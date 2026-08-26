@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilihFoto</title>
+    <!-- Anti-Screenshot Meta Tags -->
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .selected-ring {
+            border: 4px solid #3b82f6;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.15s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.15s ease-out forwards;
+        }
+
+        /* ====== FULLSCREEN PINCH/ZOOM STYLES ====== */
+        #fullscreenImageWrapper {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #fullscreenImage {
+            transform-origin: center center;
+            will-change: transform;
+            cursor: grab;
+        }
+
+        #fullscreenImage.dragging {
+            cursor: grabbing;
+        }
+
+        /* Zoom indicator */
+        #zoomIndicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 40;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        #zoomIndicator.visible {
+            opacity: 1;
+        }
+
+        /* Tambahan untuk mencegah download */
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Hide scrollbar untuk tampilan fullscreen */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* ====== ANTI-SCREENSHOT PROTECTION ====== */
+
+        /* Layer 1: CSS mix-blend-mode overlay (blur foto di balik layer putih transparan saat print) */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            #anti-screenshot-print-msg {
+                visibility: visible !important;
+                display: flex !important;
+                position: fixed;
+                inset: 0;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                background: #fff;
+                color: #111;
+                font-size: 2rem;
+                font-weight: bold;
+                text-align: center;
+            }
+        }
+
+        /* Layer 2: Overlay layar hitam (aktif saat screenshot terdeteksi) */
+        #screenshot-shield {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #screenshot-shield.active {
+            display: flex;
+        }
+
+        /* Layer 3: Konten galeri klien di-blur saat window blur */
+        body.window-blurred #protected-gallery-content,
+        body.window-blurred #fullscreenModal {
+            filter: blur(25px);
+            transition: filter 0.1s ease;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #protected-gallery-content,
+        #fullscreenModal {
+            transition: filter 0.2s ease;
+        }
+
+        /* ====== MOBILE ANTI-SCREENSHOT: Long-press prevention ====== */
+        img,
+        .photo-card {
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            touch-action: none;
+        }
+
+        /* ====== BLACK SCREEN saat window tidak aktif / screenshot terdeteksi ====== */
+        /* Layar hitam total menggantikan blur */
+        body.screen-blacked-out #protected-gallery-content,
+        body.screen-blacked-out nav,
+        body.screen-blacked-out footer {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            transition: opacity 0s !important;
+        }
+
+        body.screen-blacked-out {
+            background: #000 !important;
+        }
+
+        /* ====== CSS MIX-BLEND-MODE TRICK ====== */
+        /*
+         * Overlay ini TRANSPARAN di layar normal karena blend mode 'screen' dengan hitam = tidak terlihat.
+         * Namun pada beberapa device saat OS composite layer untuk screenshot,
+         * overlay ini bisa muncul dan menggelapkan hasil capture.
+         */
+        #css-blend-shield {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.001);
+            /* Hampir transparan di layar */
+            mix-blend-mode: multiply;
+            isolation: isolate;
+        }
+
+        #css-blend-shield.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Anti-Screenshot Print Block -->
+    <div id="anti-screenshot-print-msg" style="display:none;">
+        <svg width="80" height="80" fill="none" viewBox="0 0 24 24" stroke="#ef4444" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <p>Konten ini dilindungi hak cipta.</p>
+        <p style="font-size:1rem;font-weight:400;margin-top:8px;">Tidak diizinkan untuk mencetak atau menyimpan halaman
+            ini.</p>
+    </div>
+
+    <!-- Screenshot Shield Overlay -->
+    <div id="screenshot-shield">
+        <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#f87171" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <p style="color:#f87171;font-size:1.25rem;font-weight:700;">⚠️ Foto Dilindungi</p>
+        <p style="color:#9ca3af;font-size:0.9rem;text-align:center;max-width:300px;">Screenshot tidak
+            diizinkan.<br>Silakan pilih foto Anda melalui tombol pilih.</p>
+    </div>
+
+    <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
+    <div id="css-blend-shield"></div>
+
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    <span id="navStudioName" class="font-bold text-xl text-gray-900 tracking-tight">Studio Foto</span>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button id="btnViewGallery"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition">Galeri
+                        Klien</button>
+                    <button id="btnViewAdmin"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition">⚙️
+                        Admin</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="protected-gallery-content" class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- === VIEW: GALERI KLIEN === -->
+        <div id="viewGallery" class="block animate-fade-in">
+            <div
+                class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Pilih Foto Anda</h1>
+                    <p class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat
+                        detail.</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex items-center bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+                    <span class="text-blue-800 font-semibold mr-2">Terpilih:</span>
+                    <span id="counterText" class="text-xl font-bold text-blue-600">0 / 10</span>
+                </div>
+            </div>
+
+            <!-- Grid Foto -->
+            <div id="photoGrid"
+                class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pb-24 no-select"
+                oncontextmenu="return false;">
+                <!-- Foto akan di-render di sini oleh JavaScript -->
+            </div>
+        </div>
+
+        <!-- === VIEW: ADMIN PENGATURAN === -->
+        <div id="viewAdmin" class="hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 max-w-3xl mx-auto">
+                <div class="flex items-center mb-6 pb-4 border-b border-gray-100">
+                    <span class="text-2xl mr-2">⚙️</span>
+                    <h2 class="text-2xl font-bold text-gray-900">Pengaturan Admin</h2>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Studio Foto</label>
+                            <input type="text" id="inputStudioName"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal Pilihan</label>
+                            <input type="number" id="inputMaxLimit"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                min="1">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp
+                                Fotografer</label>
+                            <p class="text-xs text-gray-500 mb-2">Gunakan format kode negara (contoh: 628...)</p>
+                            <input type="text" id="inputWaNumber"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ubah PIN Admin</label>
+                            <p class="text-xs text-gray-500 mb-2">Gunakan PIN ini untuk masuk ke pengaturan</p>
+                            <input type="text" id="inputAdminPin"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-6 mt-2">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">Integrasi Google Drive (via GAS)</h3>
+                            <button id="btnHelpFolder"
+                                class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
+                                Pasang GAS?</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
+                                    Script</label>
+                                <input type="text" id="inputGasUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
+                                    Drive</label>
+                                <input type="text" id="inputFolderUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="https://drive.google.com/drive/folders/1A2b3c...">
+                                <div id="folderSyncStatus"
+                                    class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
+                                <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                    <b>"Siapa saja yang memiliki link"</b>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button id="btnSaveAdmin"
+                            class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
+                            Pengaturan</button>
+                    </div>
+
+                    <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
+                    <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">🔗 Bagikan Galeri ke Klien</h3>
+                        <p class="text-sm text-gray-500 mb-3">Salin link di bawah ini. Saat link ini dibuka, foto akan
+                            langsung termuat otomatis.</p>
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                            <input type="text" id="inputClientLink" readonly
+                                class="flex-1 px-4 py-3 border border-blue-200 rounded-lg bg-blue-50 text-blue-800 outline-none text-sm font-medium">
+                            <button id="btnCopyLink"
+                                class="px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap">
+                                Salin Link
+                            </button>
+                        </div>
+
+                        <!-- Panel Kirim ke Klien -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
+                                Klien</label>
+                            <p class="text-xs text-gray-500 mb-2">Masukkan nomor WA klien (gunakan awalan 628...)</p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="inputClientWa"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
+                                    placeholder="Contoh: 628...">
+                                <button id="btnSendToClientWa"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    Kirim ke WA Klien
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="w-full text-center pb-6 pt-2 bg-transparent z-10 relative">
+        <a href="https://wa.me/6282329375006?text=Halo%20Bangkit%20Production,%20saya%20terbantu%20dengan%20sistem%20pemilihan%20foto%20klien%20dan%20ingin%20memberikan%20donasi/apresiasi."
+            target="_blank" rel="noopener noreferrer"
+            class="text-xs font-semibold tracking-wider text-gray-400 hover:text-blue-600 transition-colors">
+            CREDIT BY BANGKIT_PRODUCTION
+        </a>
+    </footer>
+
+    <!-- Tombol WhatsApp Mengambang (Hanya muncul jika ada foto yang dipilih) -->
+    <div id="floatingWaBtn"
+        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 transition-all duration-300 translate-y-24 opacity-0 z-20 w-[90%] max-w-md">
+        <button id="btnSendWa"
+            class="w-full flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-200">
+            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+            Kirim <span id="waCountDisplay" class="mx-1">0</span> Pilihan ke Fotografer
+        </button>
+    </div>
+
+    <!-- Modal Fullscreen -->
+    <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden animate-fade-in no-select"
+        oncontextmenu="return false;">
+
+        <!-- Area Gambar Utama (Fit Window Edge-to-Edge) -->
+        <div id="fullscreenImageWrapper">
+            <!-- Loading indicator -->
+            <div id="fullscreenLoader"
+                class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-600 border-t-white"></div>
+            </div>
+            <img id="fullscreenImage" src="" alt="Fullscreen" draggable="false"
+                class="max-w-full max-h-full object-contain relative z-10 transition-opacity duration-300 opacity-0 select-none"
+                onload="this.classList.remove('opacity-0'); document.getElementById('fullscreenLoader').classList.add('hidden');">
+
+            <!-- Fullscreen Watermark -->
+            <div
+                class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20 overflow-hidden">
+                <span id="fullscreenWatermark"
+                    class="text-white font-bold text-4xl sm:text-6xl md:text-8xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]"></span>
+            </div>
+        </div>
+
+        <!-- Zoom Level Indicator -->
+        <div id="zoomIndicator">100%</div>
+
+        <!-- Header Mengambang -->
+        <div
+            class="absolute top-0 inset-x-0 flex justify-between items-center p-4 text-white bg-gradient-to-b from-black/80 to-transparent z-20 pointer-events-none">
+            <div id="fullscreenTitle" class="font-medium text-lg drop-shadow-md">IMG_001</div>
+            <button id="btnCloseFullscreen"
+                class="pointer-events-auto p-2 bg-black/40 hover:bg-black/80 rounded-full transition backdrop-blur-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Tombol Navigasi Kiri Kanan -->
+        <button id="btnPrevPhoto"
+            class="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-black/30 hover:bg-black/70 text-white rounded-full transition backdrop-blur-sm z-30 pointer-events-auto hidden">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <button id="btnNextPhoto"
+            class="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-black/30 hover:bg-black/70 text-white rounded-full transition backdrop-blur-sm z-30 pointer-events-auto hidden">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+
+        <!-- Footer Mengambang -->
+        <div
+            class="absolute bottom-0 inset-x-0 p-6 sm:pb-8 bg-gradient-to-t from-black/80 to-transparent flex justify-center z-20 pointer-events-none">
+            <button id="btnToggleFullscreenSelect"
+                class="pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95">
+                <!-- Icon dan text diatur via JS -->
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Dialog Modal -->
+    <div id="dialogModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hidden items-center justify-center px-4 animate-fade-in">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 id="dialogTitle" class="text-lg font-medium text-gray-900 mb-2">Informasi</h3>
+            <p id="dialogMessage" class="text-sm text-gray-500 mb-6">Pesan di sini.</p>
+            <button id="btnDialogOk"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none transition sm:text-sm">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <!-- PIN Login Modal -->
+    <div id="pinModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center px-4 animate-fade-in">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-scale-in">
+            <h3 class="text-xl font-bold text-gray-900 mb-2 text-center">Akses Admin</h3>
+            <p class="text-sm text-gray-500 mb-6 text-center">Masukkan PIN untuk mengatur galeri.</p>
+
+            <input type="password" id="inputPin" placeholder="Masukkan PIN"
+                class="w-full px-4 py-3 text-center text-xl tracking-widest border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-4">
+
+            <div class="flex space-x-3">
+                <button id="btnCancelPin"
+                    class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">Batal</button>
+                <button id="btnSubmitPin"
+                    class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Folder Help Modal -->
+    <div id="helpFolderModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center px-4 animate-fade-in overflow-y-auto pt-20 pb-10">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Cara Memasang Google Apps Script (GAS)</h3>
+                <button id="btnCloseHelp" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="text-sm text-gray-700 space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                <p>Google Apps Script (GAS) bertindak sebagai jembatan agar web ini bisa membaca folder Google Drive
+                    Anda secara otomatis tanpa diblokir.</p>
+                <ol class="list-decimal pl-5 space-y-2 font-medium">
+                    <li>Buka <a href="https://script.google.com/" target="_blank"
+                            class="text-blue-600 underline">script.google.com</a> dan buat <b>Proyek Baru</b>.</li>
+                    <li>Hapus semua kode yang ada, lalu <b>Salin (Copy) & Tempel (Paste)</b> kode <b>Versi Cepat
+                            (Optimized)</b> di bawah ini:</li>
+                </ol>
+                <div class="relative">
+                    <textarea readonly
+                        class="w-full h-48 p-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-xs text-gray-800 outline-none resize-none">
+function doGet(e) {
+  var output = ContentService.createTextOutput();
+  output.setMimeType(ContentService.MimeType.JSON);
+  try {
+    var folderId = e.parameter.folder;
+    if (!folderId) throw new Error("Parameter 'folder' tidak ditemukan.");
+    
+    var folder = DriveApp.getFolderById(folderId);
+    // OPTIMASI KECEPATAN: Langsung cari file gambar (Jauh lebih cepat dari getFiles biasa)
+    var files = folder.searchFiles("mimeType contains 'image/' and trashed = false");
+    var data = [];
+    
+    while (files.hasNext()) {
+      var file = files.next();
+      var id = file.getId();
+      data.push({
+        id: file.getName().split('.')[0], 
+        url: "https://drive.google.com/uc?export=view&id=" + id, 
+        thumb: "https://drive.google.com/uc?export=view&id=" + id
+      });
+    }
+    return output.setContent(JSON.stringify({status: 'success', data: data}));
+  } catch (err) {
+    return output.setContent(JSON.stringify({status: 'error', message: err.toString()}));
+  }
+}
+                    </textarea>
+                </div>
+                <ol class="list-decimal pl-5 space-y-2 font-medium" start="3">
+                    <li>Klik tombol <b>Terapkan (Deploy)</b> di pojok kanan atas &rarr; <b>Kelola Deployment (Manage
+                            deployments)</b>.</li>
+                    <li>Pilih deployment yang sudah ada, klik ikon <b>Pensil (Edit)</b>.</li>
+                    <li>Pada pilihan "Versi (Version)", pastikan Anda memilih <b>Versi Baru (New version)</b>.</li>
+                    <li>Klik Terapkan (Deploy).</li>
+                </ol>
+            </div>
+            <button id="btnUnderstandHelp"
+                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm">Saya
+                Mengerti</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA DEFAULT & STATE ---
+        const defaultPhotos = []; // Hapus gambar dummy
+
+        let appState = {
+            studioName: "Bangkit Pro",
+            waNumber: "628",
+            maxLimit: 10,
+            adminPin: "1234",
+            gasUrl: "",
+            folderUrl: "",
+            photos: [],
+            selectedPhotos: new Set()
+        };
+
+        let currentFullscreenPhoto = null;
+        let currentFullscreenIndex = -1;
+        let isAdminLoggedIn = false;
+
+        // --- ELEMEN DOM ---
+        const els = {
+            navStudioName: document.getElementById('navStudioName'),
+            btnViewGallery: document.getElementById('btnViewGallery'),
+            btnViewAdmin: document.getElementById('btnViewAdmin'),
+            viewGallery: document.getElementById('viewGallery'),
+            viewAdmin: document.getElementById('viewAdmin'),
+
+            photoGrid: document.getElementById('photoGrid'),
+            counterText: document.getElementById('counterText'),
+
+            inputStudioName: document.getElementById('inputStudioName'),
+            inputMaxLimit: document.getElementById('inputMaxLimit'),
+            inputWaNumber: document.getElementById('inputWaNumber'),
+            inputAdminPin: document.getElementById('inputAdminPin'),
+            inputGasUrl: document.getElementById('inputGasUrl'),
+            inputFolderUrl: document.getElementById('inputFolderUrl'),
+            folderSyncStatus: document.getElementById('folderSyncStatus'),
+            btnSaveAdmin: document.getElementById('btnSaveAdmin'),
+
+            floatingWaBtn: document.getElementById('floatingWaBtn'),
+            btnSendWa: document.getElementById('btnSendWa'),
+            waCountDisplay: document.getElementById('waCountDisplay'),
+
+            // Fullscreen
+            fullscreenModal: document.getElementById('fullscreenModal'),
+            fullscreenImage: document.getElementById('fullscreenImage'),
+            fullscreenTitle: document.getElementById('fullscreenTitle'),
+            fullscreenWatermark: document.getElementById('fullscreenWatermark'),
+            btnCloseFullscreen: document.getElementById('btnCloseFullscreen'),
+            btnToggleFullscreenSelect: document.getElementById('btnToggleFullscreenSelect'),
+            fullscreenLoader: document.getElementById('fullscreenLoader'),
+            btnPrevPhoto: document.getElementById('btnPrevPhoto'),
+            btnNextPhoto: document.getElementById('btnNextPhoto'),
+
+            // Dialog
+            dialogModal: document.getElementById('dialogModal'),
+            dialogTitle: document.getElementById('dialogTitle'),
+            dialogMessage: document.getElementById('dialogMessage'),
+            btnDialogOk: document.getElementById('btnDialogOk'),
+
+            // PIN
+            pinModal: document.getElementById('pinModal'),
+            inputPin: document.getElementById('inputPin'),
+            btnSubmitPin: document.getElementById('btnSubmitPin'),
+            btnCancelPin: document.getElementById('btnCancelPin'),
+
+            // Help Folder
+            btnHelpFolder: document.getElementById('btnHelpFolder'),
+            helpFolderModal: document.getElementById('helpFolderModal'),
+            btnCloseHelp: document.getElementById('btnCloseHelp'),
+            btnUnderstandHelp: document.getElementById('btnUnderstandHelp'),
+
+            // Share Link
+            shareSection: document.getElementById('shareSection'),
+            inputClientLink: document.getElementById('inputClientLink'),
+            btnCopyLink: document.getElementById('btnCopyLink'),
+            inputClientWa: document.getElementById('inputClientWa'),
+            btnSendToClientWa: document.getElementById('btnSendToClientWa')
+        };
+
+        // --- INIT & LOCAL STORAGE ---
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('studioSettings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState.studioName = parsed.studioName || appState.studioName;
+                    appState.waNumber = parsed.waNumber || appState.waNumber;
+                    appState.maxLimit = parsed.maxLimit || appState.maxLimit;
+                    appState.adminPin = parsed.adminPin || appState.adminPin;
+                    appState.gasUrl = parsed.gasUrl || "";
+                    appState.folderUrl = parsed.folderUrl || "";
+                    // Foto tidak lagi dimuat dari local storage agar halaman utama selalu bersih
+                }
+            } catch (e) {
+                console.log("Local storage dibatasi, menggunakan default.");
+            }
+        }
+
+        function saveSettings() {
+            try {
+                const toSave = {
+                    studioName: appState.studioName,
+                    waNumber: appState.waNumber,
+                    maxLimit: appState.maxLimit,
+                    adminPin: appState.adminPin,
+                    gasUrl: appState.gasUrl,
+                    folderUrl: appState.folderUrl
+                    // Foto tidak lagi disimpan ke local storage
+                };
+                localStorage.setItem('studioSettings', JSON.stringify(toSave));
+            } catch (e) {
+                console.log("Tidak dapat menyimpan ke local storage.");
+            }
+        }
+
+        // --- SISTEM MODAL / DIALOG ---
+        function showDialog(message, title = "Informasi") {
+            els.dialogTitle.textContent = title;
+            els.dialogMessage.textContent = message;
+            els.dialogModal.classList.remove('hidden');
+            els.dialogModal.classList.add('flex');
+        }
+
+        els.btnDialogOk.addEventListener('click', () => {
+            els.dialogModal.classList.add('hidden');
+            els.dialogModal.classList.remove('flex');
+        });
+
+        // --- LOGIKA UTAMA (GALERI KLIEN) ---
+        function updateUI() {
+            els.navStudioName.textContent = appState.studioName;
+            if (els.fullscreenWatermark) els.fullscreenWatermark.textContent = appState.studioName;
+
+            const selectedCount = appState.selectedPhotos.size;
+            els.counterText.textContent = `${selectedCount} / ${appState.maxLimit}`;
+            els.waCountDisplay.textContent = selectedCount;
+
+            // Atur tombol WA melayang
+            if (selectedCount > 0) {
+                els.floatingWaBtn.classList.remove('translate-y-24', 'opacity-0');
+                els.floatingWaBtn.classList.add('translate-y-0', 'opacity-100');
+            } else {
+                els.floatingWaBtn.classList.add('translate-y-24', 'opacity-0');
+                els.floatingWaBtn.classList.remove('translate-y-0', 'opacity-100');
+            }
+        }
+
+        function renderGallery() {
+            els.photoGrid.innerHTML = '';
+
+            if (appState.photos.length === 0) {
+                // Tampilkan pesan jika tidak ada foto
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = "col-span-full flex flex-col items-center justify-center py-16 text-center";
+
+                // Cek apakah mode admin atau mode klien berdasarkan URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const isClient = urlParams.has('t') || urlParams.has('token');
+
+                if (isClient) {
+                    emptyMessage.innerHTML = `
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">Belum ada foto</h3>
+                        <p class="text-gray-500">Galeri ini kosong atau foto gagal dimuat. Hubungi fotografer Anda.</p>
+                    `;
+                } else {
+                    emptyMessage.innerHTML = `
+                        <svg class="w-16 h-16 text-blue-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Mode Fotografer</h3>
+                        <p class="text-gray-500 mb-4">Silakan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
+                        <button onclick="document.getElementById('btnViewAdmin').click()" class="px-5 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition shadow-sm border border-blue-200">Buka Pengaturan Admin</button>
+                    `;
+                }
+
+                els.photoGrid.appendChild(emptyMessage);
+                return;
+            }
+
+            appState.photos.forEach((photo, index) => {
+                // PATCH SUPER STABIL: Ekstrak ID file dari link lama
+                // Menggunakan server Google Thumbnail agar terbebas dari blokir Virus Scan file besar
+                let fileIdMatch = (photo.url && photo.url.match(/id=([^&]+)/)) || (photo.thumb && photo.thumb.match(/id=([^&]+)/));
+                let safeThumb = photo.thumb;
+
+                if (fileIdMatch && fileIdMatch[1]) {
+                    // sz=w200 membatasi resolusi khusus thumbnail agar loading grid sangat sangat cepat
+                    safeThumb = `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w200`;
+                } else if (photo.thumb && photo.thumb.includes('picsum.photos')) {
+                    safeThumb = photo.thumb; // Fallback jika masih pakai dummy
+                }
+
+                const isSelected = appState.selectedPhotos.has(photo.id);
+
+                const card = document.createElement('div');
+                card.className = `relative group rounded-xl overflow-hidden cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-gray-200 aspect-[4/3] ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
+
+                // Indikator Centang
+                const checkBadge = isSelected
+                    ? `<div class="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full z-30 shadow-md">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                       </div>`
+                    : '';
+
+                card.innerHTML = `
+                    ${checkBadge}
+                    <img src="${safeThumb}" alt="${photo.id}" draggable="false" class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none" loading="lazy" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'">
+                    
+                    <!-- Watermark -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
+                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${appState.studioName}</span>
+                    </div>
+
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex flex-col justify-end pointer-events-none z-20">
+                        <div class="p-2 sm:p-3 bg-gradient-to-t from-black/70 to-transparent translate-y-2 group-hover:translate-y-0 transition-all">
+                            <p class="text-white text-xs sm:text-sm font-medium truncate">${photo.id}</p>
+                        </div>
+                    </div>
+                    
+                    <button class="absolute top-2 left-2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto" data-id="${photo.id}" title="Lihat Penuh">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                    </button>
+                `;
+
+                // Klik gambar untuk pilih/batal pilih
+                card.addEventListener('click', (e) => {
+                    // Jangan trigger kalau yang diklik adalah tombol zoom
+                    if (!e.target.closest('.btn-zoom')) {
+                        toggleSelection(photo.id);
+                    }
+                });
+
+                // Klik tombol zoom
+                const btnZoom = card.querySelector('.btn-zoom');
+                btnZoom.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openFullscreen(index);
+                });
+
+                els.photoGrid.appendChild(card);
+            });
+        }
+
+        function toggleSelection(id) {
+            if (appState.selectedPhotos.has(id)) {
+                appState.selectedPhotos.delete(id);
+            } else {
+                if (appState.selectedPhotos.size >= appState.maxLimit) {
+                    showDialog(`Anda telah mencapai batas maksimal pilihan yaitu ${appState.maxLimit} foto.`, "Batas Tercapai");
+                    return;
+                }
+                appState.selectedPhotos.add(id);
+            }
+
+            // Render ulang untuk update UI seleksi
+            renderGallery();
+            updateUI();
+
+            // Jika fullscreen sedang buka, update tombolnya juga
+            if (currentFullscreenPhoto && currentFullscreenPhoto.id === id && !els.fullscreenModal.classList.contains('hidden')) {
+                updateFullscreenButton(id);
+            }
+        }
+
+        function openFullscreen(index) {
+            currentFullscreenIndex = index;
+            const photo = appState.photos[index];
+            currentFullscreenPhoto = photo;
+
+            els.fullscreenTitle.textContent = photo.id;
+            els.fullscreenImage.classList.add('opacity-0'); // reset opacity for load animation
+            els.fullscreenLoader.classList.remove('hidden');
+
+            // Tampilkan tombol Prev/Next jika foto lebih dari 1
+            if (appState.photos.length > 1) {
+                els.btnPrevPhoto.classList.remove('hidden');
+                els.btnNextPhoto.classList.remove('hidden');
+            } else {
+                els.btnPrevPhoto.classList.add('hidden');
+                els.btnNextPhoto.classList.add('hidden');
+            }
+
+            // PATCH SUPER STABIL: Fullscreen dengan resolusi HD
+            let fileIdMatch = (photo.url && photo.url.match(/id=([^&]+)/)) || (photo.thumb && photo.thumb.match(/id=([^&]+)/));
+            let safeUrl = photo.url;
+
+            if (fileIdMatch && fileIdMatch[1]) {
+                // sz=w800 membatasi gambar maksimal untuk fullscreen agar super ringan
+                safeUrl = `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w800`;
+            } else if (photo.url && photo.url.includes('picsum.photos')) {
+                safeUrl = photo.url;
+            }
+
+            els.fullscreenImage.src = safeUrl;
+
+            els.fullscreenImage.onerror = () => {
+                els.fullscreenImage.src = 'https://placehold.co/800x600/111827/ffffff?text=Gambar+Gagal+Dimuat';
+                els.fullscreenImage.classList.remove('opacity-0');
+                els.fullscreenLoader.classList.add('hidden');
+            };
+
+            updateFullscreenButton(photo.id);
+
+            els.fullscreenModal.classList.remove('hidden');
+            els.fullscreenModal.classList.add('flex');
+            document.body.classList.add('overflow-hidden'); // Cegah scroll body
+        }
+
+        function closeFullscreen() {
+            els.fullscreenModal.classList.add('hidden');
+            els.fullscreenModal.classList.remove('flex', 'block');
+            document.body.classList.remove('overflow-hidden');
+            currentFullscreenPhoto = null;
+            currentFullscreenIndex = -1;
+            els.fullscreenImage.src = ""; // Clear memory
+
+            // Reset zoom properties
+            zoomScale = 1; panX = 0; panY = 0; isZoomed = false;
+            els.fullscreenImage.style.transition = 'none';
+            els.fullscreenImage.style.transform = '';
+        }
+
+        function navigateFullscreen(direction) {
+            if (currentFullscreenIndex === -1 || appState.photos.length <= 1) return;
+            let newIndex = currentFullscreenIndex + direction;
+
+            // Looping array foto jika melewati batas awal/akhir
+            if (newIndex < 0) newIndex = appState.photos.length - 1;
+            if (newIndex >= appState.photos.length) newIndex = 0;
+
+            resetZoomOnNavigate();
+            openFullscreen(newIndex);
+        }
+
+        function updateFullscreenButton(id) {
+            const isSelected = appState.selectedPhotos.has(id);
+            const btn = els.btnToggleFullscreenSelect;
+
+            if (isSelected) {
+                btn.className = "pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-white text-gray-900 hover:bg-gray-100";
+                btn.innerHTML = `<svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Batalkan Pilihan`;
+            } else {
+                btn.className = "pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-blue-600 text-white hover:bg-blue-700";
+                btn.innerHTML = `Pilih Foto Ini`;
+            }
+        }
+
+        // Event Fullscreen
+        els.btnCloseFullscreen.addEventListener('click', closeFullscreen);
+        els.btnToggleFullscreenSelect.addEventListener('click', () => {
+            if (currentFullscreenPhoto) {
+                toggleSelection(currentFullscreenPhoto.id);
+            }
+        });
+
+        els.btnPrevPhoto.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateFullscreen(-1);
+        });
+        els.btnNextPhoto.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateFullscreen(1);
+        });
+
+        // ====== PINCH-TO-ZOOM & DOUBLE-TAP ZOOM di Fullscreen ======
+        const imgWrapper = document.getElementById('fullscreenImageWrapper');
+        const zoomIndicator = document.getElementById('zoomIndicator');
+        let zoomScale = 1;
+        let zoomOriginX = 0, zoomOriginY = 0;
+        let panX = 0, panY = 0;
+        let lastPinchDist = 0;
+        let isZoomed = false;
+        let zoomIndicatorTimer = null;
+
+        // Double-tap state
+        let lastTapTime = 0;
+        let lastTapX = 0, lastTapY = 0;
+
+        // Swipe state (hanya aktif saat tidak zoom)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartTime = 0;
+        let isSwiping = false;
+
+        function getDistance(t1, t2) {
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function clampPan() {
+            if (zoomScale <= 1) { panX = 0; panY = 0; return; }
+            const img = els.fullscreenImage;
+            const maxPanX = (img.offsetWidth * (zoomScale - 1)) / 2;
+            const maxPanY = (img.offsetHeight * (zoomScale - 1)) / 2;
+            panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+            panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+        }
+
+        function applyTransform(smooth = false) {
+            const img = els.fullscreenImage;
+            img.style.transition = smooth ? 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+            img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        }
+
+        function showZoomIndicator() {
+            zoomIndicator.textContent = Math.round(zoomScale * 100) + '%';
+            zoomIndicator.classList.add('visible');
+            clearTimeout(zoomIndicatorTimer);
+            zoomIndicatorTimer = setTimeout(() => zoomIndicator.classList.remove('visible'), 1500);
+        }
+
+        function resetZoom(smooth = true) {
+            zoomScale = 1; panX = 0; panY = 0;
+            isZoomed = false;
+            applyTransform(smooth);
+            showZoomIndicator();
+        }
+
+        // Touch events for pinch & swipe
+        imgWrapper.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                const now = Date.now();
+                const t = e.touches[0];
+                touchStartX = t.clientX;
+                touchEndX = t.clientX;
+                touchStartTime = now;
+                isSwiping = !isZoomed;
+
+                // Deteksi double-tap
+                const dt = now - lastTapTime;
+                const dx = Math.abs(t.clientX - lastTapX);
+                const dy = Math.abs(t.clientY - lastTapY);
+                if (dt < 300 && dx < 40 && dy < 40) {
+                    // Double tap!
+                    if (isZoomed) {
+                        resetZoom();
+                    } else {
+                        // Zoom 2.5x ke titik tap
+                        const rect = imgWrapper.getBoundingClientRect();
+                        const cx = t.clientX - rect.left - rect.width / 2;
+                        const cy = t.clientY - rect.top - rect.height / 2;
+                        zoomScale = 2.5;
+                        panX = -cx * (zoomScale - 1) / zoomScale;
+                        panY = -cy * (zoomScale - 1) / zoomScale;
+                        clampPan();
+                        applyTransform(true);
+                        showZoomIndicator();
+                        isZoomed = true;
+                    }
+                    lastTapTime = 0;
+                    e.preventDefault();
+                    return;
+                }
+                lastTapTime = now;
+                lastTapX = t.clientX;
+                lastTapY = t.clientY;
+            } else if (e.touches.length === 2) {
+                isSwiping = false;
+                lastPinchDist = getDistance(e.touches[0], e.touches[1]);
+                // Titik tengah pinch
+                zoomOriginX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                zoomOriginY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Pan (drag) state
+        let isPanning = false;
+        let panStartX = 0, panStartY = 0, panStartPanX = 0, panStartPanY = 0;
+
+        imgWrapper.addEventListener('touchmove', e => {
+            if (e.touches.length === 2) {
+                // Pinch zoom
+                const dist = getDistance(e.touches[0], e.touches[1]);
+                const ratio = dist / lastPinchDist;
+                const newScale = Math.max(1, Math.min(5, zoomScale * ratio));
+                const delta = newScale / zoomScale;
+                const rect = imgWrapper.getBoundingClientRect();
+                const cx = zoomOriginX - rect.left - rect.width / 2;
+                const cy = zoomOriginY - rect.top - rect.height / 2;
+                panX = (panX - cx) * delta + cx;
+                panY = (panY - cy) * delta + cy;
+                zoomScale = newScale;
+                clampPan();
+                applyTransform();
+                lastPinchDist = dist;
+                isZoomed = zoomScale > 1.05;
+                e.preventDefault();
+            } else if (e.touches.length === 1) {
+                const t = e.touches[0];
+                touchEndX = t.clientX;
+                if (isZoomed) {
+                    // Pan mode
+                    if (!isPanning) {
+                        isPanning = true;
+                        panStartX = t.clientX; panStartY = t.clientY;
+                        panStartPanX = panX; panStartPanY = panY;
+                    }
+                    panX = panStartPanX + (t.clientX - panStartX);
+                    panY = panStartPanY + (t.clientY - panStartY);
+                    clampPan();
+                    applyTransform();
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        imgWrapper.addEventListener('touchend', e => {
+            isPanning = false;
+            if (e.changedTouches.length === 1 && !isZoomed && isSwiping) {
+                const elapsed = Date.now() - touchStartTime;
+                if (elapsed < 400) handleSwipe();
+            }
+            if (zoomScale < 1.05) {
+                zoomScale = 1; isZoomed = false;
+                applyTransform(true);
+            } else {
+                showZoomIndicator();
+            }
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                navigateFullscreen(1); // Geser Kiri -> Next
+            }
+            if (touchEndX > touchStartX + swipeThreshold) {
+                navigateFullscreen(-1); // Geser Kanan -> Prev
+            }
+        }
+
+        // Reset zoom saat ganti foto
+        function resetZoomOnNavigate() {
+            zoomScale = 1; panX = 0; panY = 0; isZoomed = false;
+            const img = els.fullscreenImage;
+            img.style.transition = 'none';
+            img.style.transform = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!els.fullscreenModal.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') navigateFullscreen(-1);
+                if (e.key === 'ArrowRight') navigateFullscreen(1);
+                if (e.key === 'Escape') closeFullscreen();
+            }
+        });
+
+        // WhatsApp
+        els.btnSendWa.addEventListener('click', () => {
+            if (appState.selectedPhotos.size === 0) return;
+
+            // Mengurutkan ID/Nama foto secara natural (alfanumerik) dari A-Z sebelum dikirim ke WA
+            const selectedArr = Array.from(appState.selectedPhotos).sort((a, b) =>
+                a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('%0A');
+
+            const text = `Halo Kak, ini adalah daftar foto pilihan saya:%0A%0A${listString}%0A%0ATotal: ${selectedArr.length} foto.`;
+            const waUrl = `https://wa.me/${appState.waNumber}?text=${text}`;
+
+            window.open(waUrl, '_blank');
+        });
+
+
+        // --- LOGIKA ADMIN & PIN ---
+        function switchView(viewName) {
+            const fromView = viewName === 'gallery' ? els.viewAdmin : els.viewGallery;
+            const toView = viewName === 'gallery' ? els.viewGallery : els.viewAdmin;
+
+            // Update tombol nav
+            if (viewName === 'gallery') {
+                els.btnViewGallery.classList.replace('text-gray-600', 'text-blue-700');
+                els.btnViewGallery.classList.replace('hover:bg-gray-100', 'bg-blue-50');
+                els.btnViewAdmin.classList.replace('text-blue-700', 'text-gray-600');
+                els.btnViewAdmin.classList.replace('bg-blue-50', 'hover:bg-gray-100');
+                els.btnViewAdmin.classList.add('hover:text-gray-900');
+            } else {
+                els.btnViewAdmin.classList.replace('text-gray-600', 'text-blue-700');
+                els.btnViewAdmin.classList.replace('hover:bg-gray-100', 'bg-blue-50');
+                els.btnViewAdmin.classList.remove('hover:text-gray-900');
+                els.btnViewGallery.classList.replace('text-blue-700', 'text-gray-600');
+                els.btnViewGallery.classList.replace('bg-blue-50', 'hover:bg-gray-100');
+
+                // Isi form admin
+                els.inputStudioName.value = appState.studioName;
+                els.inputWaNumber.value = appState.waNumber;
+                els.inputMaxLimit.value = appState.maxLimit;
+                els.inputAdminPin.value = appState.adminPin;
+                els.inputGasUrl.value = appState.gasUrl;
+                els.inputFolderUrl.value = appState.folderUrl;
+            }
+
+            // Tampilkan view tanpa animasi
+            if (!fromView.classList.contains('hidden')) {
+                fromView.classList.add('hidden');
+            }
+            toView.classList.remove('hidden');
+        }
+
+        // PIN Logika
+        els.btnViewAdmin.addEventListener('click', () => {
+            if (isAdminLoggedIn) {
+                switchView('admin');
+            } else {
+                els.inputPin.value = '';
+                els.pinModal.classList.remove('hidden');
+                els.pinModal.classList.add('flex');
+                els.inputPin.focus();
+            }
+        });
+
+        els.btnCancelPin.addEventListener('click', () => {
+            els.pinModal.classList.add('hidden');
+            els.pinModal.classList.remove('flex');
+        });
+
+        els.btnSubmitPin.addEventListener('click', () => {
+            if (els.inputPin.value === appState.adminPin) {
+                els.pinModal.classList.add('hidden');
+                els.pinModal.classList.remove('flex');
+                isAdminLoggedIn = true;
+                switchView('admin');
+            } else {
+                showDialog("PIN yang Anda masukkan salah.", "Akses Ditolak");
+            }
+        });
+
+        // Event Modal Help Folder
+        els.btnHelpFolder.addEventListener('click', () => {
+            els.helpFolderModal.classList.remove('hidden');
+            els.helpFolderModal.classList.add('flex');
+        });
+
+        const closeHelpFolder = () => {
+            els.helpFolderModal.classList.add('hidden');
+            els.helpFolderModal.classList.remove('flex');
+        };
+        els.btnCloseHelp.addEventListener('click', closeHelpFolder);
+        els.btnUnderstandHelp.addEventListener('click', closeHelpFolder);
+
+        els.btnViewGallery.addEventListener('click', () => switchView('gallery'));
+
+        // Fungsi Ekstrak ID Folder dari URL Drive
+        function extractFolderId(urlOrId) {
+            if (!urlOrId) return null;
+            const match = urlOrId.match(/[-\w]{25,}/);
+            return match ? match[0] : urlOrId.trim();
+        }
+
+        // --- FITUR AUTO-TARIK FOTO TANPA TOMBOL ---
+        async function pullPhotosAutomatically(folderInput, gasUrl) {
+            const folderId = extractFolderId(folderInput);
+            if (!gasUrl) {
+                showDialog("URL Web App GAS belum diisi. Silakan isi dan buat script GAS-nya terlebih dahulu.", "Peringatan");
+                return;
+            }
+
+            // Animasi Loading di Teks Status
+            els.folderSyncStatus.innerHTML = `<svg class="animate-spin w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-width="3"></path></svg> Menarik foto secara otomatis...`;
+            els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-blue-600";
+
+            try {
+                const response = await fetch(`${gasUrl}?folder=${folderId}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    if (result.data.length === 0) {
+                        showDialog("Berhasil membaca folder, namun tidak ditemukan file foto (JPG/PNG) di dalamnya.", "Info");
+                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Folder kosong / tidak ada foto.`;
+                        els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                    } else {
+                        // Mengurutkan foto berdasarkan ID (Nama File) secara natural (Alfanumerik)
+                        result.data.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+
+                        appState.photos = result.data;
+                        appState.selectedPhotos.clear(); // Reset pilihan klien sebelumnya
+
+                        // Render galeri di latar belakang agar fotografer bisa mengecek fotonya
+                        renderGallery();
+                        updateUI();
+
+                        showDialog(`Sukses menarik ${result.data.length} foto! Klik tab 'Galeri Klien' di atas untuk mengeceknya, lalu 'Simpan Pengaturan' untuk membuat link.`, "Berhasil");
+
+                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ✓ ${result.data.length} foto berhasil ditarik.`;
+                        els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-green-600";
+                    }
+                } else {
+                    showDialog(`Gagal: ${result.message}`, "Server Error");
+                    els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ✕ Gagal menarik foto.`;
+                    els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                }
+            } catch (error) {
+                showDialog("Gagal terhubung ke GAS. Pastikan URL Web App sudah benar dan izin Deployment disetel ke 'Anyone'.", "Error Koneksi");
+                els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ✕ Koneksi Error.`;
+                els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                console.error(error);
+            }
+        }
+
+        let typingTimer;
+        els.inputFolderUrl.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            const folderInput = els.inputFolderUrl.value.trim();
+            const gasUrl = els.inputGasUrl.value.trim();
+
+            // Sembunyikan status lama saat mengetik ulang
+            els.folderSyncStatus.classList.add('hidden');
+
+            // Cek jika kolom Drive dan GAS sudah terisi, dan ID foldernya valid
+            if (folderInput && gasUrl && extractFolderId(folderInput)) {
+                // Tunggu 1 detik setelah user berhenti mengetik/paste
+                typingTimer = setTimeout(() => {
+                    pullPhotosAutomatically(folderInput, gasUrl);
+                }, 1000);
+            }
+        });
+
+        els.btnSaveAdmin.addEventListener('click', async () => {
+            const newStudio = els.inputStudioName.value.trim();
+            const newWa = els.inputWaNumber.value.trim();
+            const newLimit = parseInt(els.inputMaxLimit.value);
+            const newPin = els.inputAdminPin.value.trim();
+
+            if (!newStudio || !newWa || isNaN(newLimit) || newLimit < 1 || !newPin) {
+                showDialog("Mohon lengkapi data dengan benar. Batas maksimal harus lebih dari 0 dan PIN tidak boleh kosong.", "Peringatan");
+                return;
+            }
+
+            appState.studioName = newStudio;
+            appState.waNumber = newWa;
+            appState.maxLimit = newLimit;
+            appState.adminPin = newPin;
+            appState.gasUrl = els.inputGasUrl.value.trim();
+            appState.folderUrl = els.inputFolderUrl.value.trim();
+
+            saveSettings();
+            updateUI();
+
+            showDialog("Pengaturan berhasil disimpan!", "Berhasil");
+
+            // Buat URL Klien Otomatis (DIENKRIPSI)
+            if (appState.gasUrl && appState.folderUrl) {
+                const folderId = extractFolderId(appState.folderUrl);
+                const baseUrl = window.location.href.split('?')[0];
+
+                // Ekstrak ID unik GAS agar link data lebih pendek
+                const gasMatch = appState.gasUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
+                const gasId = gasMatch ? gasMatch[1] : appState.gasUrl;
+
+                // Format String Padat: FolderID | GasID | Limit | WA | NamaStudio
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}`;
+                const token = btoa(encodeURIComponent(rawData));
+
+                const clientUrl = `${baseUrl}?t=${token}`;
+
+                els.shareSection.classList.remove('hidden');
+
+                // --- INTEGRASI IS.GD (SUPER CEPAT & ANTI-BLOKIR) ---
+                els.inputClientLink.value = "Membuat link pendek...";
+                els.btnCopyLink.disabled = true;
+                els.btnCopyLink.classList.add('opacity-50', 'cursor-not-allowed');
+
+                // Menggunakan JSONP untuk menghindari pemblokiran CORS dari browser
+                const callbackName = 'isgd_callback_' + Math.round(100000 * Math.random());
+
+                // Siapkan fungsi penangkap balasan dari is.gd
+                window[callbackName] = function (data) {
+                    if (data && data.shorturl) {
+                        els.inputClientLink.value = data.shorturl;
+                    } else {
+                        console.warn("is.gd gagal, menggunakan link asli.");
+                        els.inputClientLink.value = clientUrl;
+                    }
+                    els.btnCopyLink.disabled = false;
+                    els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
+                    delete window[callbackName]; // Bersihkan memori
+                };
+
+                // Suntikkan script untuk memanggil API
+                const script = document.createElement('script');
+                script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(clientUrl)}&callback=${callbackName}`;
+
+                // Deteksi jika internet mati atau is.gd down (timeout 5 detik)
+                script.onerror = function () {
+                    console.warn("Gagal terhubung ke is.gd, menggunakan link asli.");
+                    els.inputClientLink.value = clientUrl;
+                    els.btnCopyLink.disabled = false;
+                    els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
+                    delete window[callbackName];
+                };
+
+                document.body.appendChild(script);
+            }
+        });
+
+        els.btnCopyLink.addEventListener('click', () => {
+            els.inputClientLink.select();
+            document.execCommand('copy');
+            const originalText = els.btnCopyLink.textContent;
+            els.btnCopyLink.textContent = "Tersalin! ✓";
+            els.btnCopyLink.classList.replace('bg-green-500', 'bg-blue-600');
+            setTimeout(() => {
+                els.btnCopyLink.textContent = originalText;
+                els.btnCopyLink.classList.replace('bg-green-500', 'bg-blue-600');
+            }, 2000);
+        });
+
+        // Event Kirim ke WA Klien
+        els.btnSendToClientWa.addEventListener('click', () => {
+            const clientWa = els.inputClientWa.value.trim();
+            const clientLink = els.inputClientLink.value;
+
+            if (!clientWa) {
+                showDialog("Masukkan nomor WhatsApp klien terlebih dahulu.", "Peringatan");
+                return;
+            }
+
+            // Pesan diformat menggunakan Bintang (*) agar tampil cetak tebal di WA
+            const text = `Halo, berikut adalah link galeri foto Anda dari *${appState.studioName}*.%0A%0ASilakan buka link di bawah ini untuk memilih maksimal *${appState.maxLimit}* foto terbaik Anda:%0A${clientLink}%0A%0ATerima kasih!`;
+            const waUrl = `https://wa.me/${clientWa}?text=${text}`;
+
+            window.open(waUrl, '_blank');
+        });
+
+        // --- STARTUP APLIKASI ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadSettings();
+
+            // Auto-select text pada input saat diklik (focus) untuk memudahkan admin menghapus/mengedit
+            const allInputs = document.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.select();
+                });
+            });
+
+            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token Enkripsi)
+            const urlParams = new URLSearchParams(window.location.search);
+            const encryptedToken = urlParams.get('t') || urlParams.get('token');
+
+            if (encryptedToken) {
+                // SEMBUNYIKAN TOMBOL ADMIN JIKA DIBUKA OLEH KLIEN
+                els.btnViewAdmin.classList.add('hidden');
+                els.btnViewGallery.classList.add('cursor-default'); // Ubah kursor agar tidak terlihat seperti tombol
+
+                try {
+                    // Dekripsi token kembali menjadi data
+                    const decodedStr = decodeURIComponent(atob(encryptedToken));
+
+                    if (decodedStr.includes('|')) {
+                        // Format Data Baru (Versi Padat)
+                        const parts = decodedStr.split('|');
+                        appState.folderUrl = parts[0];
+                        // Rekonstruksi URL GAS dari ID
+                        appState.gasUrl = parts[1].includes('http') ? parts[1] : `https://script.google.com/macros/s/${parts[1]}/exec`;
+                        appState.maxLimit = parseInt(parts[2]) || appState.maxLimit;
+                        appState.waNumber = parts[3] || appState.waNumber;
+                        appState.studioName = parts[4] || appState.studioName;
+                    } else {
+                        // Format Data Lama (Versi JSON - Fallback jika klien pakai link lama)
+                        const parsedData = JSON.parse(decodedStr);
+                        appState.folderUrl = parsedData.f;
+                        appState.gasUrl = parsedData.g;
+                        appState.studioName = parsedData.n || appState.studioName;
+                        appState.waNumber = parsedData.w || appState.waNumber;
+                        appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
+                    }
+
+                    updateUI();
+
+                    // Tarik foto secara otomatis dengan animasi loading yang lebih interaktif
+                    els.photoGrid.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-24">
+                            <div class="relative">
+                                <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
+                                <div class="absolute inset-0 flex items-center justify-center mb-6">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-1">Memuat Galeri...</h3>
+                            <p id="loadingTextIndicator" class="text-sm text-gray-500 animate-pulse transition-all duration-300">Menghubungkan ke Google Drive...</p>
+                        </div>`;
+
+                    // Ganti teks loading secara berkala agar klien tidak bosan
+                    const loadingTexts = ["Mengumpulkan foto...", "Membaca data gambar...", "Sedikit lagi selesai..."];
+                    let loadingTextIndex = 0;
+                    const loadingInterval = setInterval(() => {
+                        const indicator = document.getElementById('loadingTextIndicator');
+                        if (indicator && loadingTextIndex < loadingTexts.length) {
+                            indicator.textContent = loadingTexts[loadingTextIndex];
+                            loadingTextIndex++;
+                        }
+                    }, 2500);
+
+                    const response = await fetch(`${appState.gasUrl}?folder=${appState.folderUrl}`);
+                    const result = await response.json();
+
+                    clearInterval(loadingInterval); // Hentikan animasi teks
+
+                    if (result.status === 'success') {
+                        // Mengurutkan foto berdasarkan ID (Nama File) secara natural (Alfanumerik)
+                        result.data.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+
+                        appState.photos = result.data;
+                        appState.selectedPhotos.clear();
+                        renderGallery();
+                    } else {
+                        els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Gagal memuat foto: ${result.message}</div>`;
+                    }
+                } catch (error) {
+                    // Jika klien mengedit token asal-asalan, token akan rusak dan error
+                    els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16">
+                        <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Link Tidak Valid</h3>
+                        <p class="text-gray-500">Tautan galeri ini telah rusak atau dimodifikasi. Silakan minta tautan baru kepada fotografer Anda.</p>
+                    </div>`;
+                    console.error("Token manipulation detected or invalid link:", error);
+                }
+            } else {
+                // Mode Normal (Bukan dari link Klien, buka galeri kosong/lokal)
+                appState.photos = []; // Kosongkan data foto sebelumnya
+                appState.selectedPhotos.clear();
+                updateUI();
+                renderGallery();
+            }
+
+            // Allow enter to submit PIN
+            els.inputPin.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') els.btnSubmitPin.click();
+            });
+
+            // Cegah klik kanan (Download) secara global di seluruh halaman
+            document.addEventListener('contextmenu', event => {
+                event.preventDefault();
+            });
+
+            // ====== SISTEM ANTI-SCREENSHOT (HANYA AKTIF UNTUK KLIEN) ======
+            const isClientMode = new URLSearchParams(window.location.search).has('t') ||
+                new URLSearchParams(window.location.search).has('token');
+
+            if (isClientMode) {
+                const shield = document.getElementById('screenshot-shield');
+                const blendShield = document.getElementById('css-blend-shield');
+
+                // Aktifkan CSS blend shield permanen (efek di beberapa browser/device)
+                blendShield.classList.add('active');
+
+                function showBlackScreen(duration = 2000) {
+                    // Frame 1: langsung blackout
+                    requestAnimationFrame(() => {
+                        document.body.classList.add('screen-blacked-out');
+                        shield.classList.add('active');
+                        // Frame 2: paksa repaint
+                        requestAnimationFrame(() => {
+                            // Tahan selama durasi, lalu pulihkan
+                            setTimeout(() => {
+                                shield.classList.remove('active');
+                                document.body.classList.remove('screen-blacked-out');
+                            }, duration);
+                        });
+                    });
+                }
+
+                // ====== FUNGSI INTI: BLUR KETIKA PINDAH TAB / APPS ======
+                function blurScreen() {
+                    requestAnimationFrame(() => {
+                        document.body.classList.add('window-blurred');
+                    });
+                }
+
+                function unblurScreen(delay = 200) {
+                    setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            document.body.classList.remove('window-blurred');
+                        });
+                    }, delay);
+                }
+
+                // Window kehilangan fokus (alt-tab, ganti aplikasi)
+                window.addEventListener('blur', blurScreen);
+                window.addEventListener('focus', () => unblurScreen(200));
+
+                // Page Visibility (swipe layar sistem, buka notification bar full)
+                document.addEventListener('visibilitychange', function () {
+                    if (document.hidden) {
+                        blurScreen();
+                    } else {
+                        unblurScreen(200);
+                    }
+                });
+
+                // ====== SATU-SATUNYA METODE BLACK SCREEN AKTIF: Multi-Touch Mobile (3+ jari) ======
+                // Deteksi sentuhan 3+ jari = kemungkinan screenshot gesture Android.
+                document.addEventListener('touchstart', function (e) {
+                    if (e.touches.length >= 3) {
+                        showBlackScreen(2000);
+                    }
+                }, { passive: true });
+
+                // ====== CSS Proteksi Tambahan ======
+                const protStyle = document.createElement('style');
+                protStyle.textContent = `
+                    img {
+                        -webkit-user-drag: none;
+                        user-drag: none;
+                        pointer-events: none !important;
+                        -webkit-touch-callout: none !important;
+                    }
+                    #fullscreenImageWrapper img {
+                        pointer-events: auto !important;
+                    }
+                    #protected-gallery-content * {
+                        -webkit-user-select: none !important;
+                        user-select: none !important;
+                        -webkit-touch-callout: none !important;
+                    }
+                    * { -webkit-tap-highlight-color: transparent; }
+                `;
+                document.head.appendChild(protStyle);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
