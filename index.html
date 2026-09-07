@@ -294,14 +294,6 @@
                     <h2 class="text-2xl font-bold text-gray-900">Pengaturan Admin</h2>
                 </div>
 
-                <!-- TABS -->
-                <div class="border-b border-gray-200 mb-6">
-                    <nav class="flex space-x-6" aria-label="Tabs">
-                        <button id="tabAdminSettings" class="px-1 py-3 border-b-2 font-medium text-sm border-blue-500 text-blue-600 transition focus:outline-none">Pengaturan</button>
-                        <button id="tabAdminHistory" class="px-1 py-3 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition focus:outline-none">Riwayat Link</button>
-                    </nav>
-                </div>
-
                 <!-- KONTEN PENGATURAN -->
                 <div id="adminSettingsContent" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -332,6 +324,18 @@
                             <input type="text" id="inputAdminPin"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
+                    </div>
+
+                    <!-- Opsi Watermark (Default Aktif) -->
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <label for="inputUseWatermark" class="block text-sm font-semibold text-gray-900 cursor-pointer">Watermark Nama Studio</label>
+                            <p class="text-xs text-gray-500 mt-0.5">Tampilkan watermark teks nama studio di atas foto galeri &amp; layar penuh.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="inputUseWatermark" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
                     </div>
 
                     <div class="border-t border-gray-200 pt-6 mt-2">
@@ -415,21 +419,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- KONTEN RIWAYAT -->
-                <div id="adminHistoryContent" class="hidden space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-gray-900">Riwayat Link Klien</h3>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-4">Daftar link yang pernah Anda bagikan sebelumnya.</p>
-                    <div id="historyList" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                        <!-- History items -->
-                        <div class="flex flex-col items-center justify-center py-8 text-gray-400">
-                            <span class="text-3xl mb-2">📋</span>
-                            <p class="text-sm">Belum ada riwayat link.</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </main>
@@ -472,7 +461,7 @@
                 onload="this.classList.remove('opacity-0'); document.getElementById('fullscreenLoader').classList.add('hidden');">
 
             <!-- Fullscreen Watermark -->
-            <div
+            <div id="fullscreenWatermarkWrapper"
                 class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20 overflow-hidden">
                 <span id="fullscreenWatermark"
                     class="text-white font-bold text-4xl sm:text-6xl md:text-8xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]"></span>
@@ -650,6 +639,7 @@ function doGet(e) {
             waNumber: "628",
             maxLimit: 10,
             adminPin: "1234",
+            useWatermark: true,
             gasUrl: "https://script.google.com/macros/s/AKfycbwnYzQTfagi8_kBLx7S0Yqw7IYSAnNcFqOoAVckdwRXRlNN6rWD6ahEFmwgD6x0cEWutg/exec", // MASUKKAN URL GAS ANDA DI DALAM TANDA KUTIP INI AGAR PERMANEN UNTUK SEMUA DEVICE
             folderUrl: "",
             photos: [],
@@ -676,6 +666,7 @@ function doGet(e) {
             inputMaxLimit: document.getElementById('inputMaxLimit'),
             inputWaNumber: document.getElementById('inputWaNumber'),
             inputAdminPin: document.getElementById('inputAdminPin'),
+            inputUseWatermark: document.getElementById('inputUseWatermark'),
             inputGasUrl: document.getElementById('inputGasUrl'),
             inputFolderUrl: document.getElementById('inputFolderUrl'),
             folderSyncStatus: document.getElementById('folderSyncStatus'),
@@ -689,6 +680,7 @@ function doGet(e) {
             fullscreenModal: document.getElementById('fullscreenModal'),
             fullscreenImage: document.getElementById('fullscreenImage'),
             fullscreenTitle: document.getElementById('fullscreenTitle'),
+            fullscreenWatermarkWrapper: document.getElementById('fullscreenWatermarkWrapper'),
             fullscreenWatermark: document.getElementById('fullscreenWatermark'),
             btnCloseFullscreen: document.getElementById('btnCloseFullscreen'),
             btnToggleFullscreenSelect: document.getElementById('btnToggleFullscreenSelect'),
@@ -719,14 +711,7 @@ function doGet(e) {
             inputClientLink: document.getElementById('inputClientLink'),
             btnCopyLink: document.getElementById('btnCopyLink'),
             inputClientWa: document.getElementById('inputClientWa'),
-            btnSendToClientWa: document.getElementById('btnSendToClientWa'),
-            
-            // Admin Tabs & History
-            tabAdminSettings: document.getElementById('tabAdminSettings'),
-            tabAdminHistory: document.getElementById('tabAdminHistory'),
-            adminSettingsContent: document.getElementById('adminSettingsContent'),
-            adminHistoryContent: document.getElementById('adminHistoryContent'),
-            historyList: document.getElementById('historyList')
+            btnSendToClientWa: document.getElementById('btnSendToClientWa')
         };
 
         // --- INIT & LOCAL STORAGE ---
@@ -739,6 +724,7 @@ function doGet(e) {
                     appState.waNumber = parsed.waNumber || appState.waNumber;
                     appState.maxLimit = parsed.maxLimit || appState.maxLimit;
                     appState.adminPin = parsed.adminPin || appState.adminPin;
+                    appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
                     // appState.gasUrl tidak lagi diambil dari local storage agar URL hardcode selalu digunakan
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
@@ -756,6 +742,7 @@ function doGet(e) {
                     waNumber: appState.waNumber,
                     maxLimit: appState.maxLimit,
                     adminPin: appState.adminPin,
+                    useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
                     gasUrl: appState.gasUrl,
                     folderUrl: appState.folderUrl,
                     clientLinkHistory: appState.clientLinkHistory
@@ -767,101 +754,7 @@ function doGet(e) {
             }
         }
 
-        // --- TAB & HISTORY LOGIC ---
-        function switchAdminTab(tabName) {
-            if (tabName === 'settings') {
-                els.tabAdminSettings.classList.add('border-blue-500', 'text-blue-600');
-                els.tabAdminSettings.classList.remove('border-transparent', 'text-gray-500');
-                els.tabAdminHistory.classList.remove('border-blue-500', 'text-blue-600');
-                els.tabAdminHistory.classList.add('border-transparent', 'text-gray-500');
-                
-                els.adminSettingsContent.classList.remove('hidden');
-                els.adminHistoryContent.classList.add('hidden');
-            } else {
-                els.tabAdminHistory.classList.add('border-blue-500', 'text-blue-600');
-                els.tabAdminHistory.classList.remove('border-transparent', 'text-gray-500');
-                els.tabAdminSettings.classList.remove('border-blue-500', 'text-blue-600');
-                els.tabAdminSettings.classList.add('border-transparent', 'text-gray-500');
-                
-                els.adminHistoryContent.classList.remove('hidden');
-                els.adminSettingsContent.classList.add('hidden');
-                renderHistoryList();
-            }
-        }
-        
-        els.tabAdminSettings.addEventListener('click', () => switchAdminTab('settings'));
-        els.tabAdminHistory.addEventListener('click', () => switchAdminTab('history'));
-        
-        async function renderHistoryList() {
-            els.historyList.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-8 text-blue-500">
-                    <svg class="animate-spin w-8 h-8 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
-                        <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3"></path>
-                    </svg>
-                    <p class="text-sm font-medium">Memuat dari Database...</p>
-                </div>
-            `;
-            
-            if (!appState.gasUrl) {
-                els.historyList.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-8 text-gray-400">
-                        <span class="text-3xl mb-2">📋</span>
-                        <p class="text-sm">URL GAS belum disetel. Isi pengaturan terlebih dahulu.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                const response = await fetch(`${appState.gasUrl}?action=getHistory`);
-                const result = await response.json();
-                
-                els.historyList.innerHTML = '';
-                
-                if (result.status === 'success' && result.data && result.data.length > 0) {
-                    // Sort by timestamp descending (newest first)
-                    const sortedHistory = result.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    
-                    sortedHistory.forEach((item) => {
-                        const date = new Date(item.timestamp);
-                        const dateStr = !isNaN(date) ? date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : item.timestamp;
-                        const folderName = item.folderUrl ? (item.folderUrl.split('/').pop() || 'Drive') : 'Drive';
-                        
-                        const div = document.createElement('div');
-                        div.className = "bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col space-y-2";
-                        div.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-xs text-gray-500">${dateStr} &bull; <span class="font-semibold">${item.studioName || 'Unknown'}</span></p>
-                                    <p class="text-sm font-medium text-gray-800 line-clamp-1 mt-1" title="${item.folderUrl}">Folder: ${folderName}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2 pt-1">
-                                <input type="text" readonly value="${item.shortLink}" class="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600 outline-none">
-                                <button onclick="navigator.clipboard.writeText('${item.shortLink}'); this.innerText='Tersalin!'; setTimeout(()=>this.innerText='Salin',2000);" class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-xs font-semibold transition whitespace-nowrap">Salin</button>
-                            </div>
-                        `;
-                        els.historyList.appendChild(div);
-                    });
-                } else {
-                    els.historyList.innerHTML = `
-                        <div class="flex flex-col items-center justify-center py-8 text-gray-400">
-                            <span class="text-3xl mb-2">📋</span>
-                            <p class="text-sm">Belum ada riwayat link di Database.</p>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                els.historyList.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-8 text-red-500">
-                        <span class="text-3xl mb-2">❌</span>
-                        <p class="text-sm text-center px-4">Gagal terhubung ke Database. Pastikan URL GAS benar dan izinkan akses (Anyone).</p>
-                    </div>
-                `;
-            }
-        }
-        
+        // --- PENCATATAN RIWAYAT KE DATABASE (GOOGLE SHEET) ---
         function addToHistory(shortLink, fullLink, folderUrl) {
             // Kita tetap menyimpan ke localStorage sebagai backup
             if (!appState.clientLinkHistory) appState.clientLinkHistory = [];
@@ -901,6 +794,9 @@ function doGet(e) {
         // --- LOGIKA UTAMA (GALERI KLIEN) ---
         function updateUI() {
             els.navStudioName.textContent = appState.studioName;
+            if (els.fullscreenWatermarkWrapper) {
+                els.fullscreenWatermarkWrapper.style.display = appState.useWatermark ? 'flex' : 'none';
+            }
             if (els.fullscreenWatermark) els.fullscreenWatermark.textContent = appState.studioName;
 
             const selectedCount = appState.selectedPhotos.size;
@@ -973,14 +869,17 @@ function doGet(e) {
                        </div>`
                     : '';
 
+                const watermarkHtml = appState.useWatermark ? `
+                    <!-- Watermark -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
+                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${appState.studioName}</span>
+                    </div>` : '';
+
                 card.innerHTML = `
                     ${checkBadge}
                     <img src="${safeThumb}" alt="${photo.id}" draggable="false" class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none" loading="lazy" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'">
                     
-                    <!-- Watermark -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
-                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${appState.studioName}</span>
-                    </div>
+                    ${watermarkHtml}
 
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex flex-col justify-end pointer-events-none z-20">
                         <div class="p-2 sm:p-3 bg-gradient-to-t from-black/70 to-transparent translate-y-2 group-hover:translate-y-0 transition-all">
@@ -1358,10 +1257,9 @@ function doGet(e) {
                 els.inputWaNumber.value = appState.waNumber;
                 els.inputMaxLimit.value = appState.maxLimit;
                 els.inputAdminPin.value = appState.adminPin;
+                if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
                 els.inputGasUrl.value = appState.gasUrl;
                 els.inputFolderUrl.value = appState.folderUrl;
-                // Reset tab ke Pengaturan saat buka Admin
-                if (typeof switchAdminTab === 'function') switchAdminTab('settings');
             }
 
             // Tampilkan view tanpa animasi
@@ -1504,11 +1402,13 @@ function doGet(e) {
             appState.waNumber = newWa;
             appState.maxLimit = newLimit;
             appState.adminPin = newPin;
+            if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
             appState.gasUrl = els.inputGasUrl.value.trim();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
             saveSettings();
             updateUI();
+            renderGallery();
 
             showDialog("Pengaturan berhasil disimpan!", "Berhasil");
 
@@ -1521,8 +1421,9 @@ function doGet(e) {
                 const gasMatch = appState.gasUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
                 const gasId = gasMatch ? gasMatch[1] : appState.gasUrl;
 
-                // Format String Padat: FolderID | GasID | Limit | WA | NamaStudio
-                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}`;
+                // Format String Padat: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0)
+                const wmFlag = appState.useWatermark ? '1' : '0';
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}`;
                 const token = btoa(encodeURIComponent(rawData));
 
                 const clientUrl = `${baseUrl}?t=${token}`;
@@ -1650,6 +1551,7 @@ function doGet(e) {
                         appState.maxLimit = parseInt(parts[2]) || appState.maxLimit;
                         appState.waNumber = parts[3] || appState.waNumber;
                         appState.studioName = parts[4] || appState.studioName;
+                        appState.useWatermark = parts.length > 5 ? (parts[5] === '1') : true;
                     } else {
                         // Format Data Lama (Versi JSON - Fallback jika klien pakai link lama)
                         const parsedData = JSON.parse(decodedStr);
@@ -1658,6 +1560,7 @@ function doGet(e) {
                         appState.studioName = parsedData.n || appState.studioName;
                         appState.waNumber = parsedData.w || appState.waNumber;
                         appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
+                        appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
                     }
 
                     updateUI();
