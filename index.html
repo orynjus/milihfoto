@@ -314,13 +314,14 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp
                                 Fotografer</label>
-                            <p class="text-xs text-gray-500 mb-2">Gunakan format kode negara (contoh: 628...)</p>
+                            <p class="text-xs text-gray-500 mb-2"></p>
                             <input type="text" id="inputWaNumber"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                placeholder="">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Ubah PIN Admin</label>
-                            <p class="text-xs text-gray-500 mb-2">Gunakan PIN ini untuk masuk ke pengaturan</p>
+                            <p class="text-xs text-gray-500 mb-2"></p>
                             <input type="text" id="inputAdminPin"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
@@ -408,11 +409,11 @@
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
                                 Klien</label>
-                            <p class="text-xs text-gray-500 mb-2">Masukkan nomor WA klien (gunakan awalan 628...)</p>
+                            <p class="text-xs text-gray-500 mb-2"></p>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <input type="text" id="inputClientWa"
                                     class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
-                                    placeholder="Contoh: 628...">
+                                    placeholder="">
                                 <button id="btnSendToClientWa"
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
@@ -649,7 +650,7 @@ function doGet(e) {
 
         let appState = {
             studioName: "Bangkit Pro",
-            waNumber: "628",
+            waNumber: "",
             maxLimit: 10,
             adminPin: "1234",
             useWatermark: true,
@@ -727,6 +728,18 @@ function doGet(e) {
             btnSendToClientWa: document.getElementById('btnSendToClientWa')
         };
 
+        // Fungsi normalisasi nomor WhatsApp (mengubah 08... atau +628... menjadi 628...)
+        function formatWaNumber(phone) {
+            if (!phone) return '';
+            let clean = phone.toString().trim().replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) {
+                clean = '62' + clean.slice(1);
+            } else if (clean.startsWith('8')) {
+                clean = '62' + clean;
+            }
+            return clean;
+        }
+
         // --- INIT & LOCAL STORAGE ---
         function loadSettings() {
             try {
@@ -734,7 +747,7 @@ function doGet(e) {
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     appState.studioName = parsed.studioName || appState.studioName;
-                    appState.waNumber = parsed.waNumber || appState.waNumber;
+                    appState.waNumber = formatWaNumber(parsed.waNumber) || appState.waNumber;
                     appState.maxLimit = parsed.maxLimit || appState.maxLimit;
                     appState.adminPin = parsed.adminPin || appState.adminPin;
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
@@ -1244,7 +1257,8 @@ function doGet(e) {
             const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('%0A');
 
             const text = `Halo Kak, ini adalah daftar foto pilihan saya:%0A%0A${listString}%0A%0ATotal: ${selectedArr.length} foto.`;
-            const waUrl = `https://wa.me/${appState.waNumber}?text=${text}`;
+            const cleanWa = formatWaNumber(appState.waNumber);
+            const waUrl = `https://wa.me/${cleanWa}?text=${text}`;
 
             window.open(waUrl, '_blank');
         });
@@ -1406,7 +1420,7 @@ function doGet(e) {
 
         els.btnSaveAdmin.addEventListener('click', async () => {
             const newStudio = els.inputStudioName.value.trim();
-            const newWa = els.inputWaNumber.value.trim();
+            const newWa = formatWaNumber(els.inputWaNumber.value.trim());
             const newLimit = parseInt(els.inputMaxLimit.value);
             const newPin = els.inputAdminPin.value.trim();
 
@@ -1417,6 +1431,7 @@ function doGet(e) {
 
             appState.studioName = newStudio;
             appState.waNumber = newWa;
+            els.inputWaNumber.value = newWa;
             appState.maxLimit = newLimit;
             appState.adminPin = newPin;
             if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
@@ -1519,13 +1534,15 @@ function doGet(e) {
 
         // Event Kirim ke WA Klien
         els.btnSendToClientWa.addEventListener('click', () => {
-            const clientWa = els.inputClientWa.value.trim();
+            const clientWa = formatWaNumber(els.inputClientWa.value.trim());
             const clientLink = els.inputClientLink.value;
 
             if (!clientWa) {
                 showDialog("Masukkan nomor WhatsApp klien terlebih dahulu.", "Peringatan");
                 return;
             }
+
+            els.inputClientWa.value = clientWa;
 
             // Pesan diformat menggunakan Bintang (*) agar tampil cetak tebal di WA
             const text = `Halo, berikut adalah link galeri foto Anda dari *${appState.studioName}*.%0A%0ASilakan buka link di bawah ini untuk memilih maksimal *${appState.maxLimit}* foto terbaik Anda:%0A${clientLink}%0A%0ATerima kasih!`;
@@ -1545,6 +1562,18 @@ function doGet(e) {
                     this.select();
                 });
             });
+
+            // Auto-format nomor WA ketika selesai mengetik (blur)
+            if (els.inputWaNumber) {
+                els.inputWaNumber.addEventListener('blur', function () {
+                    if (this.value.trim()) this.value = formatWaNumber(this.value);
+                });
+            }
+            if (els.inputClientWa) {
+                els.inputClientWa.addEventListener('blur', function () {
+                    if (this.value.trim()) this.value = formatWaNumber(this.value);
+                });
+            }
 
             // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token Enkripsi)
             const urlParams = new URLSearchParams(window.location.search);
@@ -1566,7 +1595,7 @@ function doGet(e) {
                         // Rekonstruksi URL GAS dari ID
                         appState.gasUrl = parts[1].includes('http') ? parts[1] : `https://script.google.com/macros/s/${parts[1]}/exec`;
                         appState.maxLimit = parseInt(parts[2]) || appState.maxLimit;
-                        appState.waNumber = parts[3] || appState.waNumber;
+                        appState.waNumber = formatWaNumber(parts[3]) || appState.waNumber;
                         appState.studioName = parts[4] || appState.studioName;
                         appState.useWatermark = parts.length > 5 ? (parts[5] === '1') : true;
                     } else {
@@ -1575,7 +1604,7 @@ function doGet(e) {
                         appState.folderUrl = parsedData.f;
                         appState.gasUrl = parsedData.g;
                         appState.studioName = parsedData.n || appState.studioName;
-                        appState.waNumber = parsedData.w || appState.waNumber;
+                        appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
                         appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
                         appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
                     }
