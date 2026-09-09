@@ -5,8 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MilihFoto</title>
-    <!-- Anti-Screenshot Meta Tags -->
-    <meta name="robots" content="noindex, nofollow">
+    <!-- Anti-Screenshot & Security Meta Tags -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <!-- Proteksi Anti-Clickjacking (Frame Busting) -->
+    <script>
+        if (window.top !== window.self) {
+            window.top.location = window.self.location;
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -321,9 +329,9 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Ubah PIN Admin</label>
-                            <p class="text-xs text-gray-500 mb-2"></p>
-                            <input type="text" id="inputAdminPin"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                            <input type="password" id="inputAdminPin"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                placeholder="Kosongkan jika tidak ingin mengubah PIN">
                         </div>
                     </div>
 
@@ -359,6 +367,13 @@
                                 <input type="text" id="inputGasUrl"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+                            </div>
+
+                            <div class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS (Secret Key)</label>
+                                <input type="password" id="inputGasSecret"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="MilihFotoSecureKey2026">
                             </div>
 
                             <div>
@@ -583,6 +598,10 @@
 function doGet(e) {
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
+  
+  // KUNCI PENGAMAN RAHASIA (Ganti jika ingin menggunakan kunci kustom Anda)
+  var SECRET_KEY = "MilihFotoSecureKey2026";
+  
   try {
     var action = e.parameter.action;
     if (!action && e.parameter.folder) action = 'getPhotos';
@@ -601,21 +620,27 @@ function doGet(e) {
       return output.setContent(JSON.stringify({status: 'success', data: data}));
       
     } else if (action === 'saveHistory') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-      if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "Short Link", "Full Link", "Folder URL", "Studio Name"]);
+      if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "Link Galeri", "Folder URL", "Studio Name"]);
       var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || "Asia/Jakarta";
       var timestamp = e.parameter.clientTime || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss");
-      sheet.appendRow([timestamp, e.parameter.shortLink || "", e.parameter.fullLink || "", e.parameter.folderUrl || "", e.parameter.studioName || ""]);
+      sheet.appendRow([timestamp, e.parameter.fullLink || e.parameter.clientLink || "", e.parameter.folderUrl || "", e.parameter.studioName || ""]);
       return output.setContent(JSON.stringify({status: 'success'}));
       
     } else if (action === 'getHistory') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
       var data = [];
       var lastRow = sheet.getLastRow();
       if (lastRow > 1) {
-        var values = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+        var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
         for (var i = 0; i < values.length; i++) {
-          data.push({ timestamp: values[i][0], shortLink: values[i][1], fullLink: values[i][2], folderUrl: values[i][3], studioName: values[i][4] });
+          data.push({ timestamp: values[i][0], clientLink: values[i][1], folderUrl: values[i][2], studioName: values[i][3] });
         }
       }
       return output.setContent(JSON.stringify({status: 'success', data: data}));
@@ -652,9 +677,10 @@ function doGet(e) {
             studioName: "Bangkit Pro",
             waNumber: "",
             maxLimit: 10,
-            adminPin: "1234",
+            adminPinHash: "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // SHA-256 untuk default PIN: 1234
             useWatermark: true,
-            gasUrl: "https://script.google.com/macros/s/AKfycbwKtwxGSN-66Yc6u89NXmbTjr8RBL1TyStpuUb2_rTIAeFrNiWaYVXMLrnaiT_cQkLPLA/exec", // MASUKKAN URL GAS ANDA DI DALAM TANDA KUTIP INI AGAR PERMANEN UNTUK SEMUA DEVICE
+            gasUrl: "https://script.google.com/macros/s/AKfycbxMhMxxCnHc7E_Ozwsd3rv3OUiDOqpTHYb37nPSVHIxiYVrKoNcJIimmIuCA_5F7_3Jpg/exec", // MASUKKAN URL GAS ANDA DI DALAM TANDA KUTIP INI AGAR PERMANEN UNTUK SEMUA DEVICE
+            gasSecretKey: "", // Kunci rahasia dimuat secara privat di browser admin
             folderUrl: "",
             photos: [],
             selectedPhotos: new Set(),
@@ -682,6 +708,7 @@ function doGet(e) {
             inputAdminPin: document.getElementById('inputAdminPin'),
             inputUseWatermark: document.getElementById('inputUseWatermark'),
             inputGasUrl: document.getElementById('inputGasUrl'),
+            inputGasSecret: document.getElementById('inputGasSecret'),
             inputFolderUrl: document.getElementById('inputFolderUrl'),
             folderSyncStatus: document.getElementById('folderSyncStatus'),
             btnSaveAdmin: document.getElementById('btnSaveAdmin'),
@@ -740,8 +767,28 @@ function doGet(e) {
             return clean;
         }
 
+        // Fungsi Sanitasi HTML untuk mencegah Cross-Site Scripting (XSS)
+        function escapeHtml(str) {
+            if (str === undefined || str === null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Fungsi Hash SHA-256 menggunakan Web Crypto API
+        async function hashText(str) {
+            if (!str) return '';
+            const msgUint8 = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         // --- INIT & LOCAL STORAGE ---
-        function loadSettings() {
+        async function loadSettings() {
             try {
                 const saved = localStorage.getItem('studioSettings');
                 if (saved) {
@@ -749,12 +796,18 @@ function doGet(e) {
                     appState.studioName = parsed.studioName || appState.studioName;
                     appState.waNumber = formatWaNumber(parsed.waNumber) || appState.waNumber;
                     appState.maxLimit = parsed.maxLimit || appState.maxLimit;
-                    appState.adminPin = parsed.adminPin || appState.adminPin;
+                    
+                    // Migrasi aman PIN: Hash disimpan, bukan teks polos
+                    if (parsed.adminPinHash) {
+                        appState.adminPinHash = parsed.adminPinHash;
+                    } else if (parsed.adminPin) {
+                        appState.adminPinHash = await hashText(parsed.adminPin);
+                    }
+                    
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
-                    // appState.gasUrl tidak lagi diambil dari local storage agar URL hardcode selalu digunakan
+                    appState.gasSecretKey = parsed.gasSecretKey || "MilihFotoSecureKey2026";
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
-                    // Foto tidak lagi dimuat dari local storage agar halaman utama selalu bersih
                 }
             } catch (e) {
                 console.log("Local storage dibatasi, menggunakan default.");
@@ -767,12 +820,12 @@ function doGet(e) {
                     studioName: appState.studioName,
                     waNumber: appState.waNumber,
                     maxLimit: appState.maxLimit,
-                    adminPin: appState.adminPin,
+                    adminPinHash: appState.adminPinHash,
                     useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
                     gasUrl: appState.gasUrl,
+                    gasSecretKey: appState.gasSecretKey,
                     folderUrl: appState.folderUrl,
                     clientLinkHistory: appState.clientLinkHistory
-                    // Foto tidak lagi disimpan ke local storage
                 };
                 localStorage.setItem('studioSettings', JSON.stringify(toSave));
             } catch (e) {
@@ -781,25 +834,25 @@ function doGet(e) {
         }
 
         // --- PENCATATAN RIWAYAT KE DATABASE (GOOGLE SHEET) ---
-        function addToHistory(shortLink, fullLink, folderUrl) {
-            // Kita tetap menyimpan ke localStorage sebagai backup
+        function addToHistory(fullLink, folderUrl) {
             if (!appState.clientLinkHistory) appState.clientLinkHistory = [];
-            const isDuplicate = appState.clientLinkHistory.some(h => h.shortLink === shortLink || (h.folderUrl === folderUrl && Date.now() - h.timestamp < 60000));
+            const isDuplicate = appState.clientLinkHistory.some(h => (h.fullLink === fullLink || h.shortLink === fullLink) || (h.folderUrl === folderUrl && Date.now() - h.timestamp < 60000));
             if (!isDuplicate) {
-                appState.clientLinkHistory.push({ timestamp: Date.now(), shortLink, fullLink, folderUrl });
+                appState.clientLinkHistory.push({ timestamp: Date.now(), fullLink, folderUrl });
                 if (appState.clientLinkHistory.length > 20) appState.clientLinkHistory.shift();
                 saveSettings();
             }
 
-            // Kirim ke Database (GAS Google Sheet)
+            // Kirim ke Database (GAS Google Sheet) dengan Kunci Rahasia
             if (appState.gasUrl) {
                 const now = new Date();
                 const pad = (n) => String(n).padStart(2, '0');
                 const localTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
                 const params = new URLSearchParams({
                     action: 'saveHistory',
-                    shortLink: shortLink,
+                    key: appState.gasSecretKey,
                     fullLink: fullLink,
+                    clientLink: fullLink,
                     folderUrl: folderUrl,
                     studioName: appState.studioName,
                     clientTime: "'" + localTime
@@ -899,25 +952,28 @@ function doGet(e) {
                        </div>`
                     : '';
 
+                const safePhotoId = escapeHtml(photo.id);
+                const safeStudio = escapeHtml(appState.studioName);
+
                 const watermarkHtml = appState.useWatermark ? `
                     <!-- Watermark -->
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
-                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${appState.studioName}</span>
+                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${safeStudio}</span>
                     </div>` : '';
 
                 card.innerHTML = `
                     ${checkBadge}
-                    <img src="${safeThumb}" alt="${photo.id}" draggable="false" class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none" loading="lazy" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'">
+                    <img src="${safeThumb}" alt="${safePhotoId}" draggable="false" class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none" loading="lazy" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'">
                     
                     ${watermarkHtml}
 
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex flex-col justify-end pointer-events-none z-20">
                         <div class="p-2 sm:p-3 bg-gradient-to-t from-black/70 to-transparent translate-y-2 group-hover:translate-y-0 transition-all">
-                            <p class="text-white text-xs sm:text-sm font-medium truncate">${photo.id}</p>
+                            <p class="text-white text-xs sm:text-sm font-medium truncate">${safePhotoId}</p>
                         </div>
                     </div>
                     
-                    <button class="absolute top-2 left-2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto" data-id="${photo.id}" title="Lihat Penuh">
+                    <button class="absolute top-2 left-2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto" data-id="${safePhotoId}" title="Lihat Penuh">
                         <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                     </button>
                 `;
@@ -1254,11 +1310,11 @@ function doGet(e) {
             const selectedArr = Array.from(appState.selectedPhotos).sort((a, b) =>
                 a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
             );
-            const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('%0A');
+            const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('\n');
 
-            const text = `Halo Kak, ini adalah daftar foto pilihan saya:%0A%0A${listString}%0A%0ATotal: ${selectedArr.length} foto.`;
+            const message = `Halo Kak, ini adalah daftar foto pilihan saya:\n\n${listString}\n\nTotal: ${selectedArr.length} foto.`;
             const cleanWa = formatWaNumber(appState.waNumber);
-            const waUrl = `https://wa.me/${cleanWa}?text=${text}`;
+            const waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`;
 
             window.open(waUrl, '_blank');
         });
@@ -1287,7 +1343,8 @@ function doGet(e) {
                 els.inputStudioName.value = appState.studioName;
                 els.inputWaNumber.value = appState.waNumber;
                 els.inputMaxLimit.value = appState.maxLimit;
-                els.inputAdminPin.value = appState.adminPin;
+                els.inputAdminPin.value = ''; // Kosongkan agar PIN lama tidak tampil
+                if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || '';
                 if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
                 els.inputGasUrl.value = appState.gasUrl;
                 els.inputFolderUrl.value = appState.folderUrl;
@@ -1300,7 +1357,10 @@ function doGet(e) {
             toView.classList.remove('hidden');
         }
 
-        // PIN Logika
+        // PIN Logika & Proteksi Brute-Force
+        let pinAttempts = 0;
+        let pinLockoutUntil = 0;
+
         els.btnViewAdmin.addEventListener('click', () => {
             if (isAdminLoggedIn) {
                 switchView('admin');
@@ -1317,14 +1377,31 @@ function doGet(e) {
             els.pinModal.classList.remove('flex');
         });
 
-        els.btnSubmitPin.addEventListener('click', () => {
-            if (els.inputPin.value === appState.adminPin) {
+        els.btnSubmitPin.addEventListener('click', async () => {
+            const now = Date.now();
+            if (now < pinLockoutUntil) {
+                const waitSec = Math.ceil((pinLockoutUntil - now) / 1000);
+                showDialog(`Terlalu banyak percobaan gagal. Silakan tunggu ${waitSec} detik lagi.`, "Akses Dikunci Sementara");
+                return;
+            }
+
+            const inputVal = els.inputPin.value.trim();
+            const inputHash = await hashText(inputVal);
+            if (inputHash === appState.adminPinHash) {
+                pinAttempts = 0;
                 els.pinModal.classList.add('hidden');
                 els.pinModal.classList.remove('flex');
                 isAdminLoggedIn = true;
                 switchView('admin');
             } else {
-                showDialog("PIN yang Anda masukkan salah.", "Akses Ditolak");
+                pinAttempts++;
+                if (pinAttempts >= 5) {
+                    pinLockoutUntil = Date.now() + 30000; // Kunci 30 detik
+                    pinAttempts = 0;
+                    showDialog("PIN salah 5 kali berturut-turut. Akses admin dikunci selama 30 detik demi keamanan.", "Keamanan Admin");
+                } else {
+                    showDialog(`PIN yang Anda masukkan salah. (Percobaan tersisa: ${5 - pinAttempts})`, "Akses Ditolak");
+                }
             }
         });
 
@@ -1424,8 +1501,8 @@ function doGet(e) {
             const newLimit = parseInt(els.inputMaxLimit.value);
             const newPin = els.inputAdminPin.value.trim();
 
-            if (!newStudio || !newWa || isNaN(newLimit) || newLimit < 1 || !newPin) {
-                showDialog("Mohon lengkapi data dengan benar. Batas maksimal harus lebih dari 0 dan PIN tidak boleh kosong.", "Peringatan");
+            if (!newStudio || !newWa || isNaN(newLimit) || newLimit < 1) {
+                showDialog("Mohon lengkapi data dengan benar. Batas maksimal harus lebih dari 0.", "Peringatan");
                 return;
             }
 
@@ -1433,7 +1510,13 @@ function doGet(e) {
             appState.waNumber = newWa;
             els.inputWaNumber.value = newWa;
             appState.maxLimit = newLimit;
-            appState.adminPin = newPin;
+            if (newPin) {
+                appState.adminPinHash = await hashText(newPin);
+                els.inputAdminPin.value = '';
+            }
+            if (els.inputGasSecret && els.inputGasSecret.value.trim()) {
+                appState.gasSecretKey = els.inputGasSecret.value.trim();
+            }
             if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
             appState.gasUrl = els.inputGasUrl.value.trim();
             appState.folderUrl = els.inputFolderUrl.value.trim();
@@ -1444,7 +1527,7 @@ function doGet(e) {
 
             showDialog("Pengaturan berhasil disimpan!", "Berhasil");
 
-            // Buat URL Klien Otomatis (DIENKRIPSI)
+            // Buat URL Klien Otomatis (Langsung & Terlindungi Integritasnya)
             if (appState.gasUrl && appState.folderUrl) {
                 const folderId = extractFolderId(appState.folderUrl);
                 const baseUrl = window.location.href.split('?')[0];
@@ -1453,53 +1536,30 @@ function doGet(e) {
                 const gasMatch = appState.gasUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
                 const gasId = gasMatch ? gasMatch[1] : appState.gasUrl;
 
-                // Format String Padat: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0)
+                // Tanda tangan integritas data (mencegah manipulasi limit atau WA)
+                const signKey = `${folderId}_${appState.maxLimit}_${appState.waNumber}`;
+                let hash = 0;
+                for (let i = 0; i < signKey.length; i++) {
+                    hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
+                    hash |= 0;
+                }
+                const sig = Math.abs(hash).toString(36);
+
+                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature
                 const wmFlag = appState.useWatermark ? '1' : '0';
-                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}`;
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}`;
                 const token = btoa(encodeURIComponent(rawData));
 
                 const clientUrl = `${baseUrl}?t=${token}`;
 
                 els.shareSection.classList.remove('hidden');
 
-                // --- INTEGRASI IS.GD (SUPER CEPAT & ANTI-BLOKIR) ---
-                els.inputClientLink.value = "Membuat link pendek...";
-                els.btnCopyLink.disabled = true;
-                els.btnCopyLink.classList.add('opacity-50', 'cursor-not-allowed');
+                // TAUTAN LANGSUNG (is.gd DIHAPUS)
+                els.inputClientLink.value = clientUrl;
+                els.btnCopyLink.disabled = false;
+                els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
 
-                // Menggunakan JSONP untuk menghindari pemblokiran CORS dari browser
-                const callbackName = 'isgd_callback_' + Math.round(100000 * Math.random());
-
-                // Siapkan fungsi penangkap balasan dari is.gd
-                window[callbackName] = function (data) {
-                    if (data && data.shorturl) {
-                        els.inputClientLink.value = data.shorturl;
-                        addToHistory(data.shorturl, clientUrl, appState.folderUrl);
-                    } else {
-                        console.warn("is.gd gagal, menggunakan link asli.");
-                        els.inputClientLink.value = clientUrl;
-                        addToHistory(clientUrl, clientUrl, appState.folderUrl);
-                    }
-                    els.btnCopyLink.disabled = false;
-                    els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
-                    delete window[callbackName]; // Bersihkan memori
-                };
-
-                // Suntikkan script untuk memanggil API
-                const script = document.createElement('script');
-                script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(clientUrl)}&callback=${callbackName}`;
-
-                // Deteksi jika internet mati atau is.gd down (timeout 5 detik)
-                script.onerror = function () {
-                    console.warn("Gagal terhubung ke is.gd, menggunakan link asli.");
-                    els.inputClientLink.value = clientUrl;
-                    addToHistory(clientUrl, clientUrl, appState.folderUrl);
-                    els.btnCopyLink.disabled = false;
-                    els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
-                    delete window[callbackName];
-                };
-
-                document.body.appendChild(script);
+                addToHistory(clientUrl, appState.folderUrl);
             }
         });
 
@@ -1553,7 +1613,7 @@ function doGet(e) {
 
         // --- STARTUP APLIKASI ---
         document.addEventListener('DOMContentLoaded', async () => {
-            loadSettings();
+            await loadSettings();
 
             // Auto-select text pada input saat diklik (focus) untuk memudahkan admin menghapus/mengedit
             const allInputs = document.querySelectorAll('input');
@@ -1575,31 +1635,71 @@ function doGet(e) {
                 });
             }
 
-            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token Enkripsi)
+            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token)
             const urlParams = new URLSearchParams(window.location.search);
             const encryptedToken = urlParams.get('t') || urlParams.get('token');
 
             if (encryptedToken) {
-                // SEMBUNYIKAN TOMBOL ADMIN JIKA DIBUKA OLEH KLIEN
-                els.btnViewAdmin.classList.add('hidden');
-                els.btnViewGallery.classList.add('cursor-default'); // Ubah kursor agar tidak terlihat seperti tombol
+                // ISOLASI KEAMANAN: HAPUS PANEL ADMIN DAN MODAL PIN SECARA TOTAL DARI DOM
+                const adminBtn = document.getElementById('btnViewAdmin');
+                const adminView = document.getElementById('viewAdmin');
+                const pinModal = document.getElementById('pinModal');
+                const helpModal = document.getElementById('helpFolderModal');
+
+                if (adminBtn) adminBtn.remove();
+                if (adminView) adminView.remove();
+                if (pinModal) pinModal.remove();
+                if (helpModal) helpModal.remove();
+
+                if (els.btnViewGallery) {
+                    els.btnViewGallery.classList.add('cursor-default');
+                }
+
+                // Kunci fungsi switchView agar tidak bisa dipanggil lewat console
+                window.switchView = function () {
+                    return false;
+                };
+
+                // Bersihkan kredensial admin dari memori halaman klien
+                delete appState.gasSecretKey;
+                delete appState.adminPinHash;
 
                 try {
                     // Dekripsi token kembali menjadi data
                     const decodedStr = decodeURIComponent(atob(encryptedToken));
 
                     if (decodedStr.includes('|')) {
-                        // Format Data Baru (Versi Padat)
                         const parts = decodedStr.split('|');
-                        appState.folderUrl = parts[0];
-                        // Rekonstruksi URL GAS dari ID
-                        appState.gasUrl = parts[1].includes('http') ? parts[1] : `https://script.google.com/macros/s/${parts[1]}/exec`;
-                        appState.maxLimit = parseInt(parts[2]) || appState.maxLimit;
-                        appState.waNumber = formatWaNumber(parts[3]) || appState.waNumber;
-                        appState.studioName = parts[4] || appState.studioName;
-                        appState.useWatermark = parts.length > 5 ? (parts[5] === '1') : true;
+                        const folderId = parts[0];
+                        const gasId = parts[1];
+                        const maxLimit = parseInt(parts[2]) || 10;
+                        const waNumber = formatWaNumber(parts[3]);
+                        const studioName = parts[4] || "Studio";
+                        const useWm = parts.length > 5 ? (parts[5] === '1') : true;
+                        const sig = parts.length > 6 ? parts[6] : null;
+
+                        // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
+                        if (sig) {
+                            const signKey = `${folderId}_${maxLimit}_${waNumber}`;
+                            let hash = 0;
+                            for (let i = 0; i < signKey.length; i++) {
+                                hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
+                                hash |= 0;
+                            }
+                            const expectedSig = Math.abs(hash).toString(36);
+                            if (sig !== expectedSig) {
+                                throw new Error("Integritas tautan tidak valid (telah diubah).");
+                            }
+                        }
+
+                        appState.folderUrl = folderId;
+                        appState.gasUrl = gasId.includes('http') ? gasId : `https://script.google.com/macros/s/${gasId}/exec`;
+                        appState.maxLimit = maxLimit;
+                        appState.waNumber = waNumber;
+                        appState.studioName = studioName;
+                        appState.useWatermark = useWm;
                     } else {
-                        // Format Data Lama (Versi JSON - Fallback jika klien pakai link lama)
+                        // Fallback format lama (JSON)
                         const parsedData = JSON.parse(decodedStr);
                         appState.folderUrl = parsedData.f;
                         appState.gasUrl = parsedData.g;
@@ -1651,7 +1751,6 @@ function doGet(e) {
                         els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Gagal memuat foto: ${result.message}</div>`;
                     }
                 } catch (error) {
-                    // Jika klien mengedit token asal-asalan, token akan rusak dan error
                     els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16">
                         <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">Link Tidak Valid</h3>
@@ -1668,9 +1767,11 @@ function doGet(e) {
             }
 
             // Allow enter to submit PIN
-            els.inputPin.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') els.btnSubmitPin.click();
-            });
+            if (els.inputPin) {
+                els.inputPin.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') els.btnSubmitPin.click();
+                });
+            }
 
             // Cegah klik kanan (Download) secara global di seluruh halaman
             document.addEventListener('contextmenu', event => {
@@ -1685,33 +1786,29 @@ function doGet(e) {
                 const shield = document.getElementById('screenshot-shield');
                 const blendShield = document.getElementById('css-blend-shield');
 
-                // Aktifkan CSS blend shield permanen (efek di beberapa browser/device)
-                blendShield.classList.add('active');
+                // Aktifkan CSS blend shield permanen
+                if (blendShield) blendShield.classList.add('active');
 
                 function showBlackScreen(duration = 2000) {
-                    // Frame 1: langsung blackout
                     requestAnimationFrame(() => {
                         document.body.classList.add('screen-blacked-out');
-                        shield.classList.add('active');
-                        // Frame 2: paksa repaint
+                        if (shield) shield.classList.add('active');
                         requestAnimationFrame(() => {
-                            // Tahan selama durasi, lalu pulihkan
                             setTimeout(() => {
-                                shield.classList.remove('active');
+                                if (shield) shield.classList.remove('active');
                                 document.body.classList.remove('screen-blacked-out');
                             }, duration);
                         });
                     });
                 }
 
-                // ====== FUNGSI INTI: BLUR KETIKA PINDAH TAB / APPS ======
                 function blurScreen() {
                     requestAnimationFrame(() => {
                         document.body.classList.add('window-blurred');
                     });
                 }
 
-                function unblurScreen(delay = 1000) {
+                function unblurScreen(delay = 500) {
                     setTimeout(() => {
                         requestAnimationFrame(() => {
                             document.body.classList.remove('window-blurred');
@@ -1721,53 +1818,25 @@ function doGet(e) {
 
                 // Window kehilangan fokus (alt-tab, ganti aplikasi)
                 window.addEventListener('blur', blurScreen);
-                window.addEventListener('focus', () => unblurScreen(1000));
+                window.addEventListener('focus', () => unblurScreen(500));
 
                 // Page Visibility (swipe layar sistem, buka notification bar full)
                 document.addEventListener('visibilitychange', function () {
                     if (document.hidden) {
                         blurScreen();
                     } else {
-                        unblurScreen(1000);
+                        unblurScreen(500);
                     }
                 });
 
-                // ====== Deteksi Tarik Laci Notifikasi (Resize Viewport) ======
-                // Saat notifikasi ditarik setengah di beberapa HP, event blur/visibility kadang tidak merespons,
-                // namun ukuran tinggi layar (viewport) sedikit berubah.
-                let lastW = window.innerWidth, lastH = window.innerHeight;
-                let isScrolling = false;
-                let scrollTimer;
-
-                // Cegah blur saat scroll (karena address bar browser HP suka sembunyi/muncul saat scroll)
-                window.addEventListener('scroll', () => {
-                    isScrolling = true;
-                    clearTimeout(scrollTimer);
-                    scrollTimer = setTimeout(() => isScrolling = false, 300);
-                }, { passive: true });
-
-                window.addEventListener('resize', function () {
-                    const dW = Math.abs(window.innerWidth - lastW);
-                    const dH = Math.abs(window.innerHeight - lastH);
-                    lastW = window.innerWidth;
-                    lastH = window.innerHeight;
-
-                    // Jika tinggi berubah (misal notifikasi ditarik) tapi tidak sedang scroll
-                    if (dH > 0 && dW === 0 && !isScrolling) {
-                        blurScreen();
-                        setTimeout(() => unblurScreen(1000), 1500);
-                    }
-                });
-
-                // ====== SATU-SATUNYA METODE BLACK SCREEN AKTIF: Multi-Touch Mobile (3+ jari) ======
-                // Deteksi sentuhan 3+ jari = kemungkinan screenshot gesture Android.
+                // Deteksi sentuhan 3+ jari = kemungkinan screenshot gesture Android
                 document.addEventListener('touchstart', function (e) {
                     if (e.touches.length >= 3) {
                         showBlackScreen(2000);
                     }
                 }, { passive: true });
 
-                // ====== CSS Proteksi Tambahan ======
+                // CSS Proteksi Tambahan
                 const protStyle = document.createElement('style');
                 protStyle.textContent = `
                     img {
