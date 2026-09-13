@@ -49,9 +49,21 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-8px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(8px);
+            }
         }
 
         .animate-fade-in {
@@ -287,7 +299,8 @@
                 class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Pilih Foto Anda</h1>
-                    <p class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat
+                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik. Ketuk ikon
+                        perbesar untuk melihat
                         detail.</p>
                 </div>
                 <div class="mt-4 sm:mt-0 flex items-center bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
@@ -321,28 +334,20 @@
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal Pilihan</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal Pilihan
+                                Foto</label>
                             <input type="number" id="inputMaxLimit"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 min="1">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp
-                                Fotografer</label>
-                            <p class="text-xs text-gray-500 mb-2"></p>
-                            <input type="text" id="inputWaNumber"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                placeholder="">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ubah PIN Admin</label>
-                            <input type="password" id="inputAdminPin"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                placeholder="Kosongkan jika tidak ingin mengubah PIN">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp Fotografer</label>
+                        <input type="text" id="inputWaNumber"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                            placeholder="08xxxxxxxxxx">
+                        <input type="password" id="inputAdminPin" class="hidden">
                     </div>
 
                     <!-- Opsi Watermark (Default Aktif) -->
@@ -362,98 +367,123 @@
                         </label>
                     </div>
 
-                    <div class="border-t border-gray-200 pt-6 mt-2">
-                        <div class="flex justify-between items-end mb-2">
-                            <h3 class="text-lg font-bold text-gray-900">Integrasi Google Drive</h3>
-                            <button id="btnHelpFolder"
-                                class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
-                                Pasang GAS?</button>
+                    <!-- Informasi Klien & Tanggal Sesi Foto -->
+                    <div class="p-4 bg-blue-50/70 rounded-xl border border-blue-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">📅</span>
+                            <h3 class="text-sm font-bold text-gray-900">Informasi Klien &amp; Tanggal Sesi</h3>
                         </div>
-
-                        <div class="space-y-4">
-                            <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
-                                    Script</label>
-                                <input type="text" id="inputGasUrl"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                    placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-                            </div>
-
-                            <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS (Secret Key)</label>
-                                <input type="password" id="inputGasSecret"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                    placeholder="MilihFotoSecureKey2026">
-                            </div>
-
+                        <div class="grid grid-cols-2 gap-3 sm:gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
-                                    Drive</label>
-                                <input type="text" id="inputFolderUrl"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                    placeholder="https://drive.google.com/drive/folders/1A2b3c...">
-                                <div id="folderSyncStatus"
-                                    class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
-                                <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
-                                    <b>"Siapa saja yang memiliki link"</b>.
-                                </p>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Klien / Acara</label>
+                                <input type="text" id="inputClientName"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Sesi Foto</label>
+                                <input type="date" id="inputSessionDate"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-4 flex justify-end">
-                        <button id="btnSaveAdmin"
-                            class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
-                            Pengaturan</button>
-                    </div>
+                        <div class="border-t border-gray-200 pt-6 mt-2">
+                            <div class="flex justify-between items-end mb-2">
+                                <h3 class="text-lg font-bold text-gray-900">Integrasi Google Drive</h3>
+                                <button id="btnHelpFolder"
+                                    class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
+                                    Pasang GAS?</button>
+                            </div>
 
-                    <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
-                    <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">🔗 Bagikan Galeri ke Klien</h3>
-                        <p class="text-sm text-gray-500 mb-3">Salin link di bawah ini. Saat link ini dibuka, foto akan
-                            langsung termuat otomatis.</p>
-                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <input type="text" id="inputClientLink" readonly
-                                class="flex-1 px-4 py-3 border border-blue-200 rounded-lg bg-blue-50 text-blue-800 outline-none text-sm font-medium">
-                            <button id="btnCopyLink"
-                                class="px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap">
-                                Salin Link
-                            </button>
-                            <button id="btnShareWa"
-                                class="px-4 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                                </svg>
-                                Buka WA
-                            </button>
+                            <div class="space-y-4">
+                                <div class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
+                                        Script</label>
+                                    <input type="text" id="inputGasUrl"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                        placeholder="https://script.google.com/macros/s/.../exec">
+                                </div>
+
+                                <div class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS
+                                        (Secret Key)</label>
+                                    <input type="password" id="inputGasSecret"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                        placeholder="Masukkan kunci rahasia Anda">
+                                    <p class="text-xs text-gray-500 mt-1">Kunci privat untuk mencatat riwayat link ke
+                                        Google Sheet (hanya tersimpan lokal di browser admin).</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
+                                        Drive</label>
+                                    <input type="text" id="inputFolderUrl"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                        placeholder="https://drive.google.com/drive/folders/1A2b3c...">
+                                    <div id="folderSyncStatus"
+                                        class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
+                                    <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                        <b>"Siapa saja yang memiliki link"</b>.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Panel Kirim ke Klien -->
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
-                                Klien</label>
-                            <p class="text-xs text-gray-500 mb-2"></p>
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="text" id="inputClientWa"
-                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
-                                    placeholder="">
-                                <button id="btnSendToClientWa"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                        <div class="pt-4 flex justify-end">
+                            <button id="btnSaveAdmin"
+                                class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
+                                Pengaturan</button>
+                        </div>
+
+                        <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
+                        <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">🔗 Bagikan Galeri ke Klien</h3>
+                            <p class="text-sm text-gray-500 mb-3">Salin link di bawah ini. Saat link ini dibuka, foto
+                                akan
+                                langsung termuat otomatis.</p>
+                            <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                                <input type="text" id="inputClientLink" readonly
+                                    class="flex-1 px-4 py-3 border border-blue-200 rounded-lg bg-blue-50 text-blue-800 outline-none text-sm font-medium">
+                                <button id="btnCopyLink"
+                                    class="px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap">
+                                    Salin Link
+                                </button>
+                                <button id="btnShareWa"
+                                    class="px-4 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 24 24"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path
                                             d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                                     </svg>
-                                    Kirim ke WA Klien
+                                    Buka WA
                                 </button>
+                            </div>
+
+                            <!-- Panel Kirim ke Klien -->
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
+                                    Klien</label>
+                                <p class="text-xs text-gray-500 mb-2"></p>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input type="text" id="inputClientWa"
+                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
+                                        placeholder="">
+                                    <button id="btnSendToClientWa"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
+                                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                        </svg>
+                                        Kirim ke WA Klien
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <!-- Footer Credit -->
@@ -549,13 +579,15 @@
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-3 text-gray-700">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
                 </svg>
             </div>
             <h3 class="text-xl font-bold text-gray-900 mb-1 text-center">Akses Admin</h3>
             <p class="text-sm text-gray-500 mb-5 text-center">Masukkan PIN untuk mengatur galeri.</p>
 
-            <input type="password" id="inputPin" placeholder="••••" maxlength="12" inputmode="numeric" autocomplete="current-password"
+            <input type="password" id="inputPin" placeholder="••••" maxlength="12" inputmode="numeric"
+                autocomplete="current-password"
                 class="w-full px-4 py-3 text-center text-2xl font-bold tracking-[0.35em] border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-4 shadow-sm bg-gray-50 focus:bg-white">
 
             <div class="flex space-x-3">
@@ -597,8 +629,8 @@ function doGet(e) {
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
   
-  // KUNCI PENGAMAN RAHASIA (Ganti jika ingin menggunakan kunci kustom Anda)
-  var SECRET_KEY = "MilihFotoSecureKey2026";
+  // KUNCI PENGAMAN RAHASIA (Ganti dengan kata sandi rahasia kustom Anda)
+  var SECRET_KEY = "GANTI_DENGAN_KUNCI_RAHASIA_ANDA";
   
   try {
     var action = e.parameter.action;
@@ -668,12 +700,14 @@ function doGet(e) {
     </div>
 
     <!-- Custom Dialog Modal (Top-most Modal, z-index 9999) -->
-    <div id="dialogModal"
-        style="z-index: 9999;"
+    <div id="dialogModal" style="z-index: 9999;"
         class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center px-4 animate-fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 relative">
-            <div id="dialogIconContainer" class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 mb-4 transition-all duration-300">
-                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 relative">
+            <div id="dialogIconContainer"
+                class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 mb-4 transition-all duration-300">
+                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 transition-all duration-300" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
@@ -688,6 +722,16 @@ function doGet(e) {
     </div>
 
     <script>
+        // Endpoint GAS terenkripsi dasar (Base64) untuk mencegah pembacaan langsung di View-Source
+        const _0x9f = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4TWhNeHhDbkhjN0VfT3p3c2QzcnYzT1VpRE9xcFRIWWIzN25QU1ZISXhpWVZyS29OY0pJaW1tSXVDQV81RjdfM0pwZy9leGVj";
+        function getDefaultGasUrl() {
+            try {
+                return atob(_0x9f);
+            } catch (e) {
+                return "";
+            }
+        }
+
         // --- DATA DEFAULT & STATE ---
         const defaultPhotos = []; // Hapus gambar dummy
 
@@ -698,8 +742,10 @@ function doGet(e) {
             adminPinHash: "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // SHA-256 untuk default PIN: 1234
             adminPinLength: 4,
             useWatermark: true,
-            gasUrl: "https://script.google.com/macros/s/AKfycbxMhMxxCnHc7E_Ozwsd3rv3OUiDOqpTHYb37nPSVHIxiYVrKoNcJIimmIuCA_5F7_3Jpg/exec", // MASUKKAN URL GAS ANDA DI DALAM TANDA KUTIP INI AGAR PERMANEN UNTUK SEMUA DEVICE
-            gasSecretKey: "", // Kunci rahasia dimuat secara privat di browser admin
+            clientName: "",
+            sessionDate: "",
+            gasUrl: getDefaultGasUrl(), // Endpoint default tersamar
+            gasSecretKey: "", // Kunci rahasia pribadi dimuat dari localStorage admin
             folderUrl: "",
             photos: [],
             selectedPhotos: new Set(),
@@ -726,6 +772,8 @@ function doGet(e) {
             inputWaNumber: document.getElementById('inputWaNumber'),
             inputAdminPin: document.getElementById('inputAdminPin'),
             inputUseWatermark: document.getElementById('inputUseWatermark'),
+            inputClientName: document.getElementById('inputClientName'),
+            inputSessionDate: document.getElementById('inputSessionDate'),
             inputGasUrl: document.getElementById('inputGasUrl'),
             inputGasSecret: document.getElementById('inputGasSecret'),
             inputFolderUrl: document.getElementById('inputFolderUrl'),
@@ -786,6 +834,31 @@ function doGet(e) {
                 clean = '62' + clean;
             }
             return clean;
+        }
+
+        // Fungsi format tampilan tanggal Indonesia (YYYY-MM-DD -> DD Bulan YYYY)
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    const m = parseInt(parts[1], 10) - 1;
+                    const d = parseInt(parts[2], 10);
+                    const y = parts[0];
+                    if (m >= 0 && m < 12 && !isNaN(d)) {
+                        return `${d} ${months[m]} ${y}`;
+                    }
+                }
+            } catch (e) { }
+            return dateStr;
+        }
+
+        // Fungsi mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+        function getTodayDateString() {
+            const today = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
         }
 
         // Fungsi Sanitasi HTML untuk mencegah Cross-Site Scripting (XSS)
@@ -887,7 +960,7 @@ function doGet(e) {
                     appState.studioName = parsed.studioName || appState.studioName;
                     appState.waNumber = formatWaNumber(parsed.waNumber) || appState.waNumber;
                     appState.maxLimit = parsed.maxLimit || appState.maxLimit;
-                    
+
                     // Migrasi aman PIN: Hash disimpan, bukan teks polos
                     if (parsed.adminPinHash) {
                         appState.adminPinHash = parsed.adminPinHash;
@@ -895,9 +968,12 @@ function doGet(e) {
                         appState.adminPinHash = await hashText(parsed.adminPin);
                     }
                     appState.adminPinLength = parsed.adminPinLength || (parsed.adminPin ? parsed.adminPin.length : 4);
-                    
+
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
-                    appState.gasSecretKey = parsed.gasSecretKey || "MilihFotoSecureKey2026";
+                    appState.clientName = parsed.clientName || "";
+                    appState.sessionDate = parsed.sessionDate || getTodayDateString();
+                    appState.gasUrl = parsed.gasUrl || getDefaultGasUrl();
+                    appState.gasSecretKey = parsed.gasSecretKey || "";
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
                 }
@@ -915,6 +991,8 @@ function doGet(e) {
                     adminPinHash: appState.adminPinHash,
                     adminPinLength: appState.adminPinLength || 4,
                     useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
+                    clientName: appState.clientName || "",
+                    sessionDate: appState.sessionDate || "",
                     gasUrl: appState.gasUrl,
                     gasSecretKey: appState.gasSecretKey,
                     folderUrl: appState.folderUrl,
@@ -936,8 +1014,8 @@ function doGet(e) {
                 saveSettings();
             }
 
-            // Kirim ke Database (GAS Google Sheet) dengan Kunci Rahasia
-            if (appState.gasUrl) {
+            // Kirim ke Database (GAS Google Sheet) dengan Kunci Rahasia jika sudah disetel
+            if (appState.gasUrl && appState.gasSecretKey) {
                 const now = new Date();
                 const pad = (n) => String(n).padStart(2, '0');
                 const localTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
@@ -1032,6 +1110,17 @@ function doGet(e) {
             const selectedCount = appState.selectedPhotos.size;
             els.counterText.textContent = `${selectedCount} / ${appState.maxLimit}`;
             els.waCountDisplay.textContent = selectedCount;
+
+            // Update sub-judul galeri jika ada nama klien / tanggal
+            const subtitleEl = document.getElementById('gallerySubtitle');
+            if (subtitleEl) {
+                if (appState.clientName) {
+                    const datePart = appState.sessionDate ? ` • Sesi: ${formatDisplayDate(appState.sessionDate)}` : '';
+                    subtitleEl.innerHTML = `Klien: <span class="font-semibold text-gray-800">${escapeHtml(appState.clientName)}</span>${escapeHtml(datePart)} &mdash; Silakan pilih maksimal <b>${appState.maxLimit}</b> foto terbaik Anda.`;
+                } else {
+                    subtitleEl.textContent = 'Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
+                }
+            }
 
             // Atur tombol WA melayang
             if (selectedCount > 0) {
@@ -1475,7 +1564,18 @@ function doGet(e) {
             );
             const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('\n');
 
-            const message = `Halo Kak, ini adalah daftar foto pilihan saya:\n\n${listString}\n\nTotal: ${selectedArr.length} foto.`;
+            let clientMeta = '';
+            if (appState.clientName) {
+                clientMeta += `👤 *Nama Klien:* ${appState.clientName}\n`;
+            }
+            if (appState.sessionDate) {
+                clientMeta += `📅 *Tanggal Sesi:* ${formatDisplayDate(appState.sessionDate)}\n`;
+            }
+            if (clientMeta) {
+                clientMeta = `${clientMeta}\n`;
+            }
+
+            const message = `Halo Kak, ini adalah daftar foto pilihan saya:\n\n${clientMeta}📸 *Foto Terpilih:*\n${listString}\n\nTotal: *${selectedArr.length}* foto.`;
             const cleanWa = formatWaNumber(appState.waNumber);
             const waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`;
 
@@ -1507,6 +1607,8 @@ function doGet(e) {
                 els.inputWaNumber.value = appState.waNumber;
                 els.inputMaxLimit.value = appState.maxLimit;
                 els.inputAdminPin.value = ''; // Kosongkan agar PIN lama tidak tampil
+                if (els.inputClientName) els.inputClientName.value = appState.clientName || '';
+                if (els.inputSessionDate) els.inputSessionDate.value = appState.sessionDate || getTodayDateString();
                 if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || '';
                 if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
                 els.inputGasUrl.value = appState.gasUrl;
@@ -1554,9 +1656,9 @@ function doGet(e) {
             isProcessingPin = true;
             try {
                 const inputHash = await hashText(inputVal);
-                const isMatch = (inputHash === appState.adminPinHash) || 
-                                (appState.adminPin && inputVal === appState.adminPin) ||
-                                (!appState.adminPinHash && inputVal === "1234");
+                const isMatch = (inputHash === appState.adminPinHash) ||
+                    (appState.adminPin && inputVal === appState.adminPin) ||
+                    (!appState.adminPinHash && inputVal === "1234");
 
                 // Sembunyikan modal PIN terlebih dahulu agar TIDAK menutupi pop-up dialog
                 els.pinModal.classList.add('hidden');
@@ -1775,11 +1877,17 @@ function doGet(e) {
                 appState.adminPinLength = newPin.length;
                 els.inputAdminPin.value = '';
             }
-            if (els.inputGasSecret && els.inputGasSecret.value.trim()) {
+            if (els.inputClientName) {
+                appState.clientName = els.inputClientName.value.trim();
+            }
+            if (els.inputSessionDate) {
+                appState.sessionDate = els.inputSessionDate.value.trim();
+            }
+            if (els.inputGasSecret) {
                 appState.gasSecretKey = els.inputGasSecret.value.trim();
             }
             if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
-            appState.gasUrl = els.inputGasUrl.value.trim();
+            appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
             saveSettings();
@@ -1806,9 +1914,11 @@ function doGet(e) {
                 }
                 const sig = Math.abs(hash).toString(36);
 
-                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature
+                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi
                 const wmFlag = appState.useWatermark ? '1' : '0';
-                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}`;
+                const safeClient = encodeURIComponent(appState.clientName || '');
+                const safeDate = encodeURIComponent(appState.sessionDate || '');
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}`;
                 const token = btoa(encodeURIComponent(rawData));
 
                 const clientUrl = `${baseUrl}?t=${token}`;
@@ -1938,6 +2048,8 @@ function doGet(e) {
                         const studioName = parts[4] || "Studio";
                         const useWm = parts.length > 5 ? (parts[5] === '1') : true;
                         const sig = parts.length > 6 ? parts[6] : null;
+                        const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
+                        const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
 
                         // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
                         if (sig) {
@@ -1959,6 +2071,8 @@ function doGet(e) {
                         appState.waNumber = waNumber;
                         appState.studioName = studioName;
                         appState.useWatermark = useWm;
+                        appState.clientName = clientName;
+                        appState.sessionDate = sessionDate;
                     } else {
                         // Fallback format lama (JSON)
                         const parsedData = JSON.parse(decodedStr);
