@@ -299,7 +299,7 @@
                 class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Pilih Foto Anda</h1>
-                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik. Ketuk ikon
+                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik yang ingin dicetak. Ketuk ikon
                         perbesar untuk melihat
                         detail.</p>
                 </div>
@@ -450,6 +450,14 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                                         </svg>
                                         Salin Pesan &amp; Link
+                                    </button>
+                                    <button id="btnOpenClientGallery" type="button"
+                                        class="px-5 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                        <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        Buka Galeri Klien
                                     </button>
                                     <button id="btnShareWa"
                                         class="px-5 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
@@ -823,6 +831,7 @@ function doGet(e) {
             shareSection: document.getElementById('shareSection'),
             inputClientLink: document.getElementById('inputClientLink'),
             btnCopyLink: document.getElementById('btnCopyLink'),
+            btnOpenClientGallery: document.getElementById('btnOpenClientGallery'),
             inputClientWa: document.getElementById('inputClientWa'),
             btnSendToClientWa: document.getElementById('btnSendToClientWa')
         };
@@ -992,6 +1001,7 @@ function doGet(e) {
 
             try {
                 localStorage.removeItem('studioSettings');
+                sessionStorage.removeItem('activeAdminSession');
             } catch (e) {}
 
             isAdminLoggedIn = false;
@@ -1164,7 +1174,7 @@ function doGet(e) {
             if (subtitleEl) {
                 if (appState.clientName) {
                     const datePart = appState.sessionDate ? ` • Sesi: ${formatDisplayDate(appState.sessionDate)}` : '';
-                    subtitleEl.innerHTML = `Klien: <span class="font-semibold text-gray-800">${escapeHtml(appState.clientName)}</span>${escapeHtml(datePart)} &mdash; Silakan pilih maksimal <b>${appState.maxLimit}</b> foto terbaik Anda.`;
+                    subtitleEl.innerHTML = `Klien: <span class="font-semibold text-gray-800">${escapeHtml(appState.clientName)}</span>${escapeHtml(datePart)} &mdash; Silakan pilih maksimal <b>${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
                 } else {
                     subtitleEl.textContent = 'Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
                 }
@@ -1638,6 +1648,36 @@ function doGet(e) {
 
             // Update tombol nav
             if (viewName === 'gallery') {
+                // SINKRONISASI DATA: Ambil input terbaru dari form admin ke appState agar tidak reset / hilang
+                if (els.inputStudioName && els.inputStudioName.value.trim()) {
+                    appState.studioName = els.inputStudioName.value.trim();
+                }
+                if (els.inputWaNumber && els.inputWaNumber.value.trim()) {
+                    appState.waNumber = formatWaNumber(els.inputWaNumber.value.trim());
+                }
+                if (els.inputMaxLimit && els.inputMaxLimit.value) {
+                    const parsedLimit = parseInt(els.inputMaxLimit.value);
+                    if (!isNaN(parsedLimit) && parsedLimit > 0) {
+                        appState.maxLimit = parsedLimit;
+                    }
+                }
+                if (els.inputClientName) {
+                    appState.clientName = els.inputClientName.value.trim();
+                }
+                if (els.inputSessionDate) {
+                    appState.sessionDate = els.inputSessionDate.value.trim();
+                }
+                if (els.inputUseWatermark) {
+                    appState.useWatermark = els.inputUseWatermark.checked;
+                }
+                if (els.inputFolderUrl) {
+                    appState.folderUrl = els.inputFolderUrl.value.trim();
+                }
+
+                // Update UI dan galeri agar menampilkan nama klien, sesi, limit, dan studio terbaru
+                updateUI();
+                renderGallery();
+
                 els.btnViewGallery.classList.replace('text-gray-600', 'text-blue-700');
                 els.btnViewGallery.classList.replace('hover:bg-gray-100', 'bg-blue-50');
                 els.btnViewAdmin.classList.replace('text-blue-700', 'text-gray-600');
@@ -1650,7 +1690,7 @@ function doGet(e) {
                 els.btnViewGallery.classList.replace('text-blue-700', 'text-gray-600');
                 els.btnViewGallery.classList.replace('bg-blue-50', 'hover:bg-gray-100');
 
-                // Isi form admin
+                // Isi form admin dari appState yang sudah tersimpan (tidak akan reset)
                 els.inputStudioName.value = appState.studioName;
                 els.inputWaNumber.value = appState.waNumber;
                 els.inputMaxLimit.value = appState.maxLimit;
@@ -1715,6 +1755,7 @@ function doGet(e) {
                 if (isMatch) {
                     pinAttempts = 0;
                     isAdminLoggedIn = true;
+                    try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) {}
                     els.inputPin.value = '';
 
                     // POP-UP OTOMATIS MUNCUL KETIKA PIN BENAR!
@@ -1865,6 +1906,16 @@ function doGet(e) {
                         appState.photos = result.data;
                         appState.selectedPhotos.clear(); // Reset pilihan klien sebelumnya
 
+                        // Sinkronkan data form admin yang sedang diketik agar tidak hilang saat galeri dibuka
+                        if (els.inputStudioName && els.inputStudioName.value.trim()) appState.studioName = els.inputStudioName.value.trim();
+                        if (els.inputWaNumber && els.inputWaNumber.value.trim()) appState.waNumber = formatWaNumber(els.inputWaNumber.value.trim());
+                        if (els.inputMaxLimit && els.inputMaxLimit.value) {
+                            const lim = parseInt(els.inputMaxLimit.value);
+                            if (!isNaN(lim) && lim > 0) appState.maxLimit = lim;
+                        }
+                        if (els.inputClientName) appState.clientName = els.inputClientName.value.trim();
+                        if (els.inputSessionDate) appState.sessionDate = els.inputSessionDate.value.trim();
+
                         // Render galeri di latar belakang agar fotografer bisa mengecek fotonya
                         renderGallery();
                         updateUI();
@@ -1938,6 +1989,7 @@ function doGet(e) {
             appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
+            try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) {}
             saveSettings();
             updateUI();
             renderGallery();
@@ -2002,6 +2054,13 @@ function doGet(e) {
                 els.btnCopyLink.classList.add('bg-blue-600', 'hover:bg-blue-700');
             }, 2000);
         });
+
+        // Event Buka Galeri Klien dari dashboard admin tanpa reset
+        if (els.btnOpenClientGallery) {
+            els.btnOpenClientGallery.addEventListener('click', () => {
+                switchView('gallery');
+            });
+        }
 
         // Event Buka WA secara langsung untuk bagikan link & pesan
         const btnShareWa = document.getElementById('btnShareWa');
@@ -2178,8 +2237,21 @@ function doGet(e) {
                     console.error("Token manipulation detected or invalid link:", error);
                 }
             } else {
-                // Mode Normal (Buka link utama: SELALU KEMBALI KE DEFAULT AWAL)
-                resetToDefault();
+                // Mode Normal (Buka link utama)
+                let hasActiveAdminSession = false;
+                try {
+                    hasActiveAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
+                } catch (e) {}
+
+                if (hasActiveAdminSession) {
+                    // Jangan reset jika ini adalah sesi kerja admin aktif (misal saat membuka galeri klien dari dashboard)
+                    await loadSettings();
+                    updateUI();
+                    renderGallery();
+                } else {
+                    // Sesi baru / tab baru buka link utama: SELALU KEMBALI KE DEFAULT AWAL
+                    resetToDefault();
+                }
             }
 
             // Cegah klik kanan (Download) secara global di seluruh halaman
