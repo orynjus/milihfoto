@@ -299,7 +299,8 @@
                 class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Pilih Foto Anda</h1>
-                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik yang ingin dicetak. Ketuk ikon
+                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik yang ingin
+                        dicetak. Ketuk ikon
                         perbesar untuk melihat
                         detail.</p>
                 </div>
@@ -386,118 +387,147 @@
                                     class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
                             </div>
                         </div>
+                        <div class="pt-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-gray-700">Custom Link Pendek (Alias
+                                    URL)</label>
+                                <button type="button" id="btnResetSlug"
+                                    class="text-[11px] text-blue-600 hover:text-blue-800 font-medium hidden flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                        </path>
+                                    </svg>
+                                    Reset ke Nama Klien
+                                </button>
+                            </div>
+                            <input type="text" id="inputCustomSlug"
+                                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-mono text-gray-800 shadow-sm"
+                                placeholder="" autocomplete="off" spellcheck="false">
+                            <p class="text-[11px] text-gray-500 mt-1">
+                                Tautan pendek otomatis dibuat dari nama klien. Anda juga bisa mengetik alias kustom
+                                sendiri di atas sebelum menyimpan.
+                            </p>
+                        </div>
                     </div>
 
-                        <div class="border-t border-gray-200 pt-6 mt-2">
-                            <div class="flex justify-between items-end mb-2">
-                                <h3 class="text-lg font-bold text-gray-900">Integrasi Google Drive</h3>
-                                <button id="btnHelpFolder"
-                                    class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
-                                    Pasang GAS?</button>
+                    <div class="border-t border-gray-200 pt-6 mt-2">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">Integrasi Google Drive</h3>
+                            <button id="btnHelpFolder"
+                                class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
+                                Pasang GAS?</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
+                                    Script</label>
+                                <input type="text" id="inputGasUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="https://script.google.com/macros/s/.../exec">
                             </div>
 
-                            <div class="space-y-4">
-                                <div class="hidden">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
-                                        Script</label>
-                                    <input type="text" id="inputGasUrl"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                        placeholder="https://script.google.com/macros/s/.../exec">
-                                </div>
+                            <div class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS
+                                    (Secret Key)</label>
+                                <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="Masukkan kunci rahasia Anda">
+                                <p class="text-xs text-gray-500 mt-1">Kunci privat untuk mencatat riwayat link ke
+                                    Google Sheet (hanya tersimpan lokal di browser admin).</p>
+                            </div>
 
-                                <div class="hidden">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS
-                                        (Secret Key)</label>
-                                    <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                        placeholder="Masukkan kunci rahasia Anda">
-                                    <p class="text-xs text-gray-500 mt-1">Kunci privat untuk mencatat riwayat link ke
-                                        Google Sheet (hanya tersimpan lokal di browser admin).</p>
-                                </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
+                                    Drive</label>
+                                <input type="text" id="inputFolderUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="">
+                                <div id="folderSyncStatus"
+                                    class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
+                                <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                    <b>"Siapa saja yang memiliki link"</b>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
-                                        Drive</label>
-                                    <input type="text" id="inputFolderUrl"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                        placeholder="">
-                                    <div id="folderSyncStatus"
-                                        class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
-                                    <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
-                                        <b>"Siapa saja yang memiliki link"</b>.
-                                    </p>
-                                </div>
+                    <div class="pt-4 flex justify-end">
+                        <button id="btnSaveAdmin"
+                            class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
+                            Pengaturan</button>
+                    </div>
+
+                    <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
+                    <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">🔗 Bagikan Pesan &amp; Galeri ke Klien</h3>
+                            <span id="shortLinkBadge"
+                                class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-3">Teks pesan dan link di bawah ini siap disalin atau
+                            langsung dikirimkan ke WhatsApp klien:</p>
+                        <div class="space-y-3 mb-4">
+                            <textarea id="inputClientLink" readonly rows="5"
+                                class="w-full px-4 py-3 border border-blue-200 rounded-xl bg-blue-50/80 text-blue-950 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <button id="btnCopyLink"
+                                    class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+                                        </path>
+                                    </svg>
+                                    Salin Pesan &amp; Link
+                                </button>
+                                <button id="btnOpenClientGallery" type="button"
+                                    class="px-5 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                    Buka Galeri Klien
+                                </button>
+                                <button id="btnShareWa"
+                                    class="px-5 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    Buka WA
+                                </button>
                             </div>
                         </div>
 
-                        <div class="pt-4 flex justify-end">
-                            <button id="btnSaveAdmin"
-                                class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
-                                Pengaturan</button>
-                        </div>
-
-                        <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
-                        <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                <h3 class="text-lg font-bold text-gray-900">🔗 Bagikan Pesan &amp; Galeri ke Klien</h3>
-                                <span id="shortLinkBadge" class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
-                            </div>
-                            <p class="text-sm text-gray-500 mb-3">Teks pesan dan link di bawah ini siap disalin atau langsung dikirimkan ke WhatsApp klien:</p>
-                            <div class="space-y-3 mb-4">
-                                <textarea id="inputClientLink" readonly rows="5"
-                                    class="w-full px-4 py-3 border border-blue-200 rounded-xl bg-blue-50/80 text-blue-950 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
-                                <div class="flex flex-col sm:flex-row gap-2">
-                                    <button id="btnCopyLink"
-                                        class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                        <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                                        </svg>
-                                        Salin Pesan &amp; Link
-                                    </button>
-                                    <button id="btnOpenClientGallery" type="button"
-                                        class="px-5 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                        <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
-                                        Buka Galeri Klien
-                                    </button>
-                                    <button id="btnShareWa"
-                                        class="px-5 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                        <svg class="w-5 h-5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                                        </svg>
-                                        Buka WA
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Panel Kirim ke Klien -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
-                                    Klien</label>
-                                <p class="text-xs text-gray-500 mb-2"></p>
-                                <div class="flex flex-col sm:flex-row gap-2">
-                                    <input type="text" id="inputClientWa"
-                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
-                                        placeholder="">
-                                    <button id="btnSendToClientWa"
-                                        class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
-                                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                                        </svg>
-                                        Kirim ke WA Klien
-                                    </button>
-                                </div>
+                        <!-- Panel Kirim ke Klien -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
+                                Klien</label>
+                            <p class="text-xs text-gray-500 mb-2"></p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="inputClientWa"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
+                                    placeholder="">
+                                <button id="btnSendToClientWa"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    Kirim ke WA Klien
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
     </main>
 
     <!-- Footer Credit -->
@@ -552,18 +582,18 @@
         <div
             class="absolute top-0 inset-x-0 flex justify-between items-center p-3 sm:p-4 text-white bg-gradient-to-b from-black/80 to-transparent z-20 pointer-events-none">
             <div class="flex items-center space-x-2 sm:space-x-3 pointer-events-auto min-w-0">
-                <button id="btnBackFullscreen"
-                    title="Kembali ke Galeri"
+                <button id="btnBackFullscreen" title="Kembali ke Galeri"
                     class="p-2 sm:px-3 sm:py-2 bg-black/40 hover:bg-black/80 text-white rounded-full transition backdrop-blur-sm flex items-center gap-1.5 active:scale-95 flex-shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
                     </svg>
                     <span class="text-sm font-medium hidden sm:inline">Kembali</span>
                 </button>
-                <div id="fullscreenTitle" class="font-medium text-base sm:text-lg drop-shadow-md truncate max-w-[200px] sm:max-w-md ml-1 flex items-center gap-1.5">IMG_001</div>
+                <div id="fullscreenTitle"
+                    class="font-medium text-base sm:text-lg drop-shadow-md truncate max-w-[200px] sm:max-w-md ml-1 flex items-center gap-1.5">
+                    IMG_001</div>
             </div>
-            <button id="btnCloseFullscreen"
-                title="Tutup Preview (Esc)"
+            <button id="btnCloseFullscreen" title="Tutup Preview (Esc)"
                 class="pointer-events-auto p-2 bg-black/40 hover:bg-black/80 rounded-full transition backdrop-blur-sm active:scale-95 text-white flex-shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
@@ -573,17 +603,13 @@
         </div>
 
         <!-- Tombol Navigasi Kiri Kanan -->
-        <button id="btnPrevPhoto"
-            aria-label="Foto Sebelumnya"
-            title="Foto Sebelumnya (Panah Kiri)"
+        <button id="btnPrevPhoto" aria-label="Foto Sebelumnya" title="Foto Sebelumnya (Panah Kiri)"
             class="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3.5 bg-black/40 hover:bg-black/80 active:scale-90 text-white rounded-full transition-all duration-150 backdrop-blur-md shadow-lg z-30 pointer-events-auto hidden focus:outline-none focus:ring-2 focus:ring-white/40">
             <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
             </svg>
         </button>
-        <button id="btnNextPhoto"
-            aria-label="Foto Selanjutnya"
-            title="Foto Selanjutnya (Panah Kanan)"
+        <button id="btnNextPhoto" aria-label="Foto Selanjutnya" title="Foto Selanjutnya (Panah Kanan)"
             class="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3.5 bg-black/40 hover:bg-black/80 active:scale-90 text-white rounded-full transition-all duration-150 backdrop-blur-md shadow-lg z-30 pointer-events-auto hidden focus:outline-none focus:ring-2 focus:ring-white/40">
             <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
@@ -725,7 +751,7 @@ function doGet(e) {
       }
       var values = shortSheet.getRange(2, 1, lastRow - 1, 7).getValues();
       for (var i = values.length - 1; i >= 0; i--) {
-        if (String(values[i][0]).trim() === String(code).trim()) {
+        if (String(values[i][0]).trim().toLowerCase() === String(code).trim().toLowerCase()) {
           return output.setContent(JSON.stringify({
             status: 'success',
             data: {
@@ -845,6 +871,7 @@ function doGet(e) {
             adminPinLength: 4,
             useWatermark: true,
             clientName: "",
+            customSlug: "",
             sessionDate: "",
             gasUrl: getDefaultGasUrl(), // Endpoint default tersamar
             gasSecretKey: getDefaultGasSecretKey(), // Kunci rahasia default aman
@@ -875,6 +902,8 @@ function doGet(e) {
             inputAdminPin: document.getElementById('inputAdminPin'),
             inputUseWatermark: document.getElementById('inputUseWatermark'),
             inputClientName: document.getElementById('inputClientName'),
+            inputCustomSlug: document.getElementById('inputCustomSlug'),
+            btnResetSlug: document.getElementById('btnResetSlug'),
             inputSessionDate: document.getElementById('inputSessionDate'),
             inputGasUrl: document.getElementById('inputGasUrl'),
             inputGasSecret: document.getElementById('inputGasSecret'),
@@ -928,6 +957,20 @@ function doGet(e) {
             inputClientWa: document.getElementById('inputClientWa'),
             btnSendToClientWa: document.getElementById('btnSendToClientWa')
         };
+
+        // Fungsi pembantu mengubah teks menjadi URL-friendly slug
+        function slugify(text) {
+            if (!text) return '';
+            return text
+                .toString()
+                .toLowerCase()
+                .trim()
+                .replace(/&/g, ' ')
+                .replace(/\bdan\b/gi, ' ')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .replace(/-{2,}/g, '-');
+        }
 
         // Fungsi pembuatan kode unik 6 karakter acak untuk link pendek
         function generateShortCode() {
@@ -1087,8 +1130,12 @@ function doGet(e) {
             if (els.inputWaNumber) els.inputWaNumber.value = "";
             if (els.inputMaxLimit) els.inputMaxLimit.value = appState.maxLimit;
             if (els.inputAdminPin) els.inputAdminPin.value = "";
+            appState.customSlug = "";
             if (els.inputUseWatermark) els.inputUseWatermark.checked = true;
             if (els.inputClientName) els.inputClientName.value = "";
+            if (els.inputCustomSlug) els.inputCustomSlug.value = "";
+            if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+            isSlugManuallyEdited = false;
             if (els.inputSessionDate) els.inputSessionDate.value = getTodayDateString();
             if (els.inputGasUrl) els.inputGasUrl.value = appState.gasUrl;
             if (els.inputGasSecret) els.inputGasSecret.value = getDefaultGasSecretKey();
@@ -1105,7 +1152,7 @@ function doGet(e) {
             try {
                 localStorage.removeItem('studioSettings');
                 sessionStorage.removeItem('activeAdminSession');
-            } catch (e) {}
+            } catch (e) { }
 
             isAdminLoggedIn = false;
             updateUI();
@@ -1132,6 +1179,7 @@ function doGet(e) {
 
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
                     appState.clientName = parsed.clientName || "";
+                    appState.customSlug = parsed.customSlug || "";
                     appState.sessionDate = parsed.sessionDate || getTodayDateString();
                     appState.gasUrl = (!parsed.gasUrl || parsed.gasUrl.includes('_3Jpg')) ? getDefaultGasUrl() : parsed.gasUrl;
                     appState.gasSecretKey = parsed.gasSecretKey || getDefaultGasSecretKey();
@@ -1153,6 +1201,7 @@ function doGet(e) {
                     adminPinLength: appState.adminPinLength || 4,
                     useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
                     clientName: appState.clientName || "",
+                    customSlug: appState.customSlug || "",
                     sessionDate: appState.sessionDate || "",
                     gasUrl: appState.gasUrl,
                     gasSecretKey: appState.gasSecretKey,
@@ -2087,6 +2136,9 @@ function doGet(e) {
                 if (els.inputClientName) {
                     appState.clientName = els.inputClientName.value.trim();
                 }
+                if (els.inputCustomSlug) {
+                    appState.customSlug = slugify(els.inputCustomSlug.value.trim());
+                }
                 if (els.inputSessionDate) {
                     appState.sessionDate = els.inputSessionDate.value.trim();
                 }
@@ -2119,6 +2171,17 @@ function doGet(e) {
                 els.inputMaxLimit.value = appState.maxLimit;
                 els.inputAdminPin.value = ''; // Kosongkan agar PIN lama tidak tampil
                 if (els.inputClientName) els.inputClientName.value = appState.clientName || '';
+                if (els.inputCustomSlug) {
+                    const defaultSlug = slugify(appState.clientName || '');
+                    els.inputCustomSlug.value = appState.customSlug || defaultSlug;
+                    if (appState.customSlug && defaultSlug && appState.customSlug !== defaultSlug) {
+                        isSlugManuallyEdited = true;
+                        if (els.btnResetSlug) els.btnResetSlug.classList.remove('hidden');
+                    } else {
+                        isSlugManuallyEdited = false;
+                        if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                    }
+                }
                 if (els.inputSessionDate) els.inputSessionDate.value = appState.sessionDate || getTodayDateString();
                 if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || getDefaultGasSecretKey();
                 if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
@@ -2178,7 +2241,7 @@ function doGet(e) {
                 if (isMatch) {
                     pinAttempts = 0;
                     isAdminLoggedIn = true;
-                    try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) {}
+                    try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
                     els.inputPin.value = '';
 
                     // POP-UP OTOMATIS MUNCUL KETIKA PIN BENAR!
@@ -2361,6 +2424,44 @@ function doGet(e) {
             }
         }
 
+        let isSlugManuallyEdited = false;
+
+        if (els.inputClientName) {
+            els.inputClientName.addEventListener('input', () => {
+                if (!isSlugManuallyEdited && els.inputCustomSlug) {
+                    els.inputCustomSlug.value = slugify(els.inputClientName.value);
+                }
+            });
+        }
+
+        if (els.inputCustomSlug) {
+            els.inputCustomSlug.addEventListener('input', () => {
+                isSlugManuallyEdited = true;
+                if (els.btnResetSlug) els.btnResetSlug.classList.remove('hidden');
+            });
+
+            els.inputCustomSlug.addEventListener('blur', () => {
+                const currentVal = els.inputCustomSlug.value.trim();
+                if (currentVal) {
+                    els.inputCustomSlug.value = slugify(currentVal);
+                } else {
+                    isSlugManuallyEdited = false;
+                    if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                    els.inputCustomSlug.value = slugify(els.inputClientName ? els.inputClientName.value : '');
+                }
+            });
+        }
+
+        if (els.btnResetSlug) {
+            els.btnResetSlug.addEventListener('click', () => {
+                isSlugManuallyEdited = false;
+                if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                if (els.inputCustomSlug) {
+                    els.inputCustomSlug.value = slugify(els.inputClientName ? els.inputClientName.value : '');
+                }
+            });
+        }
+
         let typingTimer;
         els.inputFolderUrl.addEventListener('input', () => {
             clearTimeout(typingTimer);
@@ -2402,6 +2503,9 @@ function doGet(e) {
             if (els.inputClientName) {
                 appState.clientName = els.inputClientName.value.trim();
             }
+            if (els.inputCustomSlug) {
+                appState.customSlug = slugify(els.inputCustomSlug.value.trim());
+            }
             if (els.inputSessionDate) {
                 appState.sessionDate = els.inputSessionDate.value.trim();
             }
@@ -2414,7 +2518,7 @@ function doGet(e) {
             appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
-            try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) {}
+            try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
             saveSettings();
             updateUI();
             renderGallery();
@@ -2449,9 +2553,18 @@ function doGet(e) {
 
                 const clientUrlFallback = `${baseUrl}?t=${token}`;
 
-                // Generate Short Code 6 karakter acak
-                const shortCode = generateShortCode();
-                let shortClientUrl = `${baseUrl}?c=${shortCode}`;
+                // Generate Short Code: Gunakan custom slug / nama klien jika ada, fallback ke acak
+                let finalCode = (els.inputCustomSlug ? slugify(els.inputCustomSlug.value.trim()) : '');
+                if (!finalCode && appState.clientName) {
+                    finalCode = slugify(appState.clientName);
+                }
+                if (!finalCode) {
+                    finalCode = generateShortCode();
+                }
+                appState.customSlug = finalCode;
+                const shortCode = finalCode;
+
+                let shortClientUrl = `${baseUrl}?c=${encodeURIComponent(shortCode)}`;
                 if (!isDefaultGas) {
                     shortClientUrl += `&g=${encodeURIComponent(gasId)}`;
                 }
@@ -2709,7 +2822,7 @@ function doGet(e) {
                             ? (customGas.includes('http') ? customGas : `https://script.google.com/macros/s/${customGas}/exec`)
                             : getDefaultGasUrl();
 
-                        const shortRes = await fetch(`${gasEndpoint}?action=getShortLink&code=${encodeURIComponent(shortCode)}`);
+                        const shortRes = await fetch(`${gasEndpoint}?action=getShortLink&code=${encodeURIComponent(shortCode.trim())}`);
                         const shortJson = await shortRes.json();
 
                         if (shortJson && shortJson.status === 'success' && shortJson.data && shortJson.data.token) {
@@ -2775,7 +2888,7 @@ function doGet(e) {
                 let hasActiveAdminSession = false;
                 try {
                     hasActiveAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
-                } catch (e) {}
+                } catch (e) { }
 
                 if (hasActiveAdminSession) {
                     // Jangan reset jika ini adalah sesi kerja admin aktif (misal saat membuka galeri klien dari dashboard)
