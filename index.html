@@ -2898,12 +2898,133 @@ function doGet(e) {
                 }
             }
 
-            // Cegah klik kanan (Download) secara global di seluruh halaman
+            // =========================================================================
+            // SISTEM PROTEKSI GLOBAL (AKTIF DI SEMUA HALAMAN: ADMIN & GALERI KLIEN)
+            // =========================================================================
+
+            // 1. Cegah klik kanan (Download) secara global di seluruh halaman (Capture Phase agar mendahului ekstensi)
+            window.addEventListener('contextmenu', event => {
+                event.preventDefault();
+            }, true);
             document.addEventListener('contextmenu', event => {
                 event.preventDefault();
-            });
+            }, true);
 
-            // ====== SISTEM ANTI-SCREENSHOT (HANYA AKTIF UNTUK KLIEN) ======
+            // 2. Fungsi Blur & Proteksi Tampilan Layar
+            function blurScreen() {
+                requestAnimationFrame(() => {
+                    document.body.classList.add('window-blurred');
+                });
+            }
+
+            function unblurScreen(delay = 500) {
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        // Cek jika DevTools masih terbuka sebelum unblur
+                        const threshold = 160;
+                        const isDocked = (window.outerWidth - window.innerWidth > threshold) || 
+                                         (window.outerHeight - window.innerHeight > threshold);
+                        if (!isDocked) {
+                            document.body.classList.remove('window-blurred');
+                        }
+                    });
+                }, delay);
+            }
+
+            // 3. Cegah drag foto ke desktop / tab baru secara global
+            window.addEventListener('dragstart', function (e) {
+                if (e.target && (e.target.nodeName === 'IMG' || (e.target.classList && e.target.classList.contains('photo-card')))) {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+
+            // 4. Blokir Shortcut Keyboard (F12, Inspect, View Source, Save As, Print) Secara Global
+            window.addEventListener('keydown', function (e) {
+                // F12
+                if (e.key === 'F12' || e.keyCode === 123) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+Shift+I / Cmd+Option+I (DevTools)
+                // Ctrl+Shift+J / Cmd+Option+J (Console)
+                // Ctrl+Shift+C / Cmd+Option+C (Inspect Element)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && 
+                    (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || 
+                     e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+U / Cmd+Option+U (View Page Source)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U' || e.keyCode === 85)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+S / Cmd+S (Save Page)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.keyCode === 83)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+P / Cmd+P (Print to PDF)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.keyCode === 80)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, true);
+
+            // 5. Anti-DevTools Debugger Trap (Auto Freeze Inspect) - Aktif Global
+            // Jika ada pengguna membuka Inspect Element melalui menu browser atau ekstensi (di admin maupun klien),
+            // script ini otomatis menjebak eksekusi browser dalam breakpoint berulang sehingga DevTools macet.
+            const triggerDebugger = function () {
+                try {
+                    const start = performance.now();
+                    (function () {
+                        return false;
+                    }['constructor']('debugger')['call']());
+                    // Jika debugger tertahan lebih dari 100ms, berarti DevTools sedang terbuka
+                    if (performance.now() - start > 100) {
+                        blurScreen();
+                    }
+                } catch (err) { }
+            };
+            setInterval(triggerDebugger, 250);
+
+            // 6. Deteksi DevTools Docking via Dimensi Window - Aktif Global
+            const checkDevToolsDock = function () {
+                const threshold = 160;
+                const widthDiff = window.outerWidth - window.innerWidth > threshold;
+                const heightDiff = window.outerHeight - window.innerHeight > threshold;
+                if (widthDiff || heightDiff) {
+                    blurScreen();
+                }
+            };
+            window.addEventListener('resize', checkDevToolsDock);
+            setInterval(checkDevToolsDock, 1000);
+
+            // 7. CSS Proteksi Anti-Drag & Text Select pada elemen media
+            const protStyle = document.createElement('style');
+            protStyle.textContent = `
+                img {
+                    -webkit-user-drag: none;
+                    user-drag: none;
+                    pointer-events: none !important;
+                    -webkit-touch-callout: none !important;
+                }
+                #fullscreenImageWrapper img {
+                    pointer-events: auto !important;
+                }
+                * { -webkit-tap-highlight-color: transparent; }
+            `;
+            document.head.appendChild(protStyle);
+
+            // =========================================================================
+            // FITUR KHUSUS GALERI KLIEN (ANTI-SCREENSHOT & GESTURE)
+            // =========================================================================
             const isClientMode = new URLSearchParams(window.location.search).has('t') ||
                 new URLSearchParams(window.location.search).has('token') ||
                 new URLSearchParams(window.location.search).has('c');
@@ -2928,20 +3049,6 @@ function doGet(e) {
                     });
                 }
 
-                function blurScreen() {
-                    requestAnimationFrame(() => {
-                        document.body.classList.add('window-blurred');
-                    });
-                }
-
-                function unblurScreen(delay = 500) {
-                    setTimeout(() => {
-                        requestAnimationFrame(() => {
-                            document.body.classList.remove('window-blurred');
-                        });
-                    }, delay);
-                }
-
                 // Window kehilangan fokus (alt-tab, ganti aplikasi)
                 window.addEventListener('blur', blurScreen);
                 window.addEventListener('focus', () => unblurScreen(500));
@@ -2961,27 +3068,6 @@ function doGet(e) {
                         showBlackScreen(2000);
                     }
                 }, { passive: true });
-
-                // CSS Proteksi Tambahan
-                const protStyle = document.createElement('style');
-                protStyle.textContent = `
-                    img {
-                        -webkit-user-drag: none;
-                        user-drag: none;
-                        pointer-events: none !important;
-                        -webkit-touch-callout: none !important;
-                    }
-                    #fullscreenImageWrapper img {
-                        pointer-events: auto !important;
-                    }
-                    #protected-gallery-content * {
-                        -webkit-user-select: none !important;
-                        user-select: none !important;
-                        -webkit-touch-callout: none !important;
-                    }
-                    * { -webkit-tap-highlight-color: transparent; }
-                `;
-                document.head.appendChild(protStyle);
             }
         });
 
