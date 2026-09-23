@@ -438,7 +438,10 @@
 
                         <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
                         <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">🔗 Bagikan Pesan &amp; Galeri ke Klien</h3>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <h3 class="text-lg font-bold text-gray-900">🔗 Bagikan Pesan &amp; Galeri ke Klien</h3>
+                                <span id="shortLinkBadge" class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
+                            </div>
                             <p class="text-sm text-gray-500 mb-3">Teks pesan dan link di bawah ini siap disalin atau langsung dikirimkan ke WhatsApp klien:</p>
                             <div class="space-y-3 mb-4">
                                 <textarea id="inputClientLink" readonly rows="5"
@@ -655,8 +658,8 @@ function doGet(e) {
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
   
-  // KUNCI PENGAMAN RAHASIA (Ganti dengan kata sandi rahasia kustom Anda)
-  var SECRET_KEY = "GANTI_DENGAN_KUNCI_RAHASIA_ANDA";
+  // KUNCI PENGAMAN RAHASIA (Cocokkan dengan Kunci Rahasia di Pengaturan Admin)
+  var SECRET_KEY = "MilihFotoSecureKey2026";
   
   try {
     var action = e.parameter.action;
@@ -675,6 +678,70 @@ function doGet(e) {
       }
       return output.setContent(JSON.stringify({status: 'success', data: data}));
       
+    } else if (action === 'saveShortLink') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var shortSheet = ss.getSheetByName("ShortLinks");
+      if (!shortSheet) {
+        shortSheet = ss.insertSheet("ShortLinks");
+        shortSheet.appendRow(["Code", "Token", "Folder ID", "Studio Name", "Client Name", "Session Date", "Created At"]);
+      }
+      var tz = ss.getSpreadsheetTimeZone() || "Asia/Jakarta";
+      var timestamp = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss");
+      var code = e.parameter.code;
+      var token = e.parameter.token || "";
+      var folderId = e.parameter.folderId || "";
+      var studioName = e.parameter.studioName || "";
+      var clientName = e.parameter.clientName || "";
+      var sessionDate = e.parameter.sessionDate || "";
+      
+      shortSheet.appendRow([code, token, folderId, studioName, clientName, sessionDate, timestamp]);
+      
+      // Catat juga ke tab riwayat (sheet pertama)
+      try {
+        var mainSheet = ss.getSheets()[0];
+        if (mainSheet.getName() !== "ShortLinks") {
+          if (mainSheet.getLastRow() === 0) mainSheet.appendRow(["Timestamp", "Link Galeri", "Folder URL", "Studio Name"]);
+          var fullLink = e.parameter.fullLink || token;
+          mainSheet.appendRow([timestamp, fullLink, folderId, studioName + (clientName ? " - " + clientName : "")]);
+        }
+      } catch (errHist) {}
+      
+      return output.setContent(JSON.stringify({status: 'success', code: code}));
+
+    } else if (action === 'getShortLink') {
+      var code = e.parameter.code;
+      if (!code) throw new Error("Parameter 'code' tidak ditemukan.");
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var shortSheet = ss.getSheetByName("ShortLinks");
+      if (!shortSheet) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan.'}));
+      }
+      var lastRow = shortSheet.getLastRow();
+      if (lastRow < 2) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan.'}));
+      }
+      var values = shortSheet.getRange(2, 1, lastRow - 1, 7).getValues();
+      for (var i = values.length - 1; i >= 0; i--) {
+        if (String(values[i][0]).trim() === String(code).trim()) {
+          return output.setContent(JSON.stringify({
+            status: 'success',
+            data: {
+              code: values[i][0],
+              token: values[i][1],
+              folderId: values[i][2],
+              studioName: values[i][3],
+              clientName: values[i][4],
+              sessionDate: values[i][5],
+              createdAt: values[i][6]
+            }
+          }));
+        }
+      }
+      return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan atau sudah dihapus.'}));
+
     } else if (action === 'saveHistory') {
       if (e.parameter.key !== SECRET_KEY) {
         return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
@@ -749,7 +816,7 @@ function doGet(e) {
 
     <script>
         // Endpoint GAS terenkripsi dasar (Base64) untuk mencegah pembacaan langsung di View-Source
-        const _0x9f = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4TWhNeHhDbkhjN0VfT3p3c2QzcnYzT1VpRE9xcFRIWWIzN25QU1ZISXhpWVZyS29OY0pJaW1tSXVDQV81RjdfM0pwZy9leGVj";
+        const _0x9f = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6WHlsd1dKUlA2cXdTWDR3RmZ0a1dXZW1VdTdVYlBxVjdrZUdBUzFhcGRIUkZDeDB3b3ZyeEN2eVh5VHpaanFUM2hCUS9leGVj";
         function getDefaultGasUrl() {
             try {
                 return atob(_0x9f);
@@ -854,12 +921,23 @@ function doGet(e) {
 
             // Share Link
             shareSection: document.getElementById('shareSection'),
+            shortLinkBadge: document.getElementById('shortLinkBadge'),
             inputClientLink: document.getElementById('inputClientLink'),
             btnCopyLink: document.getElementById('btnCopyLink'),
             btnOpenClientGallery: document.getElementById('btnOpenClientGallery'),
             inputClientWa: document.getElementById('inputClientWa'),
             btnSendToClientWa: document.getElementById('btnSendToClientWa')
         };
+
+        // Fungsi pembuatan kode unik 6 karakter acak untuk link pendek
+        function generateShortCode() {
+            const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
 
         // Fungsi normalisasi nomor WhatsApp (mengubah 08... atau +628... menjadi 628...)
         function formatWaNumber(phone) {
@@ -1055,7 +1133,7 @@ function doGet(e) {
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
                     appState.clientName = parsed.clientName || "";
                     appState.sessionDate = parsed.sessionDate || getTodayDateString();
-                    appState.gasUrl = parsed.gasUrl || getDefaultGasUrl();
+                    appState.gasUrl = (!parsed.gasUrl || parsed.gasUrl.includes('_3Jpg')) ? getDefaultGasUrl() : parsed.gasUrl;
                     appState.gasSecretKey = parsed.gasSecretKey || getDefaultGasSecretKey();
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
@@ -1234,7 +1312,7 @@ function doGet(e) {
 
                 // Cek apakah mode admin atau mode klien berdasarkan URL
                 const urlParams = new URLSearchParams(window.location.search);
-                const isClient = urlParams.has('t') || urlParams.has('token');
+                const isClient = urlParams.has('t') || urlParams.has('token') || urlParams.has('c');
 
                 if (isClient) {
                     emptyMessage.innerHTML = `
@@ -2267,7 +2345,7 @@ function doGet(e) {
 
                         showDialog(`Sukses menarik ${result.data.length} foto! Klik tab 'Galeri Klien' di atas untuk mengeceknya, lalu 'Simpan Pengaturan' untuk membuat link.`, "Berhasil");
 
-                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ✓ ${result.data.length} foto berhasil ditarik.`;
+                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>${result.data.length} foto berhasil ditarik.`;
                         els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-green-600";
                     }
                 } else {
@@ -2350,7 +2428,8 @@ function doGet(e) {
 
                 // Ekstrak ID unik GAS agar link data lebih pendek
                 const gasMatch = appState.gasUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
-                const gasId = gasMatch ? gasMatch[1] : appState.gasUrl;
+                const isDefaultGas = (!appState.gasUrl || appState.gasUrl === getDefaultGasUrl());
+                const gasId = isDefaultGas ? '' : (gasMatch ? gasMatch[1] : appState.gasUrl);
 
                 // Tanda tangan integritas data (mencegah manipulasi limit atau WA)
                 const signKey = `${folderId}_${appState.maxLimit}_${appState.waNumber}`;
@@ -2368,20 +2447,90 @@ function doGet(e) {
                 const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}`;
                 const token = btoa(encodeURIComponent(rawData));
 
-                const clientUrl = `${baseUrl}?t=${token}`;
+                const clientUrlFallback = `${baseUrl}?t=${token}`;
+
+                // Generate Short Code 6 karakter acak
+                const shortCode = generateShortCode();
+                let shortClientUrl = `${baseUrl}?c=${shortCode}`;
+                if (!isDefaultGas) {
+                    shortClientUrl += `&g=${encodeURIComponent(gasId)}`;
+                }
 
                 els.shareSection.classList.remove('hidden');
 
-                // Buat teks pesan WhatsApp lengkap berisi link dan metadata klien
+                // Siapkan pembuat teks pesan WhatsApp lengkap
                 const greeting = appState.clientName ? `Halo Kak *${appState.clientName}*,` : `Halo,`;
                 const sessionInfo = appState.sessionDate ? ` (Sesi: ${formatDisplayDate(appState.sessionDate)})` : '';
-                const fullShareMessage = `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilakan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${clientUrl}\n\nTerima kasih!`;
+                const buildShareMessage = (url) => {
+                    return `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilakan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${url}\n\nTerima kasih!`;
+                };
 
-                els.inputClientLink.value = fullShareMessage;
+                // Tampilkan pesan proses saat membuat link pendek
+                els.inputClientLink.value = "";
+                els.btnCopyLink.disabled = true;
+                els.btnCopyLink.classList.add('opacity-50', 'cursor-not-allowed');
+
+                if (els.shortLinkBadge) {
+                    els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-700 animate-pulse";
+                    els.shortLinkBadge.textContent = "";
+                    els.shortLinkBadge.classList.remove('hidden');
+                }
+
+                const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
+                const gasEndpoint = appState.gasUrl || getDefaultGasUrl();
+
+                const params = new URLSearchParams({
+                    action: 'saveShortLink',
+                    key: gasKey,
+                    code: shortCode,
+                    token: token,
+                    folderId: folderId,
+                    studioName: appState.studioName || 'Studio',
+                    clientName: appState.clientName || '',
+                    sessionDate: appState.sessionDate || '',
+                    fullLink: clientUrlFallback
+                });
+
+                let activeClientUrl = clientUrlFallback;
+                let isShortened = false;
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+                    const res = await fetch(`${gasEndpoint}?${params.toString()}`, {
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    const resJson = await res.json();
+                    if (resJson && resJson.status === 'success') {
+                        activeClientUrl = shortClientUrl;
+                        isShortened = true;
+                    } else {
+                        console.warn("GAS saveShortLink merespon status selain success:", resJson);
+                    }
+                } catch (err) {
+                    console.warn("Gagal membuat link pendek via Google Apps Script (mungkin kode GAS di Sheet belum diperbarui). Menggunakan tautan langsung:", err);
+                }
+
+                // Perbarui tampilan antarmuka
+                els.inputClientLink.value = buildShareMessage(activeClientUrl);
                 els.btnCopyLink.disabled = false;
                 els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
 
-                addToHistory(clientUrl, appState.folderUrl);
+                if (els.shortLinkBadge) {
+                    if (isShortened) {
+                        els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
+                        els.shortLinkBadge.textContent = "";
+                    } else {
+                        els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700";
+                        els.shortLinkBadge.textContent = "";
+                    }
+                    els.shortLinkBadge.classList.remove('hidden');
+                }
+
+                addToHistory(activeClientUrl, appState.folderUrl);
             }
         });
 
@@ -2434,6 +2583,58 @@ function doGet(e) {
             window.open(waUrl, '_blank');
         });
 
+        // Fungsi dekripsi token URL klien menjadi state aplikasi
+        function decodeTokenToAppState(tokenStr) {
+            const decodedStr = decodeURIComponent(atob(tokenStr));
+
+            if (decodedStr.includes('|')) {
+                const parts = decodedStr.split('|');
+                const folderId = parts[0];
+                const gasId = parts[1];
+                const maxLimit = parseInt(parts[2]) || 10;
+                const waNumber = formatWaNumber(parts[3]);
+                const studioName = parts[4] || "Studio";
+                const useWm = parts.length > 5 ? (parts[5] === '1') : true;
+                const sig = parts.length > 6 ? parts[6] : null;
+                const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
+                const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
+
+                // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
+                if (sig) {
+                    const signKey = `${folderId}_${maxLimit}_${waNumber}`;
+                    let hash = 0;
+                    for (let i = 0; i < signKey.length; i++) {
+                        hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    const expectedSig = Math.abs(hash).toString(36);
+                    if (sig !== expectedSig) {
+                        throw new Error("Integritas tautan tidak valid (telah diubah).");
+                    }
+                }
+
+                appState.folderUrl = folderId;
+                appState.gasUrl = (!gasId || gasId === '')
+                    ? getDefaultGasUrl()
+                    : (gasId.includes('http') ? gasId : `https://script.google.com/macros/s/${gasId}/exec`);
+                appState.maxLimit = maxLimit;
+                appState.waNumber = waNumber;
+                appState.studioName = studioName;
+                appState.useWatermark = useWm;
+                appState.clientName = clientName;
+                appState.sessionDate = sessionDate;
+            } else {
+                // Fallback format lama (JSON)
+                const parsedData = JSON.parse(decodedStr);
+                appState.folderUrl = parsedData.f;
+                appState.gasUrl = parsedData.g || getDefaultGasUrl();
+                appState.studioName = parsedData.n || appState.studioName;
+                appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
+                appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
+                appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
+            }
+        }
+
         // --- STARTUP APLIKASI ---
         document.addEventListener('DOMContentLoaded', async () => {
             // Auto-select text pada input saat diklik (focus) untuk memudahkan admin menghapus/mengedit
@@ -2456,11 +2657,12 @@ function doGet(e) {
                 });
             }
 
-            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token)
+            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token atau Short Code)
             const urlParams = new URLSearchParams(window.location.search);
             const encryptedToken = urlParams.get('t') || urlParams.get('token');
+            const shortCode = urlParams.get('c');
 
-            if (encryptedToken) {
+            if (encryptedToken || shortCode) {
                 // ISOLASI KEAMANAN: HAPUS PANEL ADMIN DAN MODAL PIN SECARA TOTAL DARI DOM
                 const adminBtn = document.getElementById('btnViewAdmin');
                 const adminView = document.getElementById('viewAdmin');
@@ -2486,54 +2688,39 @@ function doGet(e) {
                 delete appState.adminPinHash;
 
                 try {
-                    // Dekripsi token kembali menjadi data
-                    const decodedStr = decodeURIComponent(atob(encryptedToken));
+                    let tokenToUse = encryptedToken;
 
-                    if (decodedStr.includes('|')) {
-                        const parts = decodedStr.split('|');
-                        const folderId = parts[0];
-                        const gasId = parts[1];
-                        const maxLimit = parseInt(parts[2]) || 10;
-                        const waNumber = formatWaNumber(parts[3]);
-                        const studioName = parts[4] || "Studio";
-                        const useWm = parts.length > 5 ? (parts[5] === '1') : true;
-                        const sig = parts.length > 6 ? parts[6] : null;
-                        const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
-                        const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
+                    // Jika dibuka via Short Code (?c=...), tarik data token dari Google Sheets
+                    if (shortCode && !tokenToUse) {
+                        els.photoGrid.innerHTML = `
+                            <div class="col-span-full flex flex-col items-center justify-center py-24">
+                                <div class="relative">
+                                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center mb-6">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-1">Membuka Galeri Foto...</h3>
+                                <p class="text-sm text-gray-500 animate-pulse transition-all duration-300">Menghubungkan ke database tautan...</p>
+                            </div>`;
 
-                        // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
-                        if (sig) {
-                            const signKey = `${folderId}_${maxLimit}_${waNumber}`;
-                            let hash = 0;
-                            for (let i = 0; i < signKey.length; i++) {
-                                hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
-                                hash |= 0;
-                            }
-                            const expectedSig = Math.abs(hash).toString(36);
-                            if (sig !== expectedSig) {
-                                throw new Error("Integritas tautan tidak valid (telah diubah).");
-                            }
+                        const customGas = urlParams.get('g');
+                        const gasEndpoint = customGas
+                            ? (customGas.includes('http') ? customGas : `https://script.google.com/macros/s/${customGas}/exec`)
+                            : getDefaultGasUrl();
+
+                        const shortRes = await fetch(`${gasEndpoint}?action=getShortLink&code=${encodeURIComponent(shortCode)}`);
+                        const shortJson = await shortRes.json();
+
+                        if (shortJson && shortJson.status === 'success' && shortJson.data && shortJson.data.token) {
+                            tokenToUse = shortJson.data.token;
+                        } else {
+                            throw new Error(shortJson && shortJson.message ? shortJson.message : "Tautan galeri tidak ditemukan atau sudah kedaluwarsa.");
                         }
-
-                        appState.folderUrl = folderId;
-                        appState.gasUrl = gasId.includes('http') ? gasId : `https://script.google.com/macros/s/${gasId}/exec`;
-                        appState.maxLimit = maxLimit;
-                        appState.waNumber = waNumber;
-                        appState.studioName = studioName;
-                        appState.useWatermark = useWm;
-                        appState.clientName = clientName;
-                        appState.sessionDate = sessionDate;
-                    } else {
-                        // Fallback format lama (JSON)
-                        const parsedData = JSON.parse(decodedStr);
-                        appState.folderUrl = parsedData.f;
-                        appState.gasUrl = parsedData.g;
-                        appState.studioName = parsedData.n || appState.studioName;
-                        appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
-                        appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
-                        appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
                     }
 
+                    // Dekripsi token kembali menjadi data
+                    decodeTokenToAppState(tokenToUse);
                     updateUI();
 
                     // Tarik foto secara otomatis dengan animasi loading yang lebih interaktif
@@ -2578,10 +2765,10 @@ function doGet(e) {
                 } catch (error) {
                     els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16">
                         <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Link Tidak Valid</h3>
-                        <p class="text-gray-500">Tautan galeri ini telah rusak atau dimodifikasi. Silakan minta tautan baru kepada fotografer Anda.</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tautan Tidak Ditemukan / Tidak Valid</h3>
+                        <p class="text-gray-500 max-w-md mx-auto mb-4">${error.message || "Tautan galeri ini mungkin telah kedaluwarsa atau belum terdaftar. Silakan minta tautan baru kepada fotografer Anda."}</p>
                     </div>`;
-                    console.error("Token manipulation detected or invalid link:", error);
+                    console.error("Kesalahan membuka galeri klien:", error);
                 }
             } else {
                 // Mode Normal (Buka link utama)
@@ -2608,7 +2795,8 @@ function doGet(e) {
 
             // ====== SISTEM ANTI-SCREENSHOT (HANYA AKTIF UNTUK KLIEN) ======
             const isClientMode = new URLSearchParams(window.location.search).has('t') ||
-                new URLSearchParams(window.location.search).has('token');
+                new URLSearchParams(window.location.search).has('token') ||
+                new URLSearchParams(window.location.search).has('c');
 
             if (isClientMode) {
                 const shield = document.getElementById('screenshot-shield');
