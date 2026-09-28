@@ -728,7 +728,8 @@ function doGet(e) {
         if (mainSheet.getName() !== "ShortLinks") {
           if (mainSheet.getLastRow() === 0) mainSheet.appendRow(["Timestamp", "Link Galeri", "Folder URL", "Studio Name"]);
           var fullLink = e.parameter.fullLink || token;
-          mainSheet.appendRow([timestamp, fullLink, folderId, studioName + (clientName ? " - " + clientName : "")]);
+          var folderRef = e.parameter.folderUrl || ("https://drive.google.com/drive/folders/" + folderId);
+          mainSheet.appendRow([timestamp, fullLink, folderRef, studioName + (clientName ? " - " + clientName : "")]);
         }
       } catch (errHist) {}
       
@@ -1212,7 +1213,7 @@ function doGet(e) {
         }
 
         // --- PENCATATAN RIWAYAT KE DATABASE (GOOGLE SHEET) ---
-        function addToHistory(fullLink, folderUrl) {
+        function addToHistory(fullLink, folderUrl, syncToGas = true) {
             if (!appState.clientLinkHistory) appState.clientLinkHistory = [];
             const isDuplicate = appState.clientLinkHistory.some(h => (h.fullLink === fullLink || h.shortLink === fullLink) || (h.folderUrl === folderUrl && Date.now() - h.timestamp < 60000));
             if (!isDuplicate) {
@@ -1220,6 +1221,9 @@ function doGet(e) {
                 if (appState.clientLinkHistory.length > 20) appState.clientLinkHistory.shift();
                 saveSettings();
             }
+
+            // Mencegah pencatatan ganda: jika syncToGas false (karena sudah dicatat oleh saveShortLink), lewati request ke GAS
+            if (!syncToGas) return;
 
             // Kirim ke Database (GAS Google Sheet) dengan Kunci Rahasia jika sudah disetel
             const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
@@ -2477,7 +2481,12 @@ function doGet(e) {
             }
         });
 
+        let isSavingAdmin = false;
         els.btnSaveAdmin.addEventListener('click', async () => {
+            if (isSavingAdmin) return;
+            isSavingAdmin = true;
+            setTimeout(() => { isSavingAdmin = false; }, 800);
+
             const newStudio = els.inputStudioName.value.trim();
             const newWa = formatWaNumber(els.inputWaNumber.value.trim());
             const newLimit = parseInt(els.inputMaxLimit.value);
@@ -2575,72 +2584,58 @@ function doGet(e) {
                     return `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilakan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${url}\n\nTerima kasih!`;
                 };
 
-                // Tampilkan pesan proses saat membuat link pendek
-                els.inputClientLink.value = "";
-                els.btnCopyLink.disabled = true;
-                els.btnCopyLink.classList.add('opacity-50', 'cursor-not-allowed');
-
-                if (els.shortLinkBadge) {
-                    els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-700 animate-pulse";
-                    els.shortLinkBadge.textContent = "";
-                    els.shortLinkBadge.classList.remove('hidden');
-                }
-
-                const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
-                const gasEndpoint = appState.gasUrl || getDefaultGasUrl();
-
-                const params = new URLSearchParams({
-                    action: 'saveShortLink',
-                    key: gasKey,
-                    code: shortCode,
-                    token: token,
-                    folderId: folderId,
-                    studioName: appState.studioName || 'Studio',
-                    clientName: appState.clientName || '',
-                    sessionDate: appState.sessionDate || '',
-                    fullLink: clientUrlFallback
-                });
-
-                let activeClientUrl = clientUrlFallback;
-                let isShortened = false;
-
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 7000);
-
-                    const res = await fetch(`${gasEndpoint}?${params.toString()}`, {
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-
-                    const resJson = await res.json();
-                    if (resJson && resJson.status === 'success') {
-                        activeClientUrl = shortClientUrl;
-                        isShortened = true;
-                    } else {
-                        console.warn("GAS saveShortLink merespon status selain success:", resJson);
-                    }
-                } catch (err) {
-                    console.warn("Gagal membuat link pendek via Google Apps Script (mungkin kode GAS di Sheet belum diperbarui). Menggunakan tautan langsung:", err);
-                }
-
-                // Perbarui tampilan antarmuka
-                els.inputClientLink.value = buildShareMessage(activeClientUrl);
+                // REALTIME (0 Detik Jeda): Teks langsung tampil seketika & tombol salin langsung aktif
+                els.inputClientLink.value = buildShareMessage(shortClientUrl);
                 els.btnCopyLink.disabled = false;
                 els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
 
                 if (els.shortLinkBadge) {
-                    if (isShortened) {
-                        els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
-                        els.shortLinkBadge.textContent = "";
-                    } else {
-                        els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700";
-                        els.shortLinkBadge.textContent = "";
-                    }
+                    els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
+                    els.shortLinkBadge.textContent = "✓ Link Pendek Aktif";
                     els.shortLinkBadge.classList.remove('hidden');
                 }
 
-                addToHistory(activeClientUrl, appState.folderUrl);
+                // Pastikan Folder URL selalu lengkap (berupa link Google Drive lengkap)
+                const rawFolder = (appState.folderUrl || (els.inputFolderUrl ? els.inputFolderUrl.value : '') || '').trim();
+                let fullFolderUrl = rawFolder;
+                if (fullFolderUrl && !fullFolderUrl.startsWith('http')) {
+                    fullFolderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                } else if (!fullFolderUrl && folderId) {
+                    fullFolderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                }
+
+                // 1. Simpan ke Riwayat Lokal Browser Segera (syncToGas: false agar tidak tercatat ganda)
+                addToHistory(shortClientUrl, fullFolderUrl, false);
+
+                // 2. Kirim ke Database Google Sheet di Background (Hanya 1 Baris Saja, Tanpa Menghambat Tampilan UI)
+                const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
+                const gasEndpoint = appState.gasUrl || getDefaultGasUrl();
+
+                if (gasEndpoint && gasKey) {
+                    const params = new URLSearchParams({
+                        action: 'saveShortLink',
+                        key: gasKey,
+                        code: shortCode,
+                        token: token,
+                        folderId: fullFolderUrl, // URL lengkap agar kompatibel dengan skrip GAS yang membaca folderId
+                        folderUrl: fullFolderUrl, // URL lengkap untuk skrip GAS yang membaca folderUrl
+                        studioName: appState.studioName || 'Studio',
+                        clientName: appState.clientName || '',
+                        sessionDate: appState.sessionDate || '',
+                        fullLink: shortClientUrl
+                    });
+
+                    fetch(`${gasEndpoint}?${params.toString()}`)
+                        .then(res => res.json())
+                        .then(resJson => {
+                            if (resJson && resJson.status === 'success') {
+                                console.log("Google Apps Script: Tersimpan 1 baris sukses.");
+                            }
+                        })
+                        .catch(err => {
+                            console.warn("GAS background sync:", err);
+                        });
+                }
             }
         });
 
