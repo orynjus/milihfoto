@@ -14,43 +14,3059 @@
         if (window.top !== window.self) {
             window.top.location = window.self.location;
         }
-
-        (() => {
-            const removeWeddingEmoji = () => {
-                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-                const nodes = [];
-
-                while (walker.nextNode()) {
-                    const node = walker.currentNode;
-                    if (node.textContent && node.textContent.includes('💒')) {
-                        nodes.push(node);
-                    }
-                }
-
-                nodes.forEach(node => {
-                    node.textContent = node.textContent.replace(/💒/g, '');
-                });
-            };
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', removeWeddingEmoji);
-            } else {
-                removeWeddingEmoji();
-            }
-        })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Noto Sans Symbols 2', 'Twemoji Mozilla', sans-serif;
-        }
-
-        .emoji-safe,
-        .emoji-safe * {
-            font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Noto Sans Symbols 2', 'Twemoji Mozilla', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .selected-ring {
             border: 4px solid #3b82f6;
         }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-8px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(8px);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.15s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.15s ease-out forwards;
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* ====== FULLSCREEN PINCH/ZOOM STYLES ====== */
+        #fullscreenImageWrapper {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #fullscreenImage {
+            transform-origin: center center;
+            will-change: transform;
+            cursor: grab;
+        }
+
+        #fullscreenImage.dragging {
+            cursor: grabbing;
+        }
+
+        /* Zoom indicator */
+        #zoomIndicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 40;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        #zoomIndicator.visible {
+            opacity: 1;
+        }
+
+        /* Tambahan untuk mencegah download */
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Hide scrollbar untuk tampilan fullscreen */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* ====== ANTI-SCREENSHOT PROTECTION ====== */
+
+        /* Layer 1: CSS mix-blend-mode overlay (blur foto di balik layer putih transparan saat print) */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            #anti-screenshot-print-msg {
+                visibility: visible !important;
+                display: flex !important;
+                position: fixed;
+                inset: 0;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                background: #fff;
+                color: #111;
+                font-size: 2rem;
+                font-weight: bold;
+                text-align: center;
+            }
+        }
+
+        /* Layer 2: Overlay layar hitam (aktif saat screenshot terdeteksi) */
+        #screenshot-shield {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #screenshot-shield.active {
+            display: flex;
+        }
+
+        /* Layer 3: Konten galeri klien di-blur saat window blur */
+        body.window-blurred #protected-gallery-content,
+        body.window-blurred #fullscreenModal {
+            filter: blur(25px);
+            transition: filter 0s !important;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #protected-gallery-content,
+        #fullscreenModal {
+            transition: filter 0s ease;
+        }
+
+        /* ====== MOBILE ANTI-SCREENSHOT: Long-press prevention ====== */
+        img,
+        .photo-card {
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            touch-action: none;
+        }
+
+        /* ====== BLACK SCREEN saat window tidak aktif / screenshot terdeteksi ====== */
+        /* Layar hitam total menggantikan blur */
+        body.screen-blacked-out #protected-gallery-content,
+        body.screen-blacked-out nav,
+        body.screen-blacked-out footer {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            transition: opacity 0s !important;
+        }
+
+        body.screen-blacked-out {
+            background: #000 !important;
+        }
+
+        /* ====== CSS MIX-BLEND-MODE TRICK ====== */
+        /*
+         * Overlay ini TRANSPARAN di layar normal karena blend mode 'screen' dengan hitam = tidak terlihat.
+         * Namun pada beberapa device saat OS composite layer untuk screenshot,
+         * overlay ini bisa muncul dan menggelapkan hasil capture.
+         */
+        #css-blend-shield {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.001);
+            /* Hampir transparan di layar */
+            mix-blend-mode: multiply;
+            isolation: isolate;
+        }
+
+        #css-blend-shield.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Anti-Screenshot Print Block -->
+    <div id="anti-screenshot-print-msg" style="display:none;">
+        <svg width="80" height="80" fill="none" viewBox="0 0 24 24" stroke="#ef4444" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <p>Konten ini dilindungi hak cipta.</p>
+        <p style="font-size:1rem;font-weight:400;margin-top:8px;">Tidak diizinkan untuk mencetak atau menyimpan halaman
+            ini.</p>
+    </div>
+
+    <!-- Screenshot Shield Overlay -->
+    <div id="screenshot-shield">
+        <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#f87171" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <p style="color:#f87171;font-size:1.25rem;font-weight:700;">⚠️ Foto Dilindungi</p>
+        <p style="color:#9ca3af;font-size:0.9rem;text-align:center;max-width:300px;">Screenshot tidak
+            diizinkan.<br>Silakan pilih foto Anda melalui tombol pilih.</p>
+    </div>
+
+    <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
+    <div id="css-blend-shield"></div>
+
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    <span id="navStudioName" class="font-bold text-xl text-gray-900 tracking-tight">Studio Foto</span>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button id="btnViewGallery"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition">Galeri
+                        Klien</button>
+                    <button id="btnViewAdmin"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition">⚙️
+                        Admin</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="protected-gallery-content" class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- === VIEW: GALERI KLIEN === -->
+        <div id="viewGallery" class="block animate-fade-in">
+            <div
+                class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Pilih Foto Anda</h1>
+                    <p id="gallerySubtitle" class="text-gray-500 text-sm mt-1">Silakan pilih foto terbaik yang ingin
+                        dicetak. Ketuk ikon
+                        perbesar untuk melihat
+                        detail.</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex items-center bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+                    <span class="text-blue-800 font-semibold mr-2">Terpilih:</span>
+                    <span id="counterText" class="text-xl font-bold text-blue-600">0 / 10</span>
+                </div>
+            </div>
+
+            <!-- Grid Foto -->
+            <div id="photoGrid"
+                class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pb-24 no-select"
+                oncontextmenu="return false;">
+                <!-- Foto akan di-render di sini oleh JavaScript -->
+            </div>
+        </div>
+
+        <!-- === VIEW: ADMIN PENGATURAN === -->
+        <div id="viewAdmin" class="hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 max-w-3xl mx-auto">
+                <div class="flex items-center mb-4 pb-4 border-b border-gray-100">
+                    <span class="text-x font-bold text-gray-900">Pengaturan Admin</span>
+                </div>
+
+                <!-- KONTEN PENGATURAN -->
+                <div id="adminSettingsContent" class="space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Studio Foto</label>
+                            <input type="text" id="inputStudioName"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal Pilihan
+                                Foto</label>
+                            <input type="number" id="inputMaxLimit"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                min="1">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp Fotografer</label>
+                        <input type="text" id="inputWaNumber"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                            placeholder="">
+                        <input type="password" id="inputAdminPin" class="hidden">
+                    </div>
+
+                    <!-- Opsi Watermark (Default Aktif) -->
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                        <div>
+                            <label for="inputUseWatermark"
+                                class="block text-sm font-semibold text-gray-900 cursor-pointer">Watermark Nama
+                                Studio</label>
+                            <p class="text-xs text-gray-500 mt-0.5">Tampilkan watermark teks nama studio di atas foto
+                                galeri &amp; layar penuh.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="inputUseWatermark" class="sr-only peer" checked>
+                            <div
+                                class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Informasi Klien & Tanggal Sesi Foto -->
+                    <div class="p-4 bg-blue-50/70 rounded-xl border border-blue-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">📅</span>
+                            <h3 class="text-sm font-bold text-gray-900">Informasi Klien &amp; Tanggal Sesi</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Klien / Acara</label>
+                                <input type="text" id="inputClientName"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Sesi Foto</label>
+                                <input type="date" id="inputSessionDate"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+                            </div>
+                        </div>
+                        <div class="pt-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-gray-700">Custom Link Pendek (Alias
+                                    URL)</label>
+                                <button type="button" id="btnResetSlug"
+                                    class="text-[11px] text-blue-600 hover:text-blue-800 font-medium hidden flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                        </path>
+                                    </svg>
+                                    Reset ke Nama Klien
+                                </button>
+                            </div>
+                            <input type="text" id="inputCustomSlug"
+                                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-mono text-gray-800 shadow-sm"
+                                placeholder="" autocomplete="off" spellcheck="false">
+                            <p class="text-[11px] text-gray-500 mt-1">
+                                Anda juga bisa mengetik kustom url sendiri sebelum menyimpan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-0 mt-0">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-lg font-bold text-gray-900"></h3>
+                            <button id="btnHelpFolder"
+                                class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
+                                Pasang GAS?</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
+                                    Script</label>
+                                <input type="text" id="inputGasUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="https://script.google.com/macros/s/.../exec">
+                            </div>
+
+                            <div class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS
+                                    (Secret Key)</label>
+                                <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="Masukkan kunci rahasia Anda">
+                                <p class="text-xs text-gray-500 mt-1">hanya tersimpan lokal di browser admin.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
+                                    Drive</label>
+                                <input type="text" id="inputFolderUrl"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    placeholder="">
+                                <div id="folderSyncStatus"
+                                    class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
+                                <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                    <b>"Siapa saja yang memiliki link"</b>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button id="btnSaveAdmin"
+                            class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
+                            Pengaturan</button>
+                    </div>
+
+                    <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
+                    <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">🔗 Bagikan Pesan &amp; Galeri ke Klien</h3>
+                            <span id="shortLinkBadge"
+                                class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-3">Teks pesan dan link di bawah ini siap disalin atau
+                            langsung dikirimkan ke WhatsApp klien:</p>
+                        <div class="space-y-3 mb-4">
+                            <textarea id="inputClientLink" readonly rows="5"
+                                class="w-full px-4 py-3 border border-blue-200 rounded-xl bg-blue-50/80 text-blue-950 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <button id="btnCopyLink"
+                                    class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+                                        </path>
+                                    </svg>
+                                    Salin Pesan &amp; Link
+                                </button>
+                                <button id="btnOpenClientGallery" type="button"
+                                    class="px-5 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                    Buka Galeri Klien
+                                </button>
+                                <button id="btnShareWa"
+                                    class="px-5 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    Buka WA
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel Kirim ke Klien -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
+                                Klien</label>
+                            <p class="text-xs text-gray-500 mb-2"></p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="inputClientWa"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
+                                    placeholder="">
+                                <button id="btnSendToClientWa"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    Kirim ke WA Klien
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="w-full text-center pb-6 pt-2 bg-transparent z-10 relative">
+        <a href="https://wa.me/6282329375006?text=Halo%20Bangkit%20Production,%20saya%20terbantu%20dengan%20sistem%20pemilihan%20foto%20klien%20dan%20ingin%20memberikan%20donasi/apresiasi."
+            target="_blank" rel="noopener noreferrer"
+            class="text-xs font-semibold tracking-wider text-gray-400 hover:text-blue-600 transition-colors">
+            DESIGN BY BANGKIT_PRODUCTION
+        </a>
+    </footer>
+
+    <!-- Tombol WhatsApp Mengambang (Hanya muncul jika ada foto yang dipilih) -->
+    <div id="floatingWaBtn"
+        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 transition-all duration-300 translate-y-24 opacity-0 z-20 w-[90%] max-w-md">
+        <button id="btnSendWa"
+            class="w-full flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-200">
+            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+            Kirim <span id="waCountDisplay" class="mx-1">0</span> Pilihan ke Fotografer
+        </button>
+    </div>
+
+    <!-- Modal Fullscreen -->
+    <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden animate-fade-in no-select"
+        oncontextmenu="return false;">
+
+        <!-- Area Gambar Utama (Fit Window Edge-to-Edge) -->
+        <div id="fullscreenImageWrapper">
+            <!-- Loading indicator -->
+            <div id="fullscreenLoader"
+                class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-600 border-t-white"></div>
+            </div>
+            <img id="fullscreenImage" src="" alt="Fullscreen" draggable="false"
+                class="max-w-full max-h-full object-contain relative z-10 transition-opacity duration-300 opacity-0 select-none"
+                onload="this.classList.remove('opacity-0'); document.getElementById('fullscreenLoader').classList.add('hidden');">
+
+            <!-- Fullscreen Watermark -->
+            <div id="fullscreenWatermarkWrapper"
+                class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 z-20 overflow-hidden">
+                <span id="fullscreenWatermark"
+                    class="text-white font-bold text-4xl sm:text-6xl md:text-8xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]"></span>
+            </div>
+        </div>
+
+        <!-- Zoom Level Indicator -->
+        <div id="zoomIndicator">100%</div>
+
+        <!-- Header Mengambang -->
+        <div
+            class="absolute top-0 inset-x-0 flex justify-between items-center p-3 sm:p-4 text-white bg-gradient-to-b from-black/80 to-transparent z-20 pointer-events-none">
+            <div class="flex items-center space-x-2 sm:space-x-3 pointer-events-auto min-w-0">
+                <button id="btnBackFullscreen" title="Kembali ke Galeri"
+                    class="p-2 sm:px-3 sm:py-2 bg-black/40 hover:bg-black/80 text-white rounded-full transition backdrop-blur-sm flex items-center gap-1.5 active:scale-95 flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span class="text-sm font-medium hidden sm:inline">Kembali</span>
+                </button>
+                <div id="fullscreenTitle"
+                    class="font-medium text-base sm:text-lg drop-shadow-md truncate max-w-[200px] sm:max-w-md ml-1 flex items-center gap-1.5">
+                    IMG_001</div>
+            </div>
+            <button id="btnCloseFullscreen" title="Tutup Preview (Esc)"
+                class="pointer-events-auto p-2 bg-black/40 hover:bg-black/80 rounded-full transition backdrop-blur-sm active:scale-95 text-white flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Tombol Navigasi Kiri Kanan -->
+        <button id="btnPrevPhoto" aria-label="Foto Sebelumnya" title="Foto Sebelumnya (Panah Kiri)"
+            class="absolute left-2 sm:left-6 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3.5 bg-black/40 hover:bg-black/80 active:scale-90 text-white rounded-full transition-all duration-150 backdrop-blur-md shadow-lg z-30 pointer-events-auto hidden focus:outline-none focus:ring-2 focus:ring-white/40">
+            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <button id="btnNextPhoto" aria-label="Foto Selanjutnya" title="Foto Selanjutnya (Panah Kanan)"
+            class="absolute right-2 sm:right-6 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3.5 bg-black/40 hover:bg-black/80 active:scale-90 text-white rounded-full transition-all duration-150 backdrop-blur-md shadow-lg z-30 pointer-events-auto hidden focus:outline-none focus:ring-2 focus:ring-white/40">
+            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+
+        <!-- Footer Mengambang -->
+        <div
+            class="absolute bottom-0 inset-x-0 p-6 sm:pb-8 bg-gradient-to-t from-black/80 to-transparent flex justify-center z-20 pointer-events-none">
+            <button id="btnToggleFullscreenSelect"
+                class="pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95">
+                <!-- Icon dan text diatur via JS -->
+            </button>
+        </div>
+    </div>
+
+
+    <!-- PIN Login Modal -->
+    <div id="pinModal"
+        class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm z-50 hidden items-center justify-center px-4 animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-100">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-3 text-gray-700">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-1 text-center">Akses Admin</h3>
+            <p class="text-sm text-gray-500 mb-5 text-center">Masukkan PIN untuk mengatur galeri.</p>
+
+            <input type="password" id="inputPin" placeholder="••••" maxlength="12" inputmode="numeric"
+                autocomplete="current-password"
+                class="w-full px-4 py-3 text-center text-2xl font-bold tracking-[0.35em] border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-4 shadow-sm bg-gray-50 focus:bg-white">
+
+            <div class="flex space-x-3">
+                <button id="btnCancelPin"
+                    class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 active:scale-95 transition">Batal</button>
+                <button id="btnSubmitPin"
+                    class="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-semibold hover:bg-black active:scale-95 transition shadow-sm">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Folder Help Modal -->
+    <div id="helpFolderModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center px-4 animate-fade-in overflow-y-auto pt-20 pb-10">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Cara Memasang Google Apps Script (GAS)</h3>
+                <button id="btnCloseHelp" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="text-sm text-gray-700 space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                <p>Google Apps Script (GAS) bertindak sebagai pembaca folder Google Drive sekaligus sebagai database
+                    riwayat link terpusat.</p>
+                <ol class="list-decimal pl-5 space-y-2 font-medium">
+                    <li>Buka <a href="https://sheets.new" target="_blank" class="text-blue-600 underline">Google Sheets
+                            (sheets.new)</a> untuk membuat file Spreadsheet baru.</li>
+                    <li>Pada menu di atas, klik <b>Ekstensi &rarr; Apps Script</b>.</li>
+                    <li>Hapus semua kode yang ada, lalu <b>Salin (Copy) & Tempel (Paste)</b> kode <b>Terbaru</b> di
+                        bawah ini:</li>
+                </ol>
+                <div class="relative">
+                    <textarea readonly
+                        class="w-full h-48 p-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-xs text-gray-800 outline-none resize-none">
+function doGet(e) {
+  var output = ContentService.createTextOutput();
+  output.setMimeType(ContentService.MimeType.JSON);
+  
+  // KUNCI PENGAMAN RAHASIA (Cocokkan dengan Kunci Rahasia di Pengaturan Admin)
+  var SECRET_KEY = "MilihFotoSecureKey2026";
+  
+  try {
+    var action = e.parameter.action;
+    if (!action && e.parameter.folder) action = 'getPhotos';
+    
+    if (action === 'getPhotos') {
+      var folderId = e.parameter.folder;
+      if (!folderId) throw new Error("Parameter 'folder' tidak ditemukan.");
+      var folder = DriveApp.getFolderById(folderId);
+      var files = folder.searchFiles("mimeType contains 'image/' and trashed = false");
+      var data = [];
+      while (files.hasNext()) {
+        var file = files.next();
+        var id = file.getId();
+        data.push({ id: file.getName().split('.')[0], url: "https://drive.google.com/uc?export=view&id=" + id, thumb: "https://drive.google.com/uc?export=view&id=" + id });
+      }
+      return output.setContent(JSON.stringify({status: 'success', data: data}));
+      
+    } else if (action === 'saveShortLink') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var shortSheet = ss.getSheetByName("ShortLinks");
+      if (!shortSheet) {
+        shortSheet = ss.insertSheet("ShortLinks");
+        shortSheet.appendRow(["Code", "Token", "Folder ID", "Studio Name", "Client Name", "Session Date", "Created At"]);
+      }
+      var tz = ss.getSpreadsheetTimeZone() || "Asia/Jakarta";
+      var timestamp = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss");
+      var code = e.parameter.code;
+      var token = e.parameter.token || "";
+      var folderId = e.parameter.folderId || "";
+      var studioName = e.parameter.studioName || "";
+      var clientName = e.parameter.clientName || "";
+      var sessionDate = e.parameter.sessionDate || "";
+      
+      shortSheet.appendRow([code, token, folderId, studioName, clientName, sessionDate, timestamp]);
+      
+      // Catat juga ke tab riwayat (sheet pertama)
+      try {
+        var mainSheet = ss.getSheets()[0];
+        if (mainSheet.getName() !== "ShortLinks") {
+          if (mainSheet.getLastRow() === 0) mainSheet.appendRow(["Timestamp", "Link Galeri", "Folder URL", "Studio Name"]);
+          var fullLink = e.parameter.fullLink || token;
+          var folderRef = e.parameter.folderUrl || ("https://drive.google.com/drive/folders/" + folderId);
+          mainSheet.appendRow([timestamp, fullLink, folderRef, studioName + (clientName ? " - " + clientName : "")]);
+        }
+      } catch (errHist) {}
+      
+      return output.setContent(JSON.stringify({status: 'success', code: code}));
+
+    } else if (action === 'getShortLink') {
+      var code = e.parameter.code;
+      if (!code) throw new Error("Parameter 'code' tidak ditemukan.");
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var shortSheet = ss.getSheetByName("ShortLinks");
+      if (!shortSheet) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan.'}));
+      }
+      var lastRow = shortSheet.getLastRow();
+      if (lastRow < 2) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan.'}));
+      }
+      var values = shortSheet.getRange(2, 1, lastRow - 1, 7).getValues();
+      for (var i = values.length - 1; i >= 0; i--) {
+        if (String(values[i][0]).trim().toLowerCase() === String(code).trim().toLowerCase()) {
+          return output.setContent(JSON.stringify({
+            status: 'success',
+            data: {
+              code: values[i][0],
+              token: values[i][1],
+              folderId: values[i][2],
+              studioName: values[i][3],
+              clientName: values[i][4],
+              sessionDate: values[i][5],
+              createdAt: values[i][6]
+            }
+          }));
+        }
+      }
+      return output.setContent(JSON.stringify({status: 'error', message: 'Tautan tidak ditemukan atau sudah dihapus.'}));
+
+    } else if (action === 'saveHistory') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+      if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "Link Galeri", "Folder URL", "Studio Name"]);
+      var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || "Asia/Jakarta";
+      var timestamp = e.parameter.clientTime || Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss");
+      sheet.appendRow([timestamp, e.parameter.fullLink || e.parameter.clientLink || "", e.parameter.folderUrl || "", e.parameter.studioName || ""]);
+      return output.setContent(JSON.stringify({status: 'success'}));
+      
+    } else if (action === 'getHistory') {
+      if (e.parameter.key !== SECRET_KEY) {
+        return output.setContent(JSON.stringify({status: 'error', message: 'Akses ditolak: Kunci rahasia tidak valid.'}));
+      }
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+      var data = [];
+      var lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+        for (var i = 0; i < values.length; i++) {
+          data.push({ timestamp: values[i][0], clientLink: values[i][1], folderUrl: values[i][2], studioName: values[i][3] });
+        }
+      }
+      return output.setContent(JSON.stringify({status: 'success', data: data}));
+      
+    } else {
+      throw new Error("Action tidak valid.");
+    }
+  } catch (err) {
+    return output.setContent(JSON.stringify({status: 'error', message: err.toString()}));
+  }
+}
+                    </textarea>
+                </div>
+                <ol class="list-decimal pl-5 space-y-2 font-medium" start="4">
+                    <li>Klik tombol <b>Terapkan (Deploy)</b> di pojok kanan atas &rarr; <b>Deployment Baru (New
+                            deployment)</b>.</li>
+                    <li>Pilih jenis roda gigi <b>Aplikasi Web (Web app)</b>.</li>
+                    <li>Pada "Akses", pastikan Anda memilih <b>Siapa saja (Anyone)</b>. Lalu klik Terapkan.</li>
+                    <li>Berikan Izin jika diminta, lalu Salin URL Web App yang muncul ke dalam pengaturan admin di
+                        website ini.</li>
+                </ol>
+            </div>
+            <button id="btnUnderstandHelp"
+                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm">Saya
+                Mengerti</button>
+        </div>
+    </div>
+
+    <!-- Custom Dialog Modal (Top-most Modal, z-index 9999) -->
+    <div id="dialogModal" style="z-index: 9999;"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center px-4 animate-fade-in">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 relative">
+            <div id="dialogIconContainer"
+                class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 mb-4 transition-all duration-300">
+                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 transition-all duration-300" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 id="dialogTitle" class="text-xl font-bold text-gray-900 mb-2">Informasi</h3>
+            <p id="dialogMessage" class="text-sm text-gray-600 mb-6 leading-relaxed">Pesan di sini.</p>
+            <button id="btnDialogOk"
+                class="w-full inline-flex justify-center items-center rounded-xl shadow-md px-5 py-2.5 bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 focus:outline-none transition-all">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Endpoint GAS terenkripsi dasar (Base64) untuk mencegah pembacaan langsung di View-Source
+        const _0x9f = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6WHlsd1dKUlA2cXdTWDR3RmZ0a1dXZW1VdTdVYlBxVjdrZUdBUzFhcGRIUkZDeDB3b3ZyeEN2eVh5VHpaanFUM2hCUS9leGVj";
+        function getDefaultGasUrl() {
+            try {
+                return atob(_0x9f);
+            } catch (e) {
+                return "";
+            }
+        }
+
+        const _0x8e = "TWlsaWhGb3RvU2VjdXJlS2V5MjAyNg=="; // Base64: MilihFotoSecureKey2026
+        function getDefaultGasSecretKey() {
+            try {
+                return atob(_0x8e);
+            } catch (e) {
+                return "MilihFotoSecureKey2026";
+            }
+        }
+
+        // --- DATA DEFAULT & STATE ---
+        const defaultPhotos = []; // Hapus gambar dummy
+
+        let appState = {
+            studioName: "Bangkit Pro",
+            waNumber: "",
+            maxLimit: 10,
+            adminPinHash: "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // SHA-256 untuk default PIN: 1234
+            adminPinLength: 4,
+            useWatermark: true,
+            clientName: "",
+            customSlug: "",
+            sessionDate: "",
+            gasUrl: getDefaultGasUrl(), // Endpoint default tersamar
+            gasSecretKey: getDefaultGasSecretKey(), // Kunci rahasia default aman
+            folderUrl: "",
+            photos: [],
+            selectedPhotos: new Set(),
+            clientLinkHistory: []
+        };
+
+        let currentFullscreenPhoto = null;
+        let currentFullscreenIndex = -1;
+        let isAdminLoggedIn = false;
+
+        // --- ELEMEN DOM ---
+        const els = {
+            navStudioName: document.getElementById('navStudioName'),
+            btnViewGallery: document.getElementById('btnViewGallery'),
+            btnViewAdmin: document.getElementById('btnViewAdmin'),
+            viewGallery: document.getElementById('viewGallery'),
+            viewAdmin: document.getElementById('viewAdmin'),
+
+            photoGrid: document.getElementById('photoGrid'),
+            counterText: document.getElementById('counterText'),
+
+            inputStudioName: document.getElementById('inputStudioName'),
+            inputMaxLimit: document.getElementById('inputMaxLimit'),
+            inputWaNumber: document.getElementById('inputWaNumber'),
+            inputAdminPin: document.getElementById('inputAdminPin'),
+            inputUseWatermark: document.getElementById('inputUseWatermark'),
+            inputClientName: document.getElementById('inputClientName'),
+            inputCustomSlug: document.getElementById('inputCustomSlug'),
+            btnResetSlug: document.getElementById('btnResetSlug'),
+            inputSessionDate: document.getElementById('inputSessionDate'),
+            inputGasUrl: document.getElementById('inputGasUrl'),
+            inputGasSecret: document.getElementById('inputGasSecret'),
+            inputFolderUrl: document.getElementById('inputFolderUrl'),
+            folderSyncStatus: document.getElementById('folderSyncStatus'),
+            btnSaveAdmin: document.getElementById('btnSaveAdmin'),
+
+            floatingWaBtn: document.getElementById('floatingWaBtn'),
+            btnSendWa: document.getElementById('btnSendWa'),
+            waCountDisplay: document.getElementById('waCountDisplay'),
+
+            // Fullscreen
+            fullscreenModal: document.getElementById('fullscreenModal'),
+            fullscreenImage: document.getElementById('fullscreenImage'),
+            fullscreenTitle: document.getElementById('fullscreenTitle'),
+            fullscreenWatermarkWrapper: document.getElementById('fullscreenWatermarkWrapper'),
+            fullscreenWatermark: document.getElementById('fullscreenWatermark'),
+            btnBackFullscreen: document.getElementById('btnBackFullscreen'),
+            btnCloseFullscreen: document.getElementById('btnCloseFullscreen'),
+            btnToggleFullscreenSelect: document.getElementById('btnToggleFullscreenSelect'),
+            fullscreenLoader: document.getElementById('fullscreenLoader'),
+            btnPrevPhoto: document.getElementById('btnPrevPhoto'),
+            btnNextPhoto: document.getElementById('btnNextPhoto'),
+
+            // Dialog
+            dialogModal: document.getElementById('dialogModal'),
+            dialogTitle: document.getElementById('dialogTitle'),
+            dialogMessage: document.getElementById('dialogMessage'),
+            btnDialogOk: document.getElementById('btnDialogOk'),
+            dialogIconContainer: document.getElementById('dialogIconContainer'),
+            dialogIcon: document.getElementById('dialogIcon'),
+
+            // PIN
+            pinModal: document.getElementById('pinModal'),
+            inputPin: document.getElementById('inputPin'),
+            btnSubmitPin: document.getElementById('btnSubmitPin'),
+            btnCancelPin: document.getElementById('btnCancelPin'),
+
+            // Help Folder
+            btnHelpFolder: document.getElementById('btnHelpFolder'),
+            helpFolderModal: document.getElementById('helpFolderModal'),
+            btnCloseHelp: document.getElementById('btnCloseHelp'),
+            btnUnderstandHelp: document.getElementById('btnUnderstandHelp'),
+
+            // Share Link
+            shareSection: document.getElementById('shareSection'),
+            shortLinkBadge: document.getElementById('shortLinkBadge'),
+            inputClientLink: document.getElementById('inputClientLink'),
+            btnCopyLink: document.getElementById('btnCopyLink'),
+            btnOpenClientGallery: document.getElementById('btnOpenClientGallery'),
+            inputClientWa: document.getElementById('inputClientWa'),
+            btnSendToClientWa: document.getElementById('btnSendToClientWa')
+        };
+
+        // Fungsi pembantu mengubah teks menjadi URL-friendly slug
+        function slugify(text) {
+            if (!text) return '';
+            return text
+                .toString()
+                .toLowerCase()
+                .trim()
+                .replace(/&/g, ' ')
+                .replace(/\bdan\b/gi, ' ')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .replace(/-{2,}/g, '-');
+        }
+
+        // Fungsi pembuatan kode unik 6 karakter acak untuk link pendek
+        function generateShortCode() {
+            const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Fungsi normalisasi nomor WhatsApp (mengubah 08... atau +628... menjadi 628...)
+        function formatWaNumber(phone) {
+            if (!phone) return '';
+            let clean = phone.toString().trim().replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) {
+                clean = '62' + clean.slice(1);
+            } else if (clean.startsWith('8')) {
+                clean = '62' + clean;
+            }
+            return clean;
+        }
+
+        // Fungsi format tampilan tanggal Indonesia (YYYY-MM-DD -> DD Bulan YYYY)
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    const m = parseInt(parts[1], 10) - 1;
+                    const d = parseInt(parts[2], 10);
+                    const y = parts[0];
+                    if (m >= 0 && m < 12 && !isNaN(d)) {
+                        return `${d} ${months[m]} ${y}`;
+                    }
+                }
+            } catch (e) { }
+            return dateStr;
+        }
+
+        // Fungsi mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+        function getTodayDateString() {
+            const today = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+        }
+
+        // Fungsi Sanitasi HTML untuk mencegah Cross-Site Scripting (XSS)
+        function escapeHtml(str) {
+            if (str === undefined || str === null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Fungsi Hash SHA-256 menggunakan Web Crypto API dengan Fallback JS Murni
+        async function hashText(str) {
+            if (!str) return '';
+            try {
+                if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+                    const msgUint8 = new TextEncoder().encode(str);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                }
+            } catch (e) {
+                console.warn("WebCrypto tidak tersedia, beralih ke hash fallback:", e);
+            }
+            return sha256Fallback(str);
+        }
+
+        function sha256Fallback(ascii) {
+            function rightRotate(value, amount) {
+                return (value >>> amount) | (value << (32 - amount));
+            }
+            const mathPow = Math.pow;
+            const maxWord = mathPow(2, 32);
+            let lengthProperty = 'length';
+            let i, j;
+            let result = '';
+            let words = [];
+            let asciiBitLength = ascii[lengthProperty] * 8;
+            let hash = [];
+            let k = [];
+            let primeCounter = 0;
+            let isComposite = {};
+            for (let candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (i = 0; i < 313; i += candidate) {
+                        isComposite[i] = candidate;
+                    }
+                    hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+            ascii += '\x80';
+            while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+            for (i = 0; i < ascii[lengthProperty]; i++) {
+                j = ascii.charCodeAt(i);
+                if (j >> 8) return '';
+                words[i >> 2] |= j << ((3 - i) % 4) * 8;
+            }
+            words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+            words[words[lengthProperty]] = (asciiBitLength) | 0;
+            for (j = 0; j < words[lengthProperty];) {
+                let w = words.slice(j, j += 16);
+                let oldHash = hash;
+                hash = hash.slice(0, 8);
+                for (i = 0; i < 64; i++) {
+                    let w15 = w[i - 15], w2 = w[i - 2];
+                    let s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+                    let s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+                    let ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+                    let maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+                    let s_0 = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
+                    let s_1 = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
+                    let t1 = hash[7] + s_1 + ch + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0);
+                    let t2 = s_0 + maj;
+                    hash = [(t1 + t2) | 0].concat(hash.slice(0, 7));
+                    hash[4] = (hash[4] + t1) | 0;
+                }
+                for (i = 0; i < 8; i++) {
+                    hash[i] = (hash[i] + oldHash[i]) | 0;
+                }
+            }
+            for (i = 0; i < 8; i++) {
+                for (j = 3; j >= 0; j--) {
+                    let b = (hash[i] >> (8 * j)) & 255;
+                    result += (b < 16 ? '0' : '') + b.toString(16);
+                }
+            }
+            return result;
+        }
+
+        // Fungsi untuk mengembalikan seluruh state dan form ke pengaturan default awal
+        function resetToDefault() {
+            appState.studioName = "Bangkit Pro";
+            appState.waNumber = "";
+            appState.maxLimit = 10;
+            appState.adminPinHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // Default PIN: 1234
+            appState.adminPinLength = 4;
+            appState.useWatermark = true;
+            appState.clientName = "";
+            appState.sessionDate = getTodayDateString();
+            appState.gasUrl = getDefaultGasUrl();
+            appState.gasSecretKey = getDefaultGasSecretKey();
+            appState.folderUrl = "";
+            appState.photos = [];
+            appState.selectedPhotos.clear();
+            appState.clientLinkHistory = [];
+
+            if (els.inputStudioName) els.inputStudioName.value = appState.studioName;
+            if (els.inputWaNumber) els.inputWaNumber.value = "";
+            if (els.inputMaxLimit) els.inputMaxLimit.value = appState.maxLimit;
+            if (els.inputAdminPin) els.inputAdminPin.value = "";
+            appState.customSlug = "";
+            if (els.inputUseWatermark) els.inputUseWatermark.checked = true;
+            if (els.inputClientName) els.inputClientName.value = "";
+            if (els.inputCustomSlug) els.inputCustomSlug.value = "";
+            if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+            isSlugManuallyEdited = false;
+            if (els.inputSessionDate) els.inputSessionDate.value = getTodayDateString();
+            if (els.inputGasUrl) els.inputGasUrl.value = appState.gasUrl;
+            if (els.inputGasSecret) els.inputGasSecret.value = getDefaultGasSecretKey();
+            if (els.inputFolderUrl) els.inputFolderUrl.value = "";
+
+            if (els.folderSyncStatus) {
+                els.folderSyncStatus.className = "text-xs font-medium mt-2 hidden flex items-center transition-all";
+                els.folderSyncStatus.innerHTML = "";
+            }
+            if (els.shareSection) els.shareSection.classList.add('hidden');
+            if (els.inputClientLink) els.inputClientLink.value = "";
+            if (els.inputClientWa) els.inputClientWa.value = "";
+
+            try {
+                localStorage.removeItem('studioSettings');
+                sessionStorage.removeItem('activeAdminSession');
+            } catch (e) { }
+
+            isAdminLoggedIn = false;
+            updateUI();
+            renderGallery();
+        }
+
+        // --- INIT & LOCAL STORAGE ---
+        async function loadSettings() {
+            try {
+                const saved = localStorage.getItem('studioSettings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState.studioName = parsed.studioName || appState.studioName;
+                    appState.waNumber = formatWaNumber(parsed.waNumber) || appState.waNumber;
+                    appState.maxLimit = parsed.maxLimit || appState.maxLimit;
+
+                    // Migrasi aman PIN: Hash disimpan, bukan teks polos
+                    if (parsed.adminPinHash) {
+                        appState.adminPinHash = parsed.adminPinHash;
+                    } else if (parsed.adminPin) {
+                        appState.adminPinHash = await hashText(parsed.adminPin);
+                    }
+                    appState.adminPinLength = parsed.adminPinLength || (parsed.adminPin ? parsed.adminPin.length : 4);
+
+                    appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
+                    appState.clientName = parsed.clientName || "";
+                    appState.customSlug = parsed.customSlug || "";
+                    appState.sessionDate = parsed.sessionDate || getTodayDateString();
+                    appState.gasUrl = (!parsed.gasUrl || parsed.gasUrl.includes('_3Jpg')) ? getDefaultGasUrl() : parsed.gasUrl;
+                    appState.gasSecretKey = parsed.gasSecretKey || getDefaultGasSecretKey();
+                    appState.folderUrl = parsed.folderUrl || "";
+                    appState.clientLinkHistory = parsed.clientLinkHistory || [];
+                }
+            } catch (e) {
+                console.log("Local storage dibatasi, menggunakan default.");
+            }
+        }
+
+        function saveSettings() {
+            try {
+                const toSave = {
+                    studioName: appState.clientName ? `${appState.studioName} (${appState.clientName})` : appState.studioName,
+                    waNumber: appState.waNumber,
+                    maxLimit: appState.maxLimit,
+                    adminPinHash: appState.adminPinHash,
+                    adminPinLength: appState.adminPinLength || 4,
+                    useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
+                    clientName: appState.clientName || "",
+                    customSlug: appState.customSlug || "",
+                    sessionDate: appState.sessionDate || "",
+                    gasUrl: appState.gasUrl,
+                    gasSecretKey: appState.gasSecretKey,
+                    folderUrl: appState.folderUrl,
+                    clientLinkHistory: appState.clientLinkHistory
+                };
+                localStorage.setItem('studioSettings', JSON.stringify(toSave));
+            } catch (e) {
+                console.log("Tidak dapat menyimpan ke local storage.");
+            }
+        }
+
+        // --- PENCATATAN RIWAYAT KE DATABASE (GOOGLE SHEET) ---
+        function addToHistory(fullLink, folderUrl, syncToGas = true) {
+            if (!appState.clientLinkHistory) appState.clientLinkHistory = [];
+            const isDuplicate = appState.clientLinkHistory.some(h => (h.fullLink === fullLink || h.shortLink === fullLink) || (h.folderUrl === folderUrl && Date.now() - h.timestamp < 60000));
+            if (!isDuplicate) {
+                appState.clientLinkHistory.push({ timestamp: Date.now(), fullLink, folderUrl });
+                if (appState.clientLinkHistory.length > 20) appState.clientLinkHistory.shift();
+                saveSettings();
+            }
+
+            // Mencegah pencatatan ganda: jika syncToGas false (karena sudah dicatat oleh saveShortLink), lewati request ke GAS
+            if (!syncToGas) return;
+
+            // Kirim ke Database (GAS Google Sheet) dengan Kunci Rahasia jika sudah disetel
+            const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
+            const gasEndpoint = appState.gasUrl || getDefaultGasUrl();
+
+            if (gasEndpoint && gasKey) {
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const localTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                const params = new URLSearchParams({
+                    action: 'saveHistory',
+                    key: gasKey,
+                    fullLink: fullLink,
+                    clientLink: fullLink,
+                    folderUrl: folderUrl,
+                    studioName: appState.clientName ? `${appState.studioName} - ${appState.clientName}` : appState.studioName,
+                    clientTime: "'" + localTime
+                });
+                fetch(`${gasEndpoint}?${params.toString()}`, { mode: 'no-cors' })
+                    .then(() => console.log("Riwayat terkirim ke Google Sheet"))
+                    .catch(e => {
+                        console.error("Fetch gagal, mencoba fallback image ping:", e);
+                        const img = new Image();
+                        img.src = `${gasEndpoint}?${params.toString()}`;
+                    });
+            }
+        }
+
+        // --- SISTEM MODAL / DIALOG ---
+        let dialogConfirmCallback = null;
+        let dialogAutoCloseTimer = null;
+
+        function showDialog(message, title = "Informasi", type = "info", onConfirm = null, autoCloseMs = null) {
+            clearTimeout(dialogAutoCloseTimer);
+            dialogConfirmCallback = onConfirm;
+
+            els.dialogTitle.textContent = title;
+            els.dialogMessage.textContent = message;
+
+            const iconContainer = els.dialogIconContainer || document.getElementById('dialogIconContainer');
+            const iconSvg = els.dialogIcon || document.getElementById('dialogIcon');
+            const btnOk = els.btnDialogOk;
+
+            if (iconContainer && iconSvg && btnOk) {
+                // Reset styling dasar
+                iconContainer.className = "mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4 transition-all duration-300";
+                btnOk.className = "w-full inline-flex justify-center items-center rounded-xl shadow-md px-5 py-2.5 text-sm font-semibold text-white active:scale-95 focus:outline-none transition-all";
+
+                if (type === 'success') {
+                    iconContainer.classList.add('bg-green-100', 'text-green-600');
+                    iconSvg.className = "h-8 w-8 text-green-600";
+                    iconSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>`;
+                    btnOk.classList.add('bg-green-600', 'hover:bg-green-700');
+                    btnOk.textContent = onConfirm ? "Lanjut ke Admin" : "OK";
+                } else if (type === 'error') {
+                    iconContainer.classList.add('bg-red-100', 'text-red-600');
+                    iconSvg.className = "h-8 w-8 text-red-600";
+                    iconSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>`;
+                    btnOk.classList.add('bg-red-600', 'hover:bg-red-700');
+                    btnOk.textContent = "Coba Lagi";
+                } else {
+                    iconContainer.classList.add('bg-blue-100', 'text-blue-600');
+                    iconSvg.className = "h-7 w-7 text-blue-600";
+                    iconSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
+                    btnOk.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    btnOk.textContent = "Mengerti";
+                }
+            }
+
+            els.dialogModal.classList.remove('hidden');
+            els.dialogModal.classList.add('flex');
+
+            if (autoCloseMs && typeof autoCloseMs === 'number') {
+                dialogAutoCloseTimer = setTimeout(() => {
+                    closeDialog();
+                }, autoCloseMs);
+            }
+        }
+
+        function closeDialog() {
+            clearTimeout(dialogAutoCloseTimer);
+            els.dialogModal.classList.add('hidden');
+            els.dialogModal.classList.remove('flex');
+            if (dialogConfirmCallback) {
+                const cb = dialogConfirmCallback;
+                dialogConfirmCallback = null;
+                cb();
+            }
+        }
+
+        els.btnDialogOk.addEventListener('click', closeDialog);
+        els.dialogModal.addEventListener('click', (e) => {
+            if (e.target === els.dialogModal) closeDialog();
+        });
+
+        // --- LOGIKA UTAMA (GALERI KLIEN) ---
+        function updateUI() {
+            els.navStudioName.textContent = appState.studioName;
+            if (els.fullscreenWatermarkWrapper) {
+                els.fullscreenWatermarkWrapper.style.display = appState.useWatermark ? 'flex' : 'none';
+            }
+            if (els.fullscreenWatermark) els.fullscreenWatermark.textContent = appState.studioName;
+
+            const selectedCount = appState.selectedPhotos.size;
+            els.counterText.textContent = `${selectedCount} / ${appState.maxLimit}`;
+            els.waCountDisplay.textContent = selectedCount;
+
+            // Update sub-judul galeri jika ada nama klien / tanggal
+            const subtitleEl = document.getElementById('gallerySubtitle');
+            if (subtitleEl) {
+                if (appState.clientName) {
+                    const datePart = appState.sessionDate ? ` • Sesi: ${formatDisplayDate(appState.sessionDate)}` : '';
+                    subtitleEl.innerHTML = `Klien: <span class="font-semibold text-gray-800">${escapeHtml(appState.clientName)}</span>${escapeHtml(datePart)} &mdash; Silakan pilih maksimal <b>${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
+                } else {
+                    subtitleEl.textContent = 'Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
+                }
+            }
+
+            // Atur tombol WA melayang
+            if (selectedCount > 0) {
+                els.floatingWaBtn.classList.remove('translate-y-24', 'opacity-0');
+                els.floatingWaBtn.classList.add('translate-y-0', 'opacity-100');
+            } else {
+                els.floatingWaBtn.classList.add('translate-y-24', 'opacity-0');
+                els.floatingWaBtn.classList.remove('translate-y-0', 'opacity-100');
+            }
+        }
+
+        function renderGallery() {
+            els.photoGrid.innerHTML = '';
+
+            if (appState.photos.length === 0) {
+                // Tampilkan pesan jika tidak ada foto
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = "col-span-full flex flex-col items-center justify-center py-16 text-center";
+
+                // Cek apakah mode admin atau mode klien berdasarkan URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const isClient = urlParams.has('t') || urlParams.has('token') || urlParams.has('c');
+
+                if (isClient) {
+                    emptyMessage.innerHTML = `
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">Belum ada foto</h3>
+                        <p class="text-gray-500">Galeri ini kosong atau foto gagal dimuat. Hubungi fotografer Anda.</p>
+                    `;
+                } else {
+                    emptyMessage.innerHTML = `
+                        <svg class="w-16 h-16 text-blue-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Mode Fotografer</h3>
+                        <p class="text-gray-500 mb-4">Silakan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
+                        <button onclick="document.getElementById('btnViewAdmin').click()" class="px-5 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition shadow-sm border border-blue-200">Buka Pengaturan Admin</button>
+                    `;
+                }
+
+                els.photoGrid.appendChild(emptyMessage);
+                return;
+            }
+
+            appState.photos.forEach((photo, index) => {
+                // PATCH SUPER STABIL: Ekstrak ID file dari link lama
+                // Menggunakan server Google Thumbnail agar terbebas dari blokir Virus Scan file besar
+                let fileIdMatch = (photo.url && photo.url.match(/id=([^&]+)/)) || (photo.thumb && photo.thumb.match(/id=([^&]+)/));
+                let safeThumb = photo.thumb;
+
+                if (fileIdMatch && fileIdMatch[1]) {
+                    // sz=w200 membatasi resolusi khusus thumbnail agar loading grid sangat sangat cepat
+                    safeThumb = `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w200`;
+                } else if (photo.thumb && photo.thumb.includes('picsum.photos')) {
+                    safeThumb = photo.thumb; // Fallback jika masih pakai dummy
+                }
+
+                const isSelected = appState.selectedPhotos.has(photo.id);
+
+                const card = document.createElement('div');
+                card.className = `relative group rounded-xl overflow-hidden cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-gray-200 aspect-[4/3] ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
+
+                // Indikator Centang
+                const checkBadge = isSelected
+                    ? `<div class="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full z-30 shadow-md">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                       </div>`
+                    : '';
+
+                const safePhotoId = escapeHtml(photo.id);
+                const safeStudio = escapeHtml(appState.studioName);
+
+                const watermarkHtml = appState.useWatermark ? `
+                    <!-- Watermark -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
+                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${safeStudio}</span>
+                    </div>` : '';
+
+                card.innerHTML = `
+                    ${checkBadge}
+                    <img src="${safeThumb}" alt="${safePhotoId}" draggable="false" class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none" loading="lazy" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'">
+                    
+                    ${watermarkHtml}
+
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex flex-col justify-end pointer-events-none z-20">
+                        <div class="p-2 sm:p-3 bg-gradient-to-t from-black/70 to-transparent translate-y-2 group-hover:translate-y-0 transition-all">
+                            <p class="text-white text-xs sm:text-sm font-medium truncate">${safePhotoId}</p>
+                        </div>
+                    </div>
+                    
+                    <button class="absolute top-2 left-2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto" data-id="${safePhotoId}" title="Lihat Penuh">
+                        <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                    </button>
+                `;
+
+                // Klik gambar untuk pilih/batal pilih
+                card.addEventListener('click', (e) => {
+                    // Jangan trigger kalau yang diklik adalah tombol zoom
+                    if (!e.target.closest('.btn-zoom')) {
+                        toggleSelection(photo.id);
+                    }
+                });
+
+                // Klik tombol zoom
+                const btnZoom = card.querySelector('.btn-zoom');
+                btnZoom.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openFullscreen(index);
+                });
+
+                els.photoGrid.appendChild(card);
+            });
+        }
+
+        function toggleSelection(id) {
+            if (appState.selectedPhotos.has(id)) {
+                appState.selectedPhotos.delete(id);
+            } else {
+                if (appState.selectedPhotos.size >= appState.maxLimit) {
+                    showDialog(`Anda telah mencapai batas maksimal pilihan yaitu ${appState.maxLimit} foto.`, "Batas Tercapai");
+                    return;
+                }
+                appState.selectedPhotos.add(id);
+            }
+
+            // Render ulang untuk update UI seleksi
+            renderGallery();
+            updateUI();
+
+            // Jika fullscreen sedang buka, update tombolnya juga
+            if (currentFullscreenPhoto && currentFullscreenPhoto.id === id && !els.fullscreenModal.classList.contains('hidden')) {
+                updateFullscreenButton(id);
+            }
+        }
+
+        // State navigasi history untuk preview fullscreen
+        let isFullscreenHistoryActive = false;
+
+        function getSafePhotoUrl(photo) {
+            if (!photo) return '';
+            let fileIdMatch = (photo.url && photo.url.match(/id=([^&]+)/)) || (photo.thumb && photo.thumb.match(/id=([^&]+)/));
+            if (fileIdMatch && fileIdMatch[1]) {
+                // sz=w800 membatasi resolusi khusus fullscreen agar loading cepat & ringan
+                return `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w800`;
+            } else if (photo.url && photo.url.includes('picsum.photos')) {
+                return photo.url;
+            }
+            return photo.url || photo.thumb || '';
+        }
+
+        function preloadAdjacentPhotos(currentIndex) {
+            if (!appState.photos || appState.photos.length <= 1) return;
+            const total = appState.photos.length;
+            const nextIdx = (currentIndex + 1) % total;
+            const prevIdx = (currentIndex - 1 + total) % total;
+
+            const nextUrl = getSafePhotoUrl(appState.photos[nextIdx]);
+            const prevUrl = getSafePhotoUrl(appState.photos[prevIdx]);
+
+            if (nextUrl) {
+                const imgNext = new Image();
+                imgNext.src = nextUrl;
+            }
+            if (prevUrl) {
+                const imgPrev = new Image();
+                imgPrev.src = prevUrl;
+            }
+        }
+
+        function openFullscreen(index, direction = 0) {
+            const isAlreadyOpen = !els.fullscreenModal.classList.contains('hidden');
+            currentFullscreenIndex = index;
+            const photo = appState.photos[index];
+            currentFullscreenPhoto = photo;
+
+            // Indikator nama file + nomor urut foto (contoh: IMG_001 (3/20))
+            const safePhotoId = escapeHtml(photo.id);
+            const photoCounter = (appState.photos && appState.photos.length > 0)
+                ? `<span class="text-xs sm:text-sm text-gray-300 font-normal ml-1 opacity-85">(${index + 1}/${appState.photos.length})</span>`
+                : '';
+            els.fullscreenTitle.innerHTML = `<span class="font-semibold">${safePhotoId}</span>${photoCounter}`;
+
+            // Tampilkan tombol Prev/Next jika foto lebih dari 1
+            if (appState.photos.length > 1) {
+                els.btnPrevPhoto.classList.remove('hidden');
+                els.btnNextPhoto.classList.remove('hidden');
+            } else {
+                els.btnPrevPhoto.classList.add('hidden');
+                els.btnNextPhoto.classList.add('hidden');
+            }
+
+            const safeUrl = getSafePhotoUrl(photo);
+
+            // Transisi pergantian foto yang halus (tanpa kedip hitam kaku)
+            if (isAlreadyOpen && direction !== 0) {
+                // Efek slide masuk sesuai arah navigasi (geser dari kiri atau kanan)
+                const slideInOffset = direction > 0 ? 55 : -55;
+                els.fullscreenImage.style.transition = 'none';
+                els.fullscreenImage.style.transform = `translate(${slideInOffset}px, 0px) scale(0.98)`;
+                els.fullscreenImage.style.opacity = '0.35';
+
+                // Timer cadangan jika gambar butuh waktu memuat > 120ms
+                const showLoaderTimer = setTimeout(() => {
+                    if (currentFullscreenIndex === index && !els.fullscreenImage.complete) {
+                        els.fullscreenLoader.classList.remove('hidden');
+                    }
+                }, 120);
+
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    clearTimeout(showLoaderTimer);
+                    if (currentFullscreenIndex === index) {
+                        els.fullscreenImage.src = safeUrl;
+                        requestAnimationFrame(() => {
+                            els.fullscreenImage.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.22s ease';
+                            els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                            els.fullscreenImage.style.opacity = '1';
+                            els.fullscreenImage.classList.remove('opacity-0');
+                            els.fullscreenLoader.classList.add('hidden');
+                        });
+                    }
+                };
+                tempImg.onerror = () => {
+                    clearTimeout(showLoaderTimer);
+                    if (currentFullscreenIndex === index) {
+                        els.fullscreenImage.src = 'https://placehold.co/800x600/111827/ffffff?text=Gambar+Gagal+Dimuat';
+                        els.fullscreenImage.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.22s ease';
+                        els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                        els.fullscreenImage.style.opacity = '1';
+                        els.fullscreenImage.classList.remove('opacity-0');
+                        els.fullscreenLoader.classList.add('hidden');
+                    }
+                };
+                tempImg.src = safeUrl;
+            } else {
+                // Pembukaan awal fullscreen
+                els.fullscreenImage.classList.add('opacity-0');
+                els.fullscreenLoader.classList.remove('hidden');
+                els.fullscreenImage.style.transition = 'none';
+                els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                els.fullscreenImage.src = safeUrl;
+
+                els.fullscreenImage.onerror = () => {
+                    els.fullscreenImage.src = 'https://placehold.co/800x600/111827/ffffff?text=Gambar+Gagal+Dimuat';
+                    els.fullscreenImage.classList.remove('opacity-0');
+                    els.fullscreenLoader.classList.add('hidden');
+                };
+            }
+
+            // Preload foto sebelum & sesudah di memori browser
+            preloadAdjacentPhotos(index);
+
+            updateFullscreenButton(photo.id);
+
+            els.fullscreenModal.classList.remove('hidden');
+            els.fullscreenModal.classList.add('flex');
+            document.body.classList.add('overflow-hidden'); // Cegah scroll body
+
+            // Push history state jika baru dibuka agar tombol 'Kembali' di browser/HP atau usap gestur kembali menutup preview
+            if (!isAlreadyOpen && !isFullscreenHistoryActive) {
+                try {
+                    isFullscreenHistoryActive = true;
+                    history.pushState({ modal: 'fullscreen' }, '');
+                } catch (err) {
+                    console.warn('history.pushState error:', err);
+                }
+            }
+        }
+
+        function closeFullscreen(fromPopstate = false) {
+            const isFromPopstate = (fromPopstate === true);
+            if (els.fullscreenModal.classList.contains('hidden')) return;
+
+            els.fullscreenModal.classList.add('hidden');
+            els.fullscreenModal.classList.remove('flex', 'block');
+            document.body.classList.remove('overflow-hidden');
+            currentFullscreenPhoto = null;
+            currentFullscreenIndex = -1;
+            els.fullscreenImage.src = ""; // Clear memory
+
+            // Reset zoom, transform & drag properties
+            zoomScale = 1; panX = 0; panY = 0; isZoomed = false; isPanning = false; isDragging = false;
+            els.fullscreenImage.classList.remove('dragging');
+            els.fullscreenImage.style.transition = 'none';
+            els.fullscreenImage.style.transform = '';
+            els.fullscreenImage.style.opacity = '';
+            els.fullscreenModal.style.backgroundColor = '';
+            els.fullscreenModal.style.transition = '';
+
+            // Sinkronisasi history browser (tombol kembali)
+            if (!isFromPopstate && isFullscreenHistoryActive) {
+                isFullscreenHistoryActive = false;
+                try {
+                    history.back();
+                } catch (err) {
+                    console.warn('history.back error:', err);
+                }
+            } else {
+                isFullscreenHistoryActive = false;
+            }
+        }
+
+        function navigateFullscreen(direction) {
+            if (currentFullscreenIndex === -1 || appState.photos.length <= 1) return;
+            let newIndex = currentFullscreenIndex + direction;
+
+            // Looping array foto jika melewati batas awal/akhir
+            if (newIndex < 0) newIndex = appState.photos.length - 1;
+            if (newIndex >= appState.photos.length) newIndex = 0;
+
+            resetZoomOnNavigate();
+            openFullscreen(newIndex, direction);
+        }
+
+        function updateFullscreenButton(id) {
+            const isSelected = appState.selectedPhotos.has(id);
+            const btn = els.btnToggleFullscreenSelect;
+
+            if (isSelected) {
+                btn.className = "pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-white text-gray-900 hover:bg-gray-100";
+                btn.innerHTML = `<svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg> Batalkan Pilihan`;
+            } else {
+                btn.className = "pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-blue-600 text-white hover:bg-blue-700";
+                btn.innerHTML = `Pilih Foto Ini`;
+            }
+        }
+
+        // Event Fullscreen
+        if (els.btnBackFullscreen) {
+            els.btnBackFullscreen.addEventListener('click', () => closeFullscreen(false));
+        }
+        els.btnCloseFullscreen.addEventListener('click', () => closeFullscreen(false));
+        els.btnToggleFullscreenSelect.addEventListener('click', () => {
+            if (currentFullscreenPhoto) {
+                toggleSelection(currentFullscreenPhoto.id);
+            }
+        });
+
+        els.btnPrevPhoto.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateFullscreen(-1);
+        });
+        els.btnNextPhoto.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateFullscreen(1);
+        });
+
+        // ====== PINCH-TO-ZOOM, DOUBLE-TAP & UNIFIED DRAG/SWIPE ======
+        const imgWrapper = document.getElementById('fullscreenImageWrapper');
+        const zoomIndicator = document.getElementById('zoomIndicator');
+        let zoomScale = 1;
+        let zoomOriginX = 0, zoomOriginY = 0;
+        let panX = 0, panY = 0;
+        let lastPinchDist = 0;
+        let isZoomed = false;
+        let zoomIndicatorTimer = null;
+
+        // Double-tap & Double-click state
+        let lastTapTime = 0;
+        let lastTapX = 0, lastTapY = 0;
+
+        // Drag, Swipe & Dismiss state
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let dragCurrentX = 0, dragCurrentY = 0;
+        let dragStartTime = 0;
+        let dragDirectionLocked = null; // 'horizontal' | 'vertical' | null
+
+        // Pan state saat zoom
+        let isPanning = false;
+        let panStartX = 0, panStartY = 0, panStartPanX = 0, panStartPanY = 0;
+
+        function getDistance(t1, t2) {
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function clampPan() {
+            if (zoomScale <= 1) { panX = 0; panY = 0; return; }
+            const img = els.fullscreenImage;
+            const maxPanX = (img.offsetWidth * (zoomScale - 1)) / 2;
+            const maxPanY = (img.offsetHeight * (zoomScale - 1)) / 2;
+            panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+            panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+        }
+
+        function applyTransform(smooth = false) {
+            const img = els.fullscreenImage;
+            img.style.transition = smooth ? 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+            img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        }
+
+        function showZoomIndicator() {
+            zoomIndicator.textContent = Math.round(zoomScale * 100) + '%';
+            zoomIndicator.classList.add('visible');
+            clearTimeout(zoomIndicatorTimer);
+            zoomIndicatorTimer = setTimeout(() => zoomIndicator.classList.remove('visible'), 1500);
+        }
+
+        function resetZoom(smooth = true) {
+            zoomScale = 1; panX = 0; panY = 0;
+            isZoomed = false;
+            applyTransform(smooth);
+            showZoomIndicator();
+        }
+
+        function zoomToPoint(clientX, clientY) {
+            const rect = imgWrapper.getBoundingClientRect();
+            const cx = clientX - rect.left - rect.width / 2;
+            const cy = clientY - rect.top - rect.height / 2;
+            zoomScale = 2.5;
+            panX = -cx * (zoomScale - 1) / zoomScale;
+            panY = -cy * (zoomScale - 1) / zoomScale;
+            clampPan();
+            applyTransform(true);
+            showZoomIndicator();
+            isZoomed = true;
+        }
+
+        function handleDragFinish(endX, endY) {
+            if (!isDragging) return;
+            isDragging = false;
+            els.fullscreenImage.classList.remove('dragging');
+
+            const elapsed = Date.now() - dragStartTime;
+            const diffX = endX - dragStartX;
+            const diffY = endY - dragStartY;
+
+            if (dragDirectionLocked === 'vertical') {
+                const absY = Math.abs(diffY);
+                // Dismiss jika ditarik lebih dari 70px atau usapan cepat > 35px dalam waktu < 350ms
+                if (absY > 70 || (elapsed < 350 && absY > 35)) {
+                    els.fullscreenImage.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.22s ease';
+                    els.fullscreenImage.style.transform = `translate(${diffX * 0.3}px, ${diffY > 0 ? '110%' : '-110%'}) scale(0.7)`;
+                    els.fullscreenImage.style.opacity = '0';
+                    els.fullscreenModal.style.transition = 'background-color 0.22s ease';
+                    els.fullscreenModal.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+                    setTimeout(() => {
+                        closeFullscreen(false);
+                    }, 220);
+                    dragDirectionLocked = null;
+                    return;
+                } else {
+                    // Snap back ke posisi tengah jika tarikan belum mencapai batas
+                    els.fullscreenImage.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                    els.fullscreenModal.style.transition = 'background-color 0.25s ease';
+                    els.fullscreenModal.style.backgroundColor = '';
+                    setTimeout(() => {
+                        els.fullscreenImage.style.transition = 'none';
+                        els.fullscreenModal.style.transition = '';
+                    }, 250);
+                    dragDirectionLocked = null;
+                    return;
+                }
+            } else if (dragDirectionLocked === 'horizontal') {
+                const absX = Math.abs(diffX);
+                const isFlick = absX > 25 && elapsed < 320;
+                const isStandardSwipe = absX > 45;
+
+                if ((isStandardSwipe || isFlick) && appState.photos.length > 1) {
+                    const direction = diffX < 0 ? 1 : -1;
+                    const exitX = diffX < 0 ? -90 : 90;
+                    els.fullscreenImage.style.transition = 'transform 0.16s ease-out, opacity 0.16s ease-out';
+                    els.fullscreenImage.style.transform = `translate(${exitX}px, 0px)`;
+                    els.fullscreenImage.style.opacity = '0.3';
+                    setTimeout(() => {
+                        navigateFullscreen(direction);
+                    }, 150);
+                } else {
+                    // Snap back jika tarikan kurang jauh
+                    els.fullscreenImage.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                    setTimeout(() => {
+                        els.fullscreenImage.style.transition = 'none';
+                    }, 230);
+                }
+                dragDirectionLocked = null;
+                return;
+            } else {
+                // Tarikan sangat kecil / tap lepas
+                els.fullscreenImage.style.transition = 'transform 0.15s ease';
+                els.fullscreenImage.style.transform = 'translate(0px, 0px) scale(1)';
+                setTimeout(() => {
+                    els.fullscreenImage.style.transition = 'none';
+                }, 160);
+                dragDirectionLocked = null;
+            }
+        }
+
+        // Touch events untuk Mobile (Pinch zoom & Touch drag/swipe)
+        imgWrapper.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                const now = Date.now();
+                const t = e.touches[0];
+                dragStartX = t.clientX;
+                dragEndX = t.clientX;
+                dragStartY = t.clientY;
+                dragEndY = t.clientY;
+                dragCurrentX = t.clientX;
+                dragCurrentY = t.clientY;
+                dragStartTime = now;
+                dragDirectionLocked = null;
+
+                // Deteksi double-tap
+                const dt = now - lastTapTime;
+                const dx = Math.abs(t.clientX - lastTapX);
+                const dy = Math.abs(t.clientY - lastTapY);
+                if (dt < 300 && dx < 40 && dy < 40) {
+                    if (isZoomed) {
+                        resetZoom();
+                    } else {
+                        zoomToPoint(t.clientX, t.clientY);
+                    }
+                    lastTapTime = 0;
+                    e.preventDefault();
+                    return;
+                }
+                lastTapTime = now;
+                lastTapX = t.clientX;
+                lastTapY = t.clientY;
+
+                if (isZoomed) {
+                    isPanning = true;
+                    panStartX = t.clientX; panStartY = t.clientY;
+                    panStartPanX = panX; panStartPanY = panY;
+                } else {
+                    isDragging = true;
+                    els.fullscreenImage.style.transition = 'none';
+                }
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                isPanning = false;
+                dragDirectionLocked = null;
+                lastPinchDist = getDistance(e.touches[0], e.touches[1]);
+                zoomOriginX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                zoomOriginY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        imgWrapper.addEventListener('touchmove', e => {
+            if (e.touches.length === 2) {
+                // Pinch zoom
+                const dist = getDistance(e.touches[0], e.touches[1]);
+                const ratio = dist / lastPinchDist;
+                const newScale = Math.max(1, Math.min(5, zoomScale * ratio));
+                const delta = newScale / zoomScale;
+                const rect = imgWrapper.getBoundingClientRect();
+                const cx = zoomOriginX - rect.left - rect.width / 2;
+                const cy = zoomOriginY - rect.top - rect.height / 2;
+                panX = (panX - cx) * delta + cx;
+                panY = (panY - cy) * delta + cy;
+                zoomScale = newScale;
+                clampPan();
+                applyTransform();
+                lastPinchDist = dist;
+                isZoomed = zoomScale > 1.05;
+                e.preventDefault();
+            } else if (e.touches.length === 1) {
+                const t = e.touches[0];
+                dragCurrentX = t.clientX;
+                dragCurrentY = t.clientY;
+
+                if (isZoomed && isPanning) {
+                    panX = panStartPanX + (t.clientX - panStartX);
+                    panY = panStartPanY + (t.clientY - panStartY);
+                    clampPan();
+                    applyTransform();
+                    e.preventDefault();
+                } else if (isDragging && !isZoomed) {
+                    const diffX = dragCurrentX - dragStartX;
+                    const diffY = dragCurrentY - dragStartY;
+
+                    // Kunci arah gerakan (horizontal / vertikal) setelah 8px perpindahan
+                    if (!dragDirectionLocked) {
+                        if (Math.abs(diffX) > 8 || Math.abs(diffY) > 8) {
+                            dragDirectionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+                        }
+                    }
+
+                    if (dragDirectionLocked === 'horizontal') {
+                        // Cegah browser gesture history (swipe back Chrome/Safari)
+                        e.preventDefault();
+                        // Efek geser langsung mengikuti jari (real-time feedback)
+                        els.fullscreenImage.style.transform = `translate(${diffX}px, 0px)`;
+                    } else if (dragDirectionLocked === 'vertical') {
+                        e.preventDefault();
+                        const pullScale = Math.max(0.75, 1 - Math.abs(diffY) / 1200);
+                        const pullOpacity = Math.max(0.35, 1 - Math.abs(diffY) / 600);
+                        els.fullscreenImage.style.transform = `translate(${diffX * 0.25}px, ${diffY}px) scale(${pullScale})`;
+                        els.fullscreenModal.style.backgroundColor = `rgba(0, 0, 0, ${0.95 * pullOpacity})`;
+                    }
+                }
+            }
+        }, { passive: false });
+
+        imgWrapper.addEventListener('touchend', e => {
+            isPanning = false;
+            if (e.changedTouches.length === 1 && !isZoomed && isDragging) {
+                const t = e.changedTouches[0];
+                handleDragFinish(t.clientX, t.clientY);
+            }
+            if (zoomScale < 1.05) {
+                zoomScale = 1; isZoomed = false;
+                applyTransform(true);
+            } else {
+                showZoomIndicator();
+            }
+        }, { passive: false });
+
+        // Mouse drag & double-click untuk Desktop / Laptop
+        imgWrapper.addEventListener('mousedown', e => {
+            if (e.button !== 0) return; // Hanya klik kiri
+            if (els.fullscreenModal.classList.contains('hidden')) return;
+
+            const now = Date.now();
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            dragCurrentX = e.clientX;
+            dragCurrentY = e.clientY;
+            dragStartTime = now;
+            dragDirectionLocked = null;
+
+            if (isZoomed) {
+                isPanning = true;
+                panStartX = e.clientX; panStartY = e.clientY;
+                panStartPanX = panX; panStartPanY = panY;
+                els.fullscreenImage.classList.add('dragging');
+                e.preventDefault();
+            } else {
+                isDragging = true;
+                els.fullscreenImage.style.transition = 'none';
+                els.fullscreenImage.classList.add('dragging');
+            }
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (els.fullscreenModal.classList.contains('hidden')) return;
+
+            if (isZoomed && isPanning) {
+                panX = panStartPanX + (e.clientX - panStartX);
+                panY = panStartPanY + (e.clientY - panStartY);
+                clampPan();
+                applyTransform();
+                return;
+            }
+
+            if (isDragging && !isZoomed) {
+                dragCurrentX = e.clientX;
+                dragCurrentY = e.clientY;
+                const diffX = dragCurrentX - dragStartX;
+                const diffY = dragCurrentY - dragStartY;
+
+                if (!dragDirectionLocked) {
+                    if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+                        dragDirectionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+                    }
+                }
+
+                if (dragDirectionLocked === 'horizontal') {
+                    els.fullscreenImage.style.transform = `translate(${diffX}px, 0px)`;
+                } else if (dragDirectionLocked === 'vertical') {
+                    const pullScale = Math.max(0.75, 1 - Math.abs(diffY) / 1200);
+                    const pullOpacity = Math.max(0.35, 1 - Math.abs(diffY) / 600);
+                    els.fullscreenImage.style.transform = `translate(${diffX * 0.25}px, ${diffY}px) scale(${pullScale})`;
+                    els.fullscreenModal.style.backgroundColor = `rgba(0, 0, 0, ${0.95 * pullOpacity})`;
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', e => {
+            if (els.fullscreenModal.classList.contains('hidden')) return;
+            if (isPanning) {
+                isPanning = false;
+                els.fullscreenImage.classList.remove('dragging');
+            }
+            if (isDragging) {
+                handleDragFinish(e.clientX, e.clientY);
+            }
+        });
+
+        // Double-click di PC untuk zoom in/out
+        imgWrapper.addEventListener('dblclick', e => {
+            if (isZoomed) {
+                resetZoom();
+            } else {
+                zoomToPoint(e.clientX, e.clientY);
+            }
+        });
+
+        // Reset zoom saat ganti foto
+        function resetZoomOnNavigate() {
+            zoomScale = 1; panX = 0; panY = 0; isZoomed = false; isPanning = false; isDragging = false;
+            const img = els.fullscreenImage;
+            img.classList.remove('dragging');
+            img.style.transition = 'none';
+            img.style.transform = '';
+            if (zoomIndicator) zoomIndicator.classList.remove('visible');
+        }
+
+        // Tangani tombol kembali pada browser / tombol navigasi HP (Android Back & Gesture Back)
+        window.addEventListener('popstate', (e) => {
+            if (!els.fullscreenModal.classList.contains('hidden')) {
+                closeFullscreen(true);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!els.dialogModal.classList.contains('hidden')) {
+                if (e.key === 'Enter' || e.key === 'Escape') {
+                    e.preventDefault();
+                    closeDialog();
+                    return;
+                }
+            }
+            if (!els.pinModal.classList.contains('hidden')) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    els.pinModal.classList.add('hidden');
+                    els.pinModal.classList.remove('flex');
+                    els.inputPin.value = '';
+                    return;
+                }
+            }
+            if (!els.fullscreenModal.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navigateFullscreen(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateFullscreen(1);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeFullscreen(false);
+                } else if (e.key === ' ' || e.code === 'Space') {
+                    // Tombol Spasi untuk pilih / batalkan pilihan foto
+                    e.preventDefault();
+                    if (currentFullscreenPhoto) {
+                        toggleSelection(currentFullscreenPhoto.id);
+                    }
+                }
+            }
+        });
+
+        // WhatsApp
+        els.btnSendWa.addEventListener('click', () => {
+            if (appState.selectedPhotos.size === 0) return;
+
+            // Mengurutkan ID/Nama foto secara natural (alfanumerik) dari A-Z sebelum dikirim ke WA
+            const selectedArr = Array.from(appState.selectedPhotos).sort((a, b) =>
+                a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            const listString = selectedArr.map((id, index) => `${index + 1}. ${id}`).join('\n');
+
+            let clientMeta = '';
+            if (appState.clientName) {
+                clientMeta += `👩🏻‍❤️‍👨🏼 *Nama Klien:* ${appState.clientName}\n`;
+            }
+            if (appState.sessionDate) {
+                clientMeta += `📆 *Tanggal Sesi:* ${formatDisplayDate(appState.sessionDate)}\n`;
+            }
+            if (clientMeta) {
+                clientMeta = `${clientMeta}\n`;
+            }
+
+            const message = `Halo Kak, ini adalah daftar foto pilihan yang ingin saya cetak:\n\n${clientMeta}📸 *Foto Terpilih:*\n${listString}\n\nTotal: *${selectedArr.length}* foto.`;
+            const cleanWa = formatWaNumber(appState.waNumber);
+            const waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`;
+
+            window.open(waUrl, '_blank');
+        });
+
+
+        // --- LOGIKA ADMIN & PIN ---
+        function switchView(viewName) {
+            const fromView = viewName === 'gallery' ? els.viewAdmin : els.viewGallery;
+            const toView = viewName === 'gallery' ? els.viewGallery : els.viewAdmin;
+
+            // Update tombol nav
+            if (viewName === 'gallery') {
+                // SINKRONISASI DATA: Ambil input terbaru dari form admin ke appState agar tidak reset / hilang
+                if (els.inputStudioName && els.inputStudioName.value.trim()) {
+                    appState.studioName = els.inputStudioName.value.trim();
+                }
+                if (els.inputWaNumber && els.inputWaNumber.value.trim()) {
+                    appState.waNumber = formatWaNumber(els.inputWaNumber.value.trim());
+                }
+                if (els.inputMaxLimit && els.inputMaxLimit.value) {
+                    const parsedLimit = parseInt(els.inputMaxLimit.value);
+                    if (!isNaN(parsedLimit) && parsedLimit > 0) {
+                        appState.maxLimit = parsedLimit;
+                    }
+                }
+                if (els.inputClientName) {
+                    appState.clientName = els.inputClientName.value.trim();
+                }
+                if (els.inputCustomSlug) {
+                    appState.customSlug = slugify(els.inputCustomSlug.value.trim());
+                }
+                if (els.inputSessionDate) {
+                    appState.sessionDate = els.inputSessionDate.value.trim();
+                }
+                if (els.inputUseWatermark) {
+                    appState.useWatermark = els.inputUseWatermark.checked;
+                }
+                if (els.inputFolderUrl) {
+                    appState.folderUrl = els.inputFolderUrl.value.trim();
+                }
+
+                // Update UI dan galeri agar menampilkan nama klien, sesi, limit, dan studio terbaru
+                updateUI();
+                renderGallery();
+
+                els.btnViewGallery.classList.replace('text-gray-600', 'text-blue-700');
+                els.btnViewGallery.classList.replace('hover:bg-gray-100', 'bg-blue-50');
+                els.btnViewAdmin.classList.replace('text-blue-700', 'text-gray-600');
+                els.btnViewAdmin.classList.replace('bg-blue-50', 'hover:bg-gray-100');
+                els.btnViewAdmin.classList.add('hover:text-gray-900');
+            } else {
+                els.btnViewAdmin.classList.replace('text-gray-600', 'text-blue-700');
+                els.btnViewAdmin.classList.replace('hover:bg-gray-100', 'bg-blue-50');
+                els.btnViewAdmin.classList.remove('hover:text-gray-900');
+                els.btnViewGallery.classList.replace('text-blue-700', 'text-gray-600');
+                els.btnViewGallery.classList.replace('bg-blue-50', 'hover:bg-gray-100');
+
+                // Isi form admin dari appState yang sudah tersimpan (tidak akan reset)
+                els.inputStudioName.value = appState.studioName;
+                els.inputWaNumber.value = appState.waNumber;
+                els.inputMaxLimit.value = appState.maxLimit;
+                els.inputAdminPin.value = ''; // Kosongkan agar PIN lama tidak tampil
+                if (els.inputClientName) els.inputClientName.value = appState.clientName || '';
+                if (els.inputCustomSlug) {
+                    const defaultSlug = slugify(appState.clientName || '');
+                    els.inputCustomSlug.value = appState.customSlug || defaultSlug;
+                    if (appState.customSlug && defaultSlug && appState.customSlug !== defaultSlug) {
+                        isSlugManuallyEdited = true;
+                        if (els.btnResetSlug) els.btnResetSlug.classList.remove('hidden');
+                    } else {
+                        isSlugManuallyEdited = false;
+                        if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                    }
+                }
+                if (els.inputSessionDate) els.inputSessionDate.value = appState.sessionDate || getTodayDateString();
+                if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || getDefaultGasSecretKey();
+                if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
+                els.inputGasUrl.value = appState.gasUrl;
+                els.inputFolderUrl.value = appState.folderUrl;
+            }
+
+            // Tampilkan view tanpa animasi
+            if (!fromView.classList.contains('hidden')) {
+                fromView.classList.add('hidden');
+            }
+            toView.classList.remove('hidden');
+        }
+
+        // PIN Logika & Proteksi Brute-Force & Pop-up Otomatis
+        let pinAttempts = 0;
+        let pinLockoutUntil = 0;
+        let isProcessingPin = false;
+
+        async function verifyAndSubmitPin(isFromTyping = false) {
+            if (isProcessingPin) return;
+
+            const now = Date.now();
+            if (now < pinLockoutUntil) {
+                const waitSec = Math.ceil((pinLockoutUntil - now) / 1000);
+                els.pinModal.classList.add('hidden');
+                els.pinModal.classList.remove('flex');
+                showDialog(`Terlalu banyak percobaan gagal. Silakan tunggu ${waitSec} detik lagi demi keamanan.`, "Akses Dikunci Sementara", "error");
+                return;
+            }
+
+            const inputVal = els.inputPin.value.trim();
+            if (!inputVal) {
+                if (!isFromTyping) {
+                    els.pinModal.classList.add('hidden');
+                    els.pinModal.classList.remove('flex');
+                    showDialog("Silakan masukkan PIN terlebih dahulu.", "PIN Kosong", "error", () => {
+                        els.pinModal.classList.remove('hidden');
+                        els.pinModal.classList.add('flex');
+                        setTimeout(() => els.inputPin.focus(), 60);
+                    });
+                }
+                return;
+            }
+
+            isProcessingPin = true;
+            try {
+                const inputHash = await hashText(inputVal);
+                const isMatch = (inputHash === appState.adminPinHash) ||
+                    (appState.adminPin && inputVal === appState.adminPin) ||
+                    (!appState.adminPinHash && inputVal === "1234");
+
+                // Sembunyikan modal PIN terlebih dahulu agar TIDAK menutupi pop-up dialog
+                els.pinModal.classList.add('hidden');
+                els.pinModal.classList.remove('flex');
+
+                if (isMatch) {
+                    pinAttempts = 0;
+                    isAdminLoggedIn = true;
+                    try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
+                    els.inputPin.value = '';
+
+                    // POP-UP OTOMATIS MUNCUL KETIKA PIN BENAR!
+                    showDialog(
+                        "PIN benar! Akses admin berhasil dibuka.",
+                        "PIN Benar!",
+                        "success",
+                        () => {
+                            switchView('admin');
+                        },
+                        1200 // Otomatis mengalihkan ke admin setelah 1.2 detik jika tombol tidak diklik
+                    );
+                } else {
+                    pinAttempts++;
+
+                    if (pinAttempts >= 5) {
+                        pinLockoutUntil = Date.now() + 30000; // Kunci 30 detik
+                        pinAttempts = 0;
+                        showDialog("PIN salah 5 kali berturut-turut. Akses admin dikunci selama 30 detik demi keamanan.", "Keamanan Admin", "error");
+                    } else {
+                        // POP-UP OTOMATIS MUNCUL KETIKA PIN SALAH!
+                        showDialog(
+                            `PIN yang Anda masukkan salah. (Percobaan tersisa: ${5 - pinAttempts})`,
+                            "PIN Salah!",
+                            "error",
+                            () => {
+                                // Ketika user mengklik "Coba Lagi", munculkan kembali modal PIN
+                                els.pinModal.classList.remove('hidden');
+                                els.pinModal.classList.add('flex');
+                                els.inputPin.value = '';
+                                const modalCard = els.pinModal.querySelector('.bg-white');
+                                if (modalCard) {
+                                    modalCard.classList.remove('animate-shake');
+                                    void modalCard.offsetWidth; // trigger reflow
+                                    modalCard.classList.add('animate-shake');
+                                }
+                                setTimeout(() => els.inputPin.focus(), 60);
+                            }
+                        );
+                    }
+                }
+            } finally {
+                isProcessingPin = false;
+            }
+        }
+
+        els.btnViewAdmin.addEventListener('click', () => {
+            if (isAdminLoggedIn) {
+                switchView('admin');
+            } else {
+                els.inputPin.value = '';
+                els.pinModal.classList.remove('hidden');
+                els.pinModal.classList.add('flex');
+                setTimeout(() => els.inputPin.focus(), 60);
+            }
+        });
+
+        els.btnCancelPin.addEventListener('click', () => {
+            els.pinModal.classList.add('hidden');
+            els.pinModal.classList.remove('flex');
+            els.inputPin.value = '';
+        });
+
+        els.pinModal.addEventListener('click', (e) => {
+            if (e.target === els.pinModal) {
+                els.pinModal.classList.add('hidden');
+                els.pinModal.classList.remove('flex');
+                els.inputPin.value = '';
+            }
+        });
+
+        els.btnSubmitPin.addEventListener('click', () => {
+            clearTimeout(pinTypingTimer);
+            verifyAndSubmitPin(false);
+        });
+
+        // Event otomatis saat mengetik PIN (auto-trigger jika sudah memenuhi panjang PIN)
+        let pinTypingTimer = null;
+        if (els.inputPin) {
+            els.inputPin.addEventListener('input', () => {
+                clearTimeout(pinTypingTimer);
+                const targetLen = appState.adminPinLength || 4;
+                const val = els.inputPin.value.trim();
+
+                // Jika panjang input sudah mencapai panjang PIN (misal 4 digit), cek otomatis!
+                if (val.length >= targetLen) {
+                    pinTypingTimer = setTimeout(() => {
+                        verifyAndSubmitPin(true);
+                    }, 280);
+                }
+            });
+
+            els.inputPin.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(pinTypingTimer);
+                    verifyAndSubmitPin(false);
+                }
+            });
+        }
+
+        // Event Modal Help Folder
+        els.btnHelpFolder.addEventListener('click', () => {
+            els.helpFolderModal.classList.remove('hidden');
+            els.helpFolderModal.classList.add('flex');
+        });
+
+        const closeHelpFolder = () => {
+            els.helpFolderModal.classList.add('hidden');
+            els.helpFolderModal.classList.remove('flex');
+        };
+        els.btnCloseHelp.addEventListener('click', closeHelpFolder);
+        els.btnUnderstandHelp.addEventListener('click', closeHelpFolder);
+
+        els.btnViewGallery.addEventListener('click', () => switchView('gallery'));
+
+        // Fungsi Ekstrak ID Folder dari URL Drive
+        function extractFolderId(urlOrId) {
+            if (!urlOrId) return null;
+            const match = urlOrId.match(/[-\w]{25,}/);
+            return match ? match[0] : urlOrId.trim();
+        }
+
+        // --- FITUR AUTO-TARIK FOTO TANPA TOMBOL ---
+        async function pullPhotosAutomatically(folderInput, gasUrl) {
+            const folderId = extractFolderId(folderInput);
+            if (!gasUrl) {
+                showDialog("URL Web App GAS belum diisi. Silakan isi dan buat script GAS-nya terlebih dahulu.", "Peringatan");
+                return;
+            }
+
+            // Animasi Loading di Teks Status
+            els.folderSyncStatus.innerHTML = `<svg class="animate-spin w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-width="3"></path></svg> Menarik foto secara otomatis...`;
+            els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-blue-600";
+
+            try {
+                const response = await fetch(`${gasUrl}?folder=${folderId}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    if (result.data.length === 0) {
+                        showDialog("Berhasil membaca folder, namun tidak ditemukan file foto (JPG/PNG) di dalamnya.", "Info");
+                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Folder kosong / tidak ada foto.`;
+                        els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                    } else {
+                        // Mengurutkan foto berdasarkan ID (Nama File) secara natural (Alfanumerik)
+                        result.data.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+
+                        appState.photos = result.data;
+                        appState.selectedPhotos.clear(); // Reset pilihan klien sebelumnya
+
+                        // Sinkronkan data form admin yang sedang diketik agar tidak hilang saat galeri dibuka
+                        if (els.inputStudioName && els.inputStudioName.value.trim()) appState.studioName = els.inputStudioName.value.trim();
+                        if (els.inputWaNumber && els.inputWaNumber.value.trim()) appState.waNumber = formatWaNumber(els.inputWaNumber.value.trim());
+                        if (els.inputMaxLimit && els.inputMaxLimit.value) {
+                            const lim = parseInt(els.inputMaxLimit.value);
+                            if (!isNaN(lim) && lim > 0) appState.maxLimit = lim;
+                        }
+                        if (els.inputClientName) appState.clientName = els.inputClientName.value.trim();
+                        if (els.inputSessionDate) appState.sessionDate = els.inputSessionDate.value.trim();
+
+                        // Render galeri di latar belakang agar fotografer bisa mengecek fotonya
+                        renderGallery();
+                        updateUI();
+
+                        showDialog(`Sukses menarik ${result.data.length} foto! Klik tab 'Galeri Klien' di atas untuk mengeceknya, lalu 'Simpan Pengaturan' untuk membuat link.`, "Berhasil");
+
+                        els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>${result.data.length} foto berhasil ditarik.`;
+                        els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-green-600";
+                    }
+                } else {
+                    showDialog(`Gagal: ${result.message}`, "Server Error");
+                    els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ✕ Gagal menarik foto.`;
+                    els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                }
+            } catch (error) {
+                showDialog("Gagal terhubung ke GAS. Pastikan URL Web App sudah benar dan izin Deployment disetel ke 'Anyone'.", "Error Koneksi");
+                els.folderSyncStatus.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ✕ Koneksi Error.`;
+                els.folderSyncStatus.className = "text-xs font-medium mt-2 flex items-center transition-all text-red-600";
+                console.error(error);
+            }
+        }
+
+        let isSlugManuallyEdited = false;
+
+        if (els.inputClientName) {
+            els.inputClientName.addEventListener('input', () => {
+                if (!isSlugManuallyEdited && els.inputCustomSlug) {
+                    els.inputCustomSlug.value = slugify(els.inputClientName.value);
+                }
+            });
+        }
+
+        if (els.inputCustomSlug) {
+            els.inputCustomSlug.addEventListener('input', () => {
+                isSlugManuallyEdited = true;
+                if (els.btnResetSlug) els.btnResetSlug.classList.remove('hidden');
+            });
+
+            els.inputCustomSlug.addEventListener('blur', () => {
+                const currentVal = els.inputCustomSlug.value.trim();
+                if (currentVal) {
+                    els.inputCustomSlug.value = slugify(currentVal);
+                } else {
+                    isSlugManuallyEdited = false;
+                    if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                    els.inputCustomSlug.value = slugify(els.inputClientName ? els.inputClientName.value : '');
+                }
+            });
+        }
+
+        if (els.btnResetSlug) {
+            els.btnResetSlug.addEventListener('click', () => {
+                isSlugManuallyEdited = false;
+                if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
+                if (els.inputCustomSlug) {
+                    els.inputCustomSlug.value = slugify(els.inputClientName ? els.inputClientName.value : '');
+                }
+            });
+        }
+
+        let typingTimer;
+        els.inputFolderUrl.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            const folderInput = els.inputFolderUrl.value.trim();
+            const gasUrl = els.inputGasUrl.value.trim();
+
+            // Sembunyikan status lama saat mengetik ulang
+            els.folderSyncStatus.classList.add('hidden');
+
+            // Cek jika kolom Drive dan GAS sudah terisi, dan ID foldernya valid
+            if (folderInput && gasUrl && extractFolderId(folderInput)) {
+                // Tunggu 1 detik setelah user berhenti mengetik/paste
+                typingTimer = setTimeout(() => {
+                    pullPhotosAutomatically(folderInput, gasUrl);
+                }, 1000);
+            }
+        });
+
+        let isSavingAdmin = false;
+        els.btnSaveAdmin.addEventListener('click', async () => {
+            if (isSavingAdmin) return;
+            isSavingAdmin = true;
+            setTimeout(() => { isSavingAdmin = false; }, 800);
+
+            const newStudio = els.inputStudioName.value.trim();
+            const newWa = formatWaNumber(els.inputWaNumber.value.trim());
+            const newLimit = parseInt(els.inputMaxLimit.value);
+            const newPin = els.inputAdminPin.value.trim();
+
+            if (!newStudio || !newWa || isNaN(newLimit) || newLimit < 1) {
+                showDialog("Mohon lengkapi data dengan benar", "Peringatan");
+                return;
+            }
+
+            appState.studioName = newStudio;
+            appState.waNumber = newWa;
+            els.inputWaNumber.value = newWa;
+            appState.maxLimit = newLimit;
+            if (newPin) {
+                appState.adminPinHash = await hashText(newPin);
+                appState.adminPinLength = newPin.length;
+                els.inputAdminPin.value = '';
+            }
+            if (els.inputClientName) {
+                appState.clientName = els.inputClientName.value.trim();
+            }
+            if (els.inputCustomSlug) {
+                appState.customSlug = slugify(els.inputCustomSlug.value.trim());
+            }
+            if (els.inputSessionDate) {
+                appState.sessionDate = els.inputSessionDate.value.trim();
+            }
+            if (els.inputGasSecret && els.inputGasSecret.value.trim()) {
+                appState.gasSecretKey = els.inputGasSecret.value.trim();
+            } else if (!appState.gasSecretKey) {
+                appState.gasSecretKey = getDefaultGasSecretKey();
+            }
+            if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
+            appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
+            appState.folderUrl = els.inputFolderUrl.value.trim();
+
+            try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
+            saveSettings();
+            updateUI();
+            renderGallery();
+
+            showDialog("Pengaturan berhasil disimpan!", "Berhasil", "success");
+
+            // Buat URL Klien Otomatis (Langsung & Terlindungi Integritasnya)
+            if (appState.gasUrl && appState.folderUrl) {
+                const folderId = extractFolderId(appState.folderUrl);
+                const baseUrl = window.location.href.split('?')[0];
+
+                // Ekstrak ID unik GAS agar link data lebih pendek
+                const gasMatch = appState.gasUrl.match(/\/s\/([a-zA-Z0-9_-]+)/);
+                const isDefaultGas = (!appState.gasUrl || appState.gasUrl === getDefaultGasUrl());
+                const gasId = isDefaultGas ? '' : (gasMatch ? gasMatch[1] : appState.gasUrl);
+
+                // Tanda tangan integritas data (mencegah manipulasi limit atau WA)
+                const signKey = `${folderId}_${appState.maxLimit}_${appState.waNumber}`;
+                let hash = 0;
+                for (let i = 0; i < signKey.length; i++) {
+                    hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
+                    hash |= 0;
+                }
+                const sig = Math.abs(hash).toString(36);
+
+                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi
+                const wmFlag = appState.useWatermark ? '1' : '0';
+                const safeClient = encodeURIComponent(appState.clientName || '');
+                const safeDate = encodeURIComponent(appState.sessionDate || '');
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}`;
+                const token = btoa(encodeURIComponent(rawData));
+
+                const clientUrlFallback = `${baseUrl}?t=${token}`;
+
+                // Generate Short Code: Gunakan custom slug / nama klien jika ada, fallback ke acak
+                let finalCode = (els.inputCustomSlug ? slugify(els.inputCustomSlug.value.trim()) : '');
+                if (!finalCode && appState.clientName) {
+                    finalCode = slugify(appState.clientName);
+                }
+                if (!finalCode) {
+                    finalCode = generateShortCode();
+                }
+                appState.customSlug = finalCode;
+                const shortCode = finalCode;
+
+                let shortClientUrl = `${baseUrl}?c=${encodeURIComponent(shortCode)}`;
+                if (!isDefaultGas) {
+                    shortClientUrl += `&g=${encodeURIComponent(gasId)}`;
+                }
+
+                els.shareSection.classList.remove('hidden');
+
+                // Siapkan pembuat teks pesan WhatsApp lengkap
+                const greeting = appState.clientName ? `Halo Kak *${appState.clientName}*,` : `Halo,`;
+                const sessionInfo = appState.sessionDate ? ` (Sesi: ${formatDisplayDate(appState.sessionDate)})` : '';
+                const buildShareMessage = (url) => {
+                    return `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilakan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${url}\n\nTerima kasih!`;
+                };
+
+                // REALTIME (0 Detik Jeda): Teks langsung tampil seketika & tombol salin langsung aktif
+                els.inputClientLink.value = buildShareMessage(shortClientUrl);
+                els.btnCopyLink.disabled = false;
+                els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                if (els.shortLinkBadge) {
+                    els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
+                    els.shortLinkBadge.textContent = "✓ Link Pendek Aktif";
+                    els.shortLinkBadge.classList.remove('hidden');
+                }
+
+                // Pastikan Folder URL selalu lengkap (berupa link Google Drive lengkap)
+                const rawFolder = (appState.folderUrl || (els.inputFolderUrl ? els.inputFolderUrl.value : '') || '').trim();
+                let fullFolderUrl = rawFolder;
+                if (fullFolderUrl && !fullFolderUrl.startsWith('http')) {
+                    fullFolderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                } else if (!fullFolderUrl && folderId) {
+                    fullFolderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                }
+
+                // 1. Simpan ke Riwayat Lokal Browser Segera (syncToGas: false agar tidak tercatat ganda)
+                addToHistory(shortClientUrl, fullFolderUrl, false);
+
+                // 2. Kirim ke Database Google Sheet di Background (Hanya 1 Baris Saja, Tanpa Menghambat Tampilan UI)
+                const gasKey = appState.gasSecretKey || getDefaultGasSecretKey();
+                const gasEndpoint = appState.gasUrl || getDefaultGasUrl();
+
+                if (gasEndpoint && gasKey) {
+                    const params = new URLSearchParams({
+                        action: 'saveShortLink',
+                        key: gasKey,
+                        code: shortCode,
+                        token: token,
+                        folderId: fullFolderUrl, // URL lengkap agar kompatibel dengan skrip GAS yang membaca folderId
+                        folderUrl: fullFolderUrl, // URL lengkap untuk skrip GAS yang membaca folderUrl
+                        studioName: appState.studioName || 'Studio',
+                        clientName: appState.clientName || '',
+                        sessionDate: appState.sessionDate || '',
+                        fullLink: shortClientUrl
+                    });
+
+                    fetch(`${gasEndpoint}?${params.toString()}`)
+                        .then(res => res.json())
+                        .then(resJson => {
+                            if (resJson && resJson.status === 'success') {
+                                console.log("Google Apps Script: Tersimpan 1 baris sukses.");
+                            }
+                        })
+                        .catch(err => {
+                            console.warn("GAS background sync:", err);
+                        });
+                }
+            }
+        });
+
+        els.btnCopyLink.addEventListener('click', () => {
+            els.inputClientLink.select();
+            document.execCommand('copy');
+            const originalHtml = els.btnCopyLink.innerHTML;
+            els.btnCopyLink.innerHTML = `<svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Pesan Tersalin! ✓`;
+
+            // Perbaiki pergantian warna saat diklik
+            els.btnCopyLink.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            els.btnCopyLink.classList.add('bg-green-600', 'hover:bg-green-700');
+
+            setTimeout(() => {
+                els.btnCopyLink.innerHTML = originalHtml;
+                els.btnCopyLink.classList.remove('bg-green-600', 'hover:bg-green-700');
+                els.btnCopyLink.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 2000);
+        });
+
+        // Event Buka Galeri Klien dari dashboard admin tanpa reset
+        if (els.btnOpenClientGallery) {
+            els.btnOpenClientGallery.addEventListener('click', () => {
+                switchView('gallery');
+            });
+        }
+
+        // Event Buka WA secara langsung untuk bagikan link & pesan
+        const btnShareWa = document.getElementById('btnShareWa');
+        if (btnShareWa) {
+            btnShareWa.addEventListener('click', () => {
+                const messageText = els.inputClientLink.value;
+                if (!messageText || messageText.includes("Membuat link")) return;
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(messageText)}`, '_blank');
+            });
+        }
+
+        // Event Kirim ke WA Klien
+        els.btnSendToClientWa.addEventListener('click', () => {
+            const clientWa = formatWaNumber(els.inputClientWa.value.trim());
+            const messageText = els.inputClientLink.value;
+
+            if (!clientWa) {
+                showDialog("Masukkan nomor WhatsApp klien terlebih dahulu.", "Peringatan");
+                return;
+            }
+
+            els.inputClientWa.value = clientWa;
+            const waUrl = `https://wa.me/${clientWa}?text=${encodeURIComponent(messageText)}`;
+            window.open(waUrl, '_blank');
+        });
+
+        // Fungsi dekripsi token URL klien menjadi state aplikasi
+        function decodeTokenToAppState(tokenStr) {
+            const decodedStr = decodeURIComponent(atob(tokenStr));
+
+            if (decodedStr.includes('|')) {
+                const parts = decodedStr.split('|');
+                const folderId = parts[0];
+                const gasId = parts[1];
+                const maxLimit = parseInt(parts[2]) || 10;
+                const waNumber = formatWaNumber(parts[3]);
+                const studioName = parts[4] || "Studio";
+                const useWm = parts.length > 5 ? (parts[5] === '1') : true;
+                const sig = parts.length > 6 ? parts[6] : null;
+                const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
+                const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
+
+                // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
+                if (sig) {
+                    const signKey = `${folderId}_${maxLimit}_${waNumber}`;
+                    let hash = 0;
+                    for (let i = 0; i < signKey.length; i++) {
+                        hash = ((hash << 5) - hash) + signKey.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    const expectedSig = Math.abs(hash).toString(36);
+                    if (sig !== expectedSig) {
+                        throw new Error("Integritas tautan tidak valid (telah diubah).");
+                    }
+                }
+
+                appState.folderUrl = folderId;
+                appState.gasUrl = (!gasId || gasId === '')
+                    ? getDefaultGasUrl()
+                    : (gasId.includes('http') ? gasId : `https://script.google.com/macros/s/${gasId}/exec`);
+                appState.maxLimit = maxLimit;
+                appState.waNumber = waNumber;
+                appState.studioName = studioName;
+                appState.useWatermark = useWm;
+                appState.clientName = clientName;
+                appState.sessionDate = sessionDate;
+            } else {
+                // Fallback format lama (JSON)
+                const parsedData = JSON.parse(decodedStr);
+                appState.folderUrl = parsedData.f;
+                appState.gasUrl = parsedData.g || getDefaultGasUrl();
+                appState.studioName = parsedData.n || appState.studioName;
+                appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
+                appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
+                appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
+            }
+        }
+
+        // --- STARTUP APLIKASI ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Auto-select text pada input saat diklik (focus) untuk memudahkan admin menghapus/mengedit
+            const allInputs = document.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.select();
+                });
+            });
+
+            // Auto-format nomor WA ketika selesai mengetik (blur)
+            if (els.inputWaNumber) {
+                els.inputWaNumber.addEventListener('blur', function () {
+                    if (this.value.trim()) this.value = formatWaNumber(this.value);
+                });
+            }
+            if (els.inputClientWa) {
+                els.inputClientWa.addEventListener('blur', function () {
+                    if (this.value.trim()) this.value = formatWaNumber(this.value);
+                });
+            }
+
+            // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token atau Short Code)
+            const urlParams = new URLSearchParams(window.location.search);
+            const encryptedToken = urlParams.get('t') || urlParams.get('token');
+            const shortCode = urlParams.get('c');
+
+            if (encryptedToken || shortCode) {
+                // ISOLASI KEAMANAN: HAPUS PANEL ADMIN DAN MODAL PIN SECARA TOTAL DARI DOM
+                const adminBtn = document.getElementById('btnViewAdmin');
+                const adminView = document.getElementById('viewAdmin');
+                const pinModal = document.getElementById('pinModal');
+                const helpModal = document.getElementById('helpFolderModal');
+
+                if (adminBtn) adminBtn.remove();
+                if (adminView) adminView.remove();
+                if (pinModal) pinModal.remove();
+                if (helpModal) helpModal.remove();
+
+                if (els.btnViewGallery) {
+                    els.btnViewGallery.classList.add('cursor-default');
+                }
+
+                // Kunci fungsi switchView agar tidak bisa dipanggil lewat console
+                window.switchView = function () {
+                    return false;
+                };
+
+                // Bersihkan kredensial admin dari memori halaman klien
+                delete appState.gasSecretKey;
+                delete appState.adminPinHash;
+
+                try {
+                    let tokenToUse = encryptedToken;
+
+                    // Jika dibuka via Short Code (?c=...), tarik data token dari Google Sheets
+                    if (shortCode && !tokenToUse) {
+                        els.photoGrid.innerHTML = `
+                            <div class="col-span-full flex flex-col items-center justify-center py-24">
+                                <div class="relative">
+                                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center mb-6">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-1">Membuka Galeri Foto...</h3>
+                                <p class="text-sm text-gray-500 animate-pulse transition-all duration-300">Menghubungkan ke database tautan...</p>
+                            </div>`;
+
+                        const customGas = urlParams.get('g');
+                        const gasEndpoint = customGas
+                            ? (customGas.includes('http') ? customGas : `https://script.google.com/macros/s/${customGas}/exec`)
+                            : getDefaultGasUrl();
+
+                        const shortRes = await fetch(`${gasEndpoint}?action=getShortLink&code=${encodeURIComponent(shortCode.trim())}`);
+                        const shortJson = await shortRes.json();
+
+                        if (shortJson && shortJson.status === 'success' && shortJson.data && shortJson.data.token) {
+                            tokenToUse = shortJson.data.token;
+                        } else {
+                            throw new Error(shortJson && shortJson.message ? shortJson.message : "Tautan galeri tidak ditemukan atau sudah kedaluwarsa.");
+                        }
+                    }
+
+                    // Dekripsi token kembali menjadi data
+                    decodeTokenToAppState(tokenToUse);
+                    updateUI();
+
+                    // Tarik foto secara otomatis dengan animasi loading yang lebih interaktif
+                    els.photoGrid.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-24">
+                            <div class="relative">
+                                <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
+                                <div class="absolute inset-0 flex items-center justify-center mb-6">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-1">Memuat Galeri...</h3>
+                            <p id="loadingTextIndicator" class="text-sm text-gray-500 animate-pulse transition-all duration-300">Menghubungkan ke Google Drive...</p>
+                        </div>`;
+
+                    // Ganti teks loading secara berkala agar klien tidak bosan
+                    const loadingTexts = ["Mengumpulkan foto...", "Membaca data gambar...", "Sedikit lagi selesai..."];
+                    let loadingTextIndex = 0;
+                    const loadingInterval = setInterval(() => {
+                        const indicator = document.getElementById('loadingTextIndicator');
+                        if (indicator && loadingTextIndex < loadingTexts.length) {
+                            indicator.textContent = loadingTexts[loadingTextIndex];
+                            loadingTextIndex++;
+                        }
+                    }, 2500);
+
+                    const response = await fetch(`${appState.gasUrl}?folder=${appState.folderUrl}`);
+                    const result = await response.json();
+
+                    clearInterval(loadingInterval); // Hentikan animasi teks
+
+                    if (result.status === 'success') {
+                        // Mengurutkan foto berdasarkan ID (Nama File) secara natural (Alfanumerik)
+                        result.data.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+
+                        appState.photos = result.data;
+                        appState.selectedPhotos.clear();
+                        renderGallery();
+                    } else {
+                        els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Gagal memuat foto: ${result.message}</div>`;
+                    }
+                } catch (error) {
+                    els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16">
+                        <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tautan Tidak Ditemukan / Tidak Valid</h3>
+                        <p class="text-gray-500 max-w-md mx-auto mb-4">${error.message || "Tautan galeri ini mungkin telah kedaluwarsa atau belum terdaftar. Silakan minta tautan baru kepada fotografer Anda."}</p>
+                    </div>`;
+                    console.error("Kesalahan membuka galeri klien:", error);
+                }
+            } else {
+                // Mode Normal (Buka link utama)
+                let hasActiveAdminSession = false;
+                try {
+                    hasActiveAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
+                } catch (e) { }
+
+                if (hasActiveAdminSession) {
+                    // Jangan reset jika ini adalah sesi kerja admin aktif (misal saat membuka galeri klien dari dashboard)
+                    await loadSettings();
+                    updateUI();
+                    renderGallery();
+                } else {
+                    // Sesi baru / tab baru buka link utama: SELALU KEMBALI KE DEFAULT AWAL
+                    resetToDefault();
+                }
+            }
+
+            // =========================================================================
+            // SISTEM PROTEKSI GLOBAL (AKTIF DI SEMUA HALAMAN: ADMIN & GALERI KLIEN)
+            // =========================================================================
+
+            // 1. Cegah klik kanan (Download) secara global di seluruh halaman (Capture Phase agar mendahului ekstensi)
+            window.addEventListener('contextmenu', event => {
+                event.preventDefault();
+            }, true);
+            document.addEventListener('contextmenu', event => {
+                event.preventDefault();
+            }, true);
+
+            // 2. Fungsi Blur & Proteksi Tampilan Layar
+            function blurScreen() {
+                requestAnimationFrame(() => {
+                    document.body.classList.add('window-blurred');
+                });
+            }
+
+            function unblurScreen(delay = 500) {
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        // Cek jika DevTools masih terbuka sebelum unblur
+                        const threshold = 160;
+                        const isDocked = (window.outerWidth - window.innerWidth > threshold) || 
+                                         (window.outerHeight - window.innerHeight > threshold);
+                        if (!isDocked) {
+                            document.body.classList.remove('window-blurred');
+                        }
+                    });
+                }, delay);
+            }
+
+            // 3. Cegah drag foto ke desktop / tab baru secara global
+            window.addEventListener('dragstart', function (e) {
+                if (e.target && (e.target.nodeName === 'IMG' || (e.target.classList && e.target.classList.contains('photo-card')))) {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+
+            // 4. Blokir Shortcut Keyboard (F12, Inspect, View Source, Save As, Print) Secara Global
+            window.addEventListener('keydown', function (e) {
+                // F12
+                if (e.key === 'F12' || e.keyCode === 123) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+Shift+I / Cmd+Option+I (DevTools)
+                // Ctrl+Shift+J / Cmd+Option+J (Console)
+                // Ctrl+Shift+C / Cmd+Option+C (Inspect Element)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && 
+                    (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || 
+                     e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+U / Cmd+Option+U (View Page Source)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U' || e.keyCode === 85)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+S / Cmd+S (Save Page)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.keyCode === 83)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+P / Cmd+P (Print to PDF)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.keyCode === 80)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, true);
+
+            // 5. Anti-DevTools Debugger Trap (Auto Freeze Inspect) - Aktif Global
+            // Jika ada pengguna membuka Inspect Element melalui menu browser atau ekstensi (di admin maupun klien),
+            // script ini otomatis menjebak eksekusi browser dalam breakpoint berulang sehingga DevTools macet.
+            const triggerDebugger = function () {
+                try {
+                    const start = performance.now();
+                    (function () {
+                        return false;
+                    }['constructor']('debugger')['call']());
+                    // Jika debugger tertahan lebih dari 100ms, berarti DevTools sedang terbuka
+                    if (performance.now() - start > 100) {
+                        blurScreen();
+                    }
+                } catch (err) { }
+            };
+            setInterval(triggerDebugger, 250);
+
+            // 6. Deteksi DevTools Docking via Dimensi Window - Aktif Global
+            const checkDevToolsDock = function () {
+                const threshold = 160;
+                const widthDiff = window.outerWidth - window.innerWidth > threshold;
+                const heightDiff = window.outerHeight - window.innerHeight > threshold;
+                if (widthDiff || heightDiff) {
+                    blurScreen();
+                }
+            };
+            window.addEventListener('resize', checkDevToolsDock);
+            setInterval(checkDevToolsDock, 1000);
+
+            // 7. CSS Proteksi Anti-Drag & Text Select pada elemen media
+            const protStyle = document.createElement('style');
+            protStyle.textContent = `
+                img {
+                    -webkit-user-drag: none;
+                    user-drag: none;
+                    pointer-events: none !important;
+                    -webkit-touch-callout: none !important;
+                }
+                #fullscreenImageWrapper img {
+                    pointer-events: auto !important;
+                }
+                * { -webkit-tap-highlight-color: transparent; }
+            `;
+            document.head.appendChild(protStyle);
+
+            // =========================================================================
+            // FITUR KHUSUS GALERI KLIEN (ANTI-SCREENSHOT & GESTURE)
+            // =========================================================================
+            const isClientMode = new URLSearchParams(window.location.search).has('t') ||
+                new URLSearchParams(window.location.search).has('token') ||
+                new URLSearchParams(window.location.search).has('c');
+
+            if (isClientMode) {
+                const shield = document.getElementById('screenshot-shield');
+                const blendShield = document.getElementById('css-blend-shield');
+
+                // Aktifkan CSS blend shield permanen
+                if (blendShield) blendShield.classList.add('active');
+
+                function showBlackScreen(duration = 2000) {
+                    requestAnimationFrame(() => {
+                        document.body.classList.add('screen-blacked-out');
+                        if (shield) shield.classList.add('active');
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                if (shield) shield.classList.remove('active');
+                                document.body.classList.remove('screen-blacked-out');
+                            }, duration);
+                        });
+                    });
+                }
+
+                // Window kehilangan fokus (alt-tab, ganti aplikasi)
+                window.addEventListener('blur', blurScreen);
+                window.addEventListener('focus', () => unblurScreen(500));
+
+                // Page Visibility (swipe layar sistem, buka notification bar full)
+                document.addEventListener('visibilitychange', function () {
+                    if (document.hidden) {
+                        blurScreen();
+                    } else {
+                        unblurScreen(500);
+                    }
+                });
+
+                // Deteksi sentuhan 3+ jari = kemungkinan screenshot gesture Android
+                document.addEventListener('touchstart', function (e) {
+                    if (e.touches.length >= 3) {
+                        showBlackScreen(2000);
+                    }
+                }, { passive: true });
+            }
+        });
+
+    </script>
+</body>
+
+</html>
