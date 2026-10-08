@@ -9,11 +9,43 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <!-- Proteksi Anti-Clickjacking (Frame Busting) -->
+    <!-- Proteksi Anti-Clickjacking & Auto-Redirect Galeri Klien -->
     <script>
         if (window.top !== window.self) {
             window.top.location = window.self.location;
         }
+
+        // AUTO-REDIRECT KLIEN: Jika klien menghapus parameter URL jadi domain utama,
+        // seketika kembalikan (redirect) ke galeri foto klien dalam 0 detik!
+        (function () {
+            try {
+                const search = window.location.search;
+                const hash = window.location.hash;
+                const urlParams = new URLSearchParams(search);
+                const isClientUrl = urlParams.has('c') || urlParams.has('t') || urlParams.has('token');
+                const isAdminBypass = urlParams.has('admin') || hash === '#admin';
+
+                if (isClientUrl) {
+                    // Simpan link galeri klien yang sedang dibuka
+                    localStorage.setItem('saved_client_gallery', window.location.href);
+                    if (localStorage.getItem('isAdminDevice') !== 'true') {
+                        localStorage.setItem('isClientDevice', 'true');
+                    }
+                } else if (!isAdminBypass) {
+                    // Klien mencoba mengakses domain utama (menghapus parameter)
+                    const isAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
+                    const isAdminDevice = localStorage.getItem('isAdminDevice') === 'true';
+                    const savedClient = localStorage.getItem('saved_client_gallery');
+
+                    if (!isAdminSession && !isAdminDevice && savedClient) {
+                        // Redirect instan sebelum konten admin sempat di-render
+                        window.location.replace(savedClient);
+                    }
+                }
+            } catch (e) {
+                console.warn("Auto-redirect check:", e);
+            }
+        })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -2242,7 +2274,12 @@ function doGet(e) {
                 if (isMatch) {
                     pinAttempts = 0;
                     isAdminLoggedIn = true;
-                    try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
+                    try {
+                        sessionStorage.setItem('activeAdminSession', 'true');
+                        localStorage.setItem('isAdminDevice', 'true');
+                        localStorage.removeItem('isClientDevice');
+                        localStorage.removeItem('saved_client_gallery');
+                    } catch (e) { }
                     els.inputPin.value = '';
 
                     // POP-UP OTOMATIS MUNCUL KETIKA PIN BENAR!
@@ -2524,7 +2561,12 @@ function doGet(e) {
             appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
-            try { sessionStorage.setItem('activeAdminSession', 'true'); } catch (e) { }
+            try {
+                sessionStorage.setItem('activeAdminSession', 'true');
+                localStorage.setItem('isAdminDevice', 'true');
+                localStorage.removeItem('isClientDevice');
+                localStorage.removeItem('saved_client_gallery');
+            } catch (e) { }
             saveSettings();
             updateUI();
             renderGallery();
@@ -2768,6 +2810,14 @@ function doGet(e) {
             const shortCode = urlParams.get('c');
 
             if (encryptedToken || shortCode) {
+                // Simpan tautan klien aktif ke localStorage
+                try {
+                    localStorage.setItem('saved_client_gallery', window.location.href);
+                    if (localStorage.getItem('isAdminDevice') !== 'true') {
+                        localStorage.setItem('isClientDevice', 'true');
+                    }
+                } catch (e) { }
+
                 // ISOLASI KEAMANAN: HAPUS PANEL ADMIN DAN MODAL PIN SECARA TOTAL DARI DOM
                 const adminBtn = document.getElementById('btnViewAdmin');
                 const adminView = document.getElementById('viewAdmin');
@@ -2876,11 +2926,21 @@ function doGet(e) {
                     console.error("Kesalahan membuka galeri klien:", error);
                 }
             } else {
-                // Mode Normal (Buka link utama)
+                // Mode Normal (Buka link utama / domain admin)
                 let hasActiveAdminSession = false;
                 try {
                     hasActiveAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
                 } catch (e) { }
+
+                const isAdminDevice = localStorage.getItem('isAdminDevice') === 'true';
+                const savedClientUrl = localStorage.getItem('saved_client_gallery');
+                const isAdminBypass = urlParams.has('admin') || window.location.hash === '#admin';
+
+                // Jika bukan admin dan ada riwayat galeri klien, mental kembali ke link klien
+                if (!hasActiveAdminSession && !isAdminDevice && savedClientUrl && !isAdminBypass) {
+                    window.location.replace(savedClientUrl);
+                    return;
+                }
 
                 if (hasActiveAdminSession) {
                     // Jangan reset jika ini adalah sesi kerja admin aktif (misal saat membuka galeri klien dari dashboard)
@@ -2890,6 +2950,13 @@ function doGet(e) {
                 } else {
                     // Sesi baru / tab baru buka link utama: SELALU KEMBALI KE DEFAULT AWAL
                     resetToDefault();
+
+                    // Jika fotografer membuka dengan ?admin atau #admin, buka modal PIN secara otomatis
+                    if (isAdminBypass) {
+                        setTimeout(() => {
+                            if (els.btnViewAdmin) els.btnViewAdmin.click();
+                        }, 250);
+                    }
                 }
             }
 
