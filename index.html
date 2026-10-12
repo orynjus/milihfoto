@@ -49,11 +49,62 @@
             }
         })();
     </script>
+    <!-- Instant Theme Loader (Default Terang) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('app_theme');
+                if (savedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ====== TRANSISI TEMA SUPER MULUS (LIGHT / DARK SMOOTH TRANSITION) ====== */
+        nav,
+        #viewGallery > div,
+        #viewAdmin > div,
+        #reviewModal > div,
+        #pinModal > div,
+        #dialogModal > div,
+        #helpFolderModal > div,
+        #filterTabContainer,
+        #filterTabContainer button,
+        input,
+        textarea {
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html.theme-transitioning,
+        html.theme-transitioning *,
+        html.theme-transitioning *::before,
+        html.theme-transitioning *::after {
+            transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                        color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                        fill 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                        stroke 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 450ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition-delay: 0s !important;
         }
 
         /* ====== PREVENT FLASH & INSTANT SPLASH SCREEN MODE (0 DETIK) ====== */
@@ -94,6 +145,10 @@
             background-color: #f1f5f9;
         }
 
+        html.dark .shimmer-bg {
+            background-color: #1e293b;
+        }
+
         .shimmer-bg::after {
             position: absolute;
             top: 0;
@@ -108,6 +163,14 @@
                     rgba(255, 255, 255, 0));
             animation: shimmer 1.6s infinite;
             content: '';
+        }
+
+        html.dark .shimmer-bg::after {
+            background-image: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0,
+                    rgba(255, 255, 255, 0.05) 20%,
+                    rgba(255, 255, 255, 0.1) 60%,
+                    rgba(255, 255, 255, 0));
         }
 
         @keyframes fadeIn {
@@ -324,7 +387,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
 
     <!-- Anti-Screenshot Print Block -->
     <div id="anti-screenshot-print-msg" style="display:none;">
@@ -351,24 +414,36 @@
     <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
     <div id="css-blend-shield"></div>
 
-    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 transition-colors duration-200">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <svg class="w-8 h-8 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
                         </path>
                     </svg>
-                    <span id="navStudioName" class="font-bold text-xl text-gray-900 tracking-tight">Studio Foto</span>
+                    <span id="navStudioName" class="font-bold text-xl text-gray-900 dark:text-white tracking-tight">Studio Foto</span>
                 </div>
-                <div class="flex items-center space-x-2 sm:space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Toggle Mode Terang/Gelap -->
+                    <button id="btnThemeToggle" type="button" aria-label="Ganti Mode Terang atau Gelap" title="Mode Terang / Gelap"
+                        class="relative w-9 h-9 p-0 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/80 transition-all duration-300 active:scale-90 flex items-center justify-center overflow-hidden">
+                        <svg id="themeIconSun" class="w-5 h-5 text-amber-400 absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="themeIconMoon" class="w-5 h-5 text-gray-600 dark:text-gray-300 absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
                     <button id="btnViewGallery" onclick="switchView('gallery')"
-                        class="px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition">Galeri
+                        class="px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 transition">Galeri
                         Klien</button>
                     <button id="btnViewAdmin" onclick="handleAdminClick(event)"
-                        class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition">⚙️
+                        class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition">⚙️
                         Admin</button>
                 </div>
             </div>
@@ -380,38 +455,38 @@
         <!-- === VIEW: GALERI KLIEN === -->
         <div id="viewGallery" class="block animate-fade-in">
             <!-- Header Kartu Galeri Klien dengan Progress Bar -->
-            <div class="mb-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 transition-all">
+            <div class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800 transition-all">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
 
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Pilih Foto Anda
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Pilih Foto Anda
                         </h1>
-                        <p id="gallerySubtitle" class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">
+                        <p id="gallerySubtitle" class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 leading-relaxed">
                             Silakan pilih foto terbaik yang ingin dicetak. Ketuk ikon perbesar untuk melihat detail.
                         </p>
                     </div>
                     <div class="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                        <div class="flex items-center bg-blue-50/80 px-4 py-2.5 rounded-xl border border-blue-100">
+                        <div class="flex items-center bg-blue-50/80 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
                             <span
-                                class="text-xs font-semibold text-blue-800 mr-2 uppercase tracking-wider">Terpilih:</span>
-                            <span id="counterText" class="text-lg sm:text-xl font-bold text-blue-600">0 / 10</span>
+                                class="text-xs font-semibold text-blue-800 dark:text-blue-300 mr-2 uppercase tracking-wider">Terpilih:</span>
+                            <span id="counterText" class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">0 / 10</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Animated Selection Progress Bar -->
-                <div class="mt-4 pt-3.5 border-t border-gray-100">
+                <div class="mt-4 pt-3.5 border-t border-gray-100 dark:border-gray-800">
                     <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
-                        <span id="progressStatusText" class="text-gray-500 flex items-center gap-1.5">
+                        <span id="progressStatusText" class="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                             <span>Pilih maksimal 10 foto</span>
                         </span>
-                        <span id="progressPercentText" class="text-blue-600 font-bold">0%</span>
+                        <span id="progressPercentText" class="text-blue-600 dark:text-blue-400 font-bold">0%</span>
                     </div>
                     <div
-                        class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-200/60 shadow-inner">
+                        class="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5 border border-gray-200/60 dark:border-gray-700 shadow-inner">
                         <div id="selectionProgressBar"
                             class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full transition-all duration-500 ease-out"
                             style="width: 0%;"></div>
@@ -421,132 +496,132 @@
 
             <!-- Tab Filter Kategori Cepat (Semua Foto vs Terpilih) -->
             <div class="mb-4 flex items-center justify-between flex-wrap gap-2.5">
-                <div class="inline-flex p-1 bg-gray-100/90 rounded-xl border border-gray-200/70 text-xs font-semibold"
+                <div class="inline-flex p-1 bg-gray-100/90 dark:bg-gray-800 rounded-xl border border-gray-200/70 dark:border-gray-700 text-xs font-semibold"
                     id="filterTabContainer">
                     <button id="tabFilterAll" onclick="setGalleryFilter('all')"
-                        class="px-3.5 py-2 rounded-lg bg-white text-gray-900 shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95">
-                        <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="px-3.5 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95">
+                        <svg class="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
                             </path>
                         </svg>
                         <span>Semua Foto</span>
-                        <span id="tabCountAll" class="text-gray-400 font-normal ml-0.5">(0)</span>
+                        <span id="tabCountAll" class="text-gray-400 dark:text-gray-400 font-normal ml-0.5">(0)</span>
                     </button>
                     <button id="tabFilterSelected" onclick="setGalleryFilter('selected')"
-                        class="px-3.5 py-2 rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 active:scale-95">
+                        class="px-3.5 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all flex items-center gap-1.5 active:scale-95">
                         <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                             <path
                                 d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
                             </path>
                         </svg>
                         <span>Foto Terpilih</span>
-                        <span id="tabCountSelected" class="text-blue-600 font-bold ml-0.5">(0)</span>
+                        <span id="tabCountSelected" class="text-blue-600 dark:text-blue-400 font-bold ml-0.5">(0)</span>
                     </button>
                 </div>
                 <div id="filterSelectedNotice"
-                    class="hidden text-xs text-amber-800 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 items-center gap-1.5 animate-fade-in">
+                    class="hidden text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/60 items-center gap-1.5 animate-fade-in">
                     <span>⭐ Menampilkan khusus foto yang telah Anda centang</span>
                 </div>
             </div>
 
             <!-- Empty Selected Filter Notice -->
             <div id="filterEmptySelectedState"
-                class="hidden col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200 p-6 mb-6">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="hidden col-span-full py-16 text-center bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 p-6 mb-6">
+                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
-                <h3 class="text-base font-bold text-gray-800 mb-1">Belum Ada Foto Terpilih</h3>
-                <p class="text-xs text-gray-500 max-w-sm mx-auto mb-4">Anda belum mencentang foto apapun. Silakan
+                <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">Belum Ada Foto Terpilih</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Anda belum mencentang foto apapun. Silakan
                     beralih ke tab Semua Foto untuk mulai memilih foto favorit Anda.</p>
                 <button onclick="setGalleryFilter('all')"
                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">Lihat
                     Semua Foto</button>
             </div>
 
-            <!-- Grid Foto -->
+            <!-- Grid Foto Masonry (Foto Utuh, Rapi, Urut Berurutan) -->
             <div id="photoGrid"
-                class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pb-28 no-select"
+                class="flex gap-1.5 sm:gap-2 pb-28 no-select items-start w-full"
                 oncontextmenu="return false;">
-                <!-- Foto akan di-render di sini oleh JavaScript -->
+                <!-- Kolom foto akan di-render di sini oleh JavaScript -->
             </div>
         </div>
 
         <!-- === VIEW: ADMIN PENGATURAN === -->
         <div id="viewAdmin" class="hidden animate-fade-in">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 max-w-3xl mx-auto">
-                <div class="flex items-center mb-4 pb-4 border-b border-gray-100">
-                    <span class="text-x font-bold text-gray-900">Pengaturan Admin</span>
+            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 md:p-8 max-w-3xl mx-auto">
+                <div class="flex items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-x font-bold text-gray-900 dark:text-white">Pengaturan Admin</span>
                 </div>
 
                 <!-- KONTEN PENGATURAN -->
                 <div id="adminSettingsContent" class="space-y-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Studio Foto</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Studio Foto</label>
                             <input type="text" id="inputStudioName"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                                class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal Pilihan
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batas Maksimal Pilihan
                                 Foto</label>
                             <input type="number" id="inputMaxLimit"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 min="1">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp Fotografer</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor WhatsApp Fotografer</label>
                         <input type="text" id="inputWaNumber"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                            class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                             placeholder="">
                         <input type="password" id="inputAdminPin" class="hidden">
                     </div>
 
                     <!-- Opsi Watermark (Default Aktif) -->
-                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <div>
                             <label for="inputUseWatermark"
-                                class="block text-sm font-semibold text-gray-900 cursor-pointer">Watermark Nama
+                                class="block text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">Watermark Nama
                                 Studio</label>
-                            <p class="text-xs text-gray-500 mt-0.5">Tampilkan watermark teks nama studio di atas foto
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan watermark teks nama studio di atas foto
                                 galeri &amp; layar penuh.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="inputUseWatermark" class="sr-only peer" checked>
                             <div
-                                class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                             </div>
                         </label>
                     </div>
 
                     <!-- Informasi Klien & Tanggal Sesi Foto -->
-                    <div class="p-4 bg-blue-50/70 rounded-xl border border-blue-100 space-y-3">
+                    <div class="p-4 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-3">
                         <div class="flex items-center space-x-2">
                             <span class="text-base">&#128197;</span>
-                            <h3 class="text-sm font-bold text-gray-900">Informasi Klien &amp; Tanggal Sesi</h3>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-blue-200">Informasi Klien &amp; Tanggal Sesi</h3>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Klien / Acara</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Nama Klien / Acara</label>
                                 <input type="text" id="inputClientName"
-                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Sesi Foto</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Tanggal Sesi Foto</label>
                                 <input type="date" id="inputSessionDate"
-                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+                                    class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
                             </div>
                         </div>
                         <div class="pt-1">
                             <div class="flex items-center justify-between mb-1">
-                                <label class="block text-xs font-semibold text-gray-700">Custom Link Pendek (Alias
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300">Custom Link Pendek (Alias
                                     URL)</label>
                                 <button type="button" id="btnResetSlug"
-                                    class="text-[11px] text-blue-600 hover:text-blue-800 font-medium hidden flex items-center gap-1">
+                                    class="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium hidden flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -556,49 +631,49 @@
                                 </button>
                             </div>
                             <input type="text" id="inputCustomSlug"
-                                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-mono text-gray-800 shadow-sm"
+                                class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-mono text-gray-800 dark:text-gray-200 shadow-sm"
                                 placeholder="" autocomplete="off" spellcheck="false">
-                            <p class="text-[11px] text-gray-500 mt-1">
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                 Anda juga bisa mengetik kustom url sendiri sebelum menyimpan.
                             </p>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-200 pt-0 mt-0">
+                    <div class="border-t border-gray-200 dark:border-gray-800 pt-0 mt-0">
                         <div class="flex justify-between items-end mb-2">
-                            <h3 class="text-lg font-bold text-gray-900"></h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white"></h3>
                             <button id="btnHelpFolder"
-                                class="hidden text-xs text-blue-600 hover:text-blue-800 font-semibold underline px-2 py-1 bg-blue-50 rounded transition">Cara
+                                class="hidden text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold underline px-2 py-1 bg-blue-50 dark:bg-blue-950/50 rounded transition">Cara
                                 Pasang GAS?</button>
                         </div>
 
                         <div class="space-y-4">
                             <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL Web App Google Apps
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL Web App Google Apps
                                     Script</label>
                                 <input type="text" id="inputGasUrl"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="https://script.google.com/macros/s/.../exec">
                             </div>
 
                             <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Kunci Rahasia GAS
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kunci Rahasia GAS
                                     (Secret Key)</label>
                                 <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="Masukkan kunci rahasia Anda">
-                                <p class="text-xs text-gray-500 mt-1">hanya tersimpan lokal di browser admin.</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">hanya tersimpan lokal di browser admin.</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Folder Google
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Folder Google
                                     Drive</label>
                                 <input type="text" id="inputFolderUrl"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="">
                                 <div id="folderSyncStatus"
                                     class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
-                                <p class="text-xs text-gray-500 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Pastikan pengaturan folder Drive Anda adalah
                                     <b>"Siapa saja yang memiliki link"</b>.
                                 </p>
                             </div>
@@ -607,23 +682,23 @@
 
                     <div class="pt-4 flex justify-end">
                         <button id="btnSaveAdmin"
-                            class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-black transition shadow-sm">Simpan
+                            class="px-6 py-2 bg-gray-900 dark:bg-blue-600 text-white rounded-lg font-medium hover:bg-black dark:hover:bg-blue-700 transition shadow-sm">Simpan
                             Pengaturan</button>
                     </div>
 
                     <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
-                    <div id="shareSection" class="border-t border-gray-200 pt-6 mt-6 hidden">
+                    <div id="shareSection" class="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6 hidden">
                         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <h3 class="text-lg font-bold text-gray-900">&#128279; Bagikan Pesan &amp; Galeri ke Klien
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">&#128279; Bagikan Pesan &amp; Galeri ke Klien
                             </h3>
                             <span id="shortLinkBadge"
                                 class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
                         </div>
-                        <p class="text-sm text-gray-500 mb-3">Teks pesan dan link di bawah ini siap disalin atau
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Teks pesan dan link di bawah ini siap disalin atau
                             langsung dikirimkan ke WhatsApp klien:</p>
                         <div class="space-y-3 mb-4">
                             <textarea id="inputClientLink" readonly rows="5"
-                                class="w-full px-4 py-3 border border-blue-200 rounded-xl bg-blue-50/80 text-blue-950 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
+                                class="w-full px-4 py-3 border border-blue-200 dark:border-blue-900/60 rounded-xl bg-blue-50/80 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <button id="btnCopyLink"
                                     class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
@@ -658,13 +733,13 @@
                         </div>
 
                         <!-- Panel Kirim ke Klien -->
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Kirim Langsung ke WhatsApp
+                        <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirim Langsung ke WhatsApp
                                 Klien</label>
-                            <p class="text-xs text-gray-500 mb-2"></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2"></p>
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <input type="text" id="inputClientWa"
-                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
+                                    class="flex-1 px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
                                     placeholder="">
                                 <button id="btnSendToClientWa"
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
@@ -802,22 +877,22 @@
         class="fixed inset-0 z-50 bg-gray-950/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 hidden no-select"
         oncontextmenu="return false;">
         <div
-            class="max-w-md w-full bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-scale-in">
+            class="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col max-h-[90vh] animate-scale-in">
             <!-- Modal Header -->
             <div
-                class="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-blue-50/30">
+                class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-gray-800/50">
                 <div class="flex items-center gap-2.5">
                     <div
-                        class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                        class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg">
                         📸
                     </div>
                     <div>
-                        <h3 class="text-base font-bold text-gray-900">Konfirmasi Pilihan Foto</h3>
-                        <p class="text-xs text-gray-500">Tinjau kembali foto sebelum dikirim ke WA</p>
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white">Konfirmasi Pilihan Foto</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Tinjau kembali foto sebelum dikirim ke WA</p>
                     </div>
                 </div>
                 <button id="btnCloseReviewTop"
-                    class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition">
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 18L18 6M6 6l12 12" />
@@ -828,24 +903,24 @@
             <!-- Modal Body (Scrollable) -->
             <div class="p-5 overflow-y-auto space-y-4 flex-1">
                 <!-- Info Ringkasan Klien -->
-                <div class="bg-gray-50 rounded-2xl p-3.5 border border-gray-100 text-xs space-y-2">
+                <div class="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3.5 border border-gray-100 dark:border-gray-700 text-xs space-y-2">
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Nama Klien:</span>
-                        <span id="reviewClientName" class="font-bold text-gray-800">-</span>
+                        <span class="text-gray-500 dark:text-gray-400">Nama Klien:</span>
+                        <span id="reviewClientName" class="font-bold text-gray-900 dark:text-white">-</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Tanggal Sesi:</span>
-                        <span id="reviewSessionDate" class="font-semibold text-gray-700">-</span>
+                        <span class="text-gray-500 dark:text-gray-400">Tanggal Sesi:</span>
+                        <span id="reviewSessionDate" class="font-semibold text-gray-800 dark:text-gray-200">-</span>
                     </div>
-                    <div class="flex justify-between pt-1 border-t border-gray-200/60">
-                        <span class="text-gray-600 font-semibold">Total Foto Dipilih:</span>
-                        <span id="reviewTotalCount" class="font-extrabold text-blue-600 text-sm">0 Foto</span>
+                    <div class="flex justify-between pt-1 border-t border-gray-200/60 dark:border-gray-700">
+                        <span class="text-gray-600 dark:text-gray-400 font-semibold">Total Foto Dipilih:</span>
+                        <span id="reviewTotalCount" class="font-extrabold text-blue-600 dark:text-blue-400 text-sm">0 Foto</span>
                     </div>
                 </div>
 
                 <!-- Grid Daftar Foto Terpilih -->
                 <div>
-                    <p class="text-xs font-bold text-gray-700 mb-2">Daftar Foto Terpilih:</p>
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Daftar Foto Terpilih:</p>
                     <div id="reviewGrid" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                         <!-- Diisi otomatis oleh JS -->
                     </div>
@@ -853,9 +928,9 @@
             </div>
 
             <!-- Modal Footer Buttons -->
-            <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center gap-2.5">
+            <div class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center gap-2.5">
                 <button id="btnCancelReview"
-                    class="flex-1 py-3 px-4 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl text-xs sm:text-sm transition shadow-sm">
+                    class="flex-1 py-3 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-200 font-semibold rounded-xl text-xs sm:text-sm transition shadow-sm">
                     Periksa Lagi
                 </button>
                 <button id="btnConfirmSendWa"
@@ -895,6 +970,29 @@
 
         <!-- Zoom Level Indicator -->
         <div id="zoomIndicator">100%</div>
+
+        <!-- Notifikasi Loop di Tengah (Sebelum Foto Pertama Dimulai Lagi) -->
+        <div id="fullscreenLoopNotification"
+            class="absolute inset-0 z-40 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none bg-black/60 backdrop-blur-sm cursor-pointer select-none">
+            <div
+                class="loop-card transform scale-90 transition-all duration-300 bg-gray-950/95 border border-white/20 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black text-center max-w-[290px] sm:max-w-xs w-full flex flex-col items-center">
+                <div
+                    class="w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-400/30 text-blue-400 flex items-center justify-center mb-3.5 shadow-lg shadow-blue-500/20">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </div>
+                <h4 class="text-base sm:text-lg font-bold text-white mb-1 tracking-tight">Foto Telah Dilihat Semua</h4>
+                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed mb-3.5">Kembali ke awal...</p>
+                <div
+                    class="inline-flex items-center gap-2 text-[11px] text-blue-400 font-semibold bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                    <span>Memulai dari awal</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Header Mengambang -->
         <div
@@ -948,26 +1046,26 @@
     <!-- PIN Login Modal -->
     <div id="pinModal" style="z-index: 1000;"
         class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm z-[1000] hidden items-center justify-center px-4 animate-fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-100">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-3 text-gray-700">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-100 dark:border-gray-800">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 text-gray-700 dark:text-gray-300">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
                     </path>
                 </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-1 text-center">Akses Admin</h3>
-            <p class="text-sm text-gray-500 mb-5 text-center">Masukkan PIN untuk mengatur galeri.</p>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1 text-center">Akses Admin</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5 text-center">Masukkan PIN untuk mengatur galeri.</p>
 
             <input type="password" id="inputPin" placeholder="••••" maxlength="12" inputmode="numeric"
                 autocomplete="current-password"
-                class="w-full px-4 py-3 text-center text-2xl font-bold tracking-[0.35em] border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-4 shadow-sm bg-gray-50 focus:bg-white">
+                class="w-full px-4 py-3 text-center text-2xl font-bold tracking-[0.35em] border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition mb-4 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-750">
 
             <div class="flex space-x-3">
                 <button id="btnCancelPin"
-                    class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 active:scale-95 transition">Batal</button>
+                    class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition">Batal</button>
                 <button id="btnSubmitPin"
-                    class="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl font-semibold hover:bg-black active:scale-95 transition shadow-sm">Masuk</button>
+                    class="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-blue-600 text-white rounded-xl font-semibold hover:bg-black dark:hover:bg-blue-700 active:scale-95 transition shadow-sm">Masuk</button>
             </div>
         </div>
     </div>
@@ -975,23 +1073,23 @@
     <!-- Folder Help Modal -->
     <div id="helpFolderModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center px-4 animate-fade-in overflow-y-auto pt-20 pb-10">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto">
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto border border-gray-100 dark:border-gray-800">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-900">Cara Memasang Google Apps Script (GAS)</h3>
-                <button id="btnCloseHelp" class="text-gray-400 hover:text-gray-600 transition">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Cara Memasang Google Apps Script (GAS)</h3>
+                <button id="btnCloseHelp" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
                     </svg>
                 </button>
             </div>
-            <div class="text-sm text-gray-700 space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+            <div class="text-sm text-gray-700 dark:text-gray-300 space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
                 <p>Google Apps Script (GAS) bertindak sebagai pembaca folder Google Drive, database riwayat link,
                     serta
                     <b>pencatat otomatis backup hasil pilihan foto klien ke Google Sheets</b>.
                 </p>
                 <ol class="list-decimal pl-5 space-y-2 font-medium">
-                    <li>Buka <a href="https://sheets.new" target="_blank" class="text-blue-600 underline">Google
+                    <li>Buka <a href="https://sheets.new" target="_blank" class="text-blue-600 dark:text-blue-400 underline">Google
                             Sheets
                             (sheets.new)</a> untuk membuat file Spreadsheet baru.</li>
                     <li>Pada menu di atas, klik <b>Ekstensi &rarr; Apps Script</b>.</li>
@@ -1000,7 +1098,7 @@
                 </ol>
                 <div class="relative">
                     <textarea readonly
-                        class="w-full h-48 p-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-xs text-gray-800 outline-none resize-none">
+                        class="w-full h-48 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg font-mono text-xs text-gray-800 dark:text-gray-200 outline-none resize-none">
 function doGet(e) {
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
@@ -1172,17 +1270,17 @@ function doPost(e) {
     <div id="dialogModal" style="z-index: 9999;"
         class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center px-4 animate-fade-in">
         <div
-            class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 relative">
+            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 dark:border-gray-800 relative">
             <div id="dialogIconContainer"
-                class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 mb-4 transition-all duration-300">
-                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 transition-all duration-300" fill="none"
+                class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 dark:bg-blue-900/40 mb-4 transition-all duration-300">
+                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 dark:text-blue-400 transition-all duration-300" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <h3 id="dialogTitle" class="text-xl font-bold text-gray-900 mb-2">Informasi</h3>
-            <p id="dialogMessage" class="text-sm text-gray-600 mb-6 leading-relaxed">Pesan di sini.</p>
+            <h3 id="dialogTitle" class="text-xl font-bold text-gray-900 dark:text-white mb-2">Informasi</h3>
+            <p id="dialogMessage" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Pesan di sini.</p>
             <button id="btnDialogOk"
                 class="w-full inline-flex justify-center items-center rounded-xl shadow-md px-5 py-2.5 bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 focus:outline-none transition-all">
                 Mengerti
@@ -1305,8 +1403,66 @@ function doPost(e) {
             btnCopyLink: document.getElementById('btnCopyLink'),
             btnOpenClientGallery: document.getElementById('btnOpenClientGallery'),
             inputClientWa: document.getElementById('inputClientWa'),
-            btnSendToClientWa: document.getElementById('btnSendToClientWa')
+            btnSendToClientWa: document.getElementById('btnSendToClientWa'),
+
+            // Theme Toggle
+            btnThemeToggle: document.getElementById('btnThemeToggle'),
+            themeIconSun: document.getElementById('themeIconSun'),
+            themeIconMoon: document.getElementById('themeIconMoon')
         };
+
+        // --- MANAJEMEN TEMA TERANG / GELAP (LIGHT/DARK MODE) ---
+        function updateThemeUI(isDark) {
+            const sunIcon = document.getElementById('themeIconSun');
+            const moonIcon = document.getElementById('themeIconMoon');
+            if (sunIcon && moonIcon) {
+                if (isDark) {
+                    sunIcon.classList.remove('scale-0', '-rotate-90', 'opacity-0');
+                    sunIcon.classList.add('scale-100', 'rotate-0', 'opacity-100');
+                    moonIcon.classList.remove('scale-100', 'rotate-0', 'opacity-100');
+                    moonIcon.classList.add('scale-0', 'rotate-90', 'opacity-0');
+                } else {
+                    sunIcon.classList.remove('scale-100', 'rotate-0', 'opacity-100');
+                    sunIcon.classList.add('scale-0', '-rotate-90', 'opacity-0');
+                    moonIcon.classList.remove('scale-0', 'rotate-90', 'opacity-0');
+                    moonIcon.classList.add('scale-100', 'rotate-0', 'opacity-100');
+                }
+            }
+        }
+
+        let themeTransitionTimer = null;
+        function toggleTheme() {
+            clearTimeout(themeTransitionTimer);
+            // Aktifkan transisi menyeluruh di seluruh elemen DOM
+            document.documentElement.classList.add('theme-transitioning');
+
+            const isDark = document.documentElement.classList.toggle('dark');
+            try {
+                localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+            updateThemeUI(isDark);
+
+            themeTransitionTimer = setTimeout(() => {
+                document.documentElement.classList.remove('theme-transitioning');
+            }, 500);
+        }
+
+        function initTheme() {
+            // Default adalah Terang (Light Mode), hanya aktif jika sebelumnya disimpan 'dark'
+            const savedTheme = localStorage.getItem('app_theme');
+            const isDark = savedTheme === 'dark';
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeUI(isDark);
+            const btn = document.getElementById('btnThemeToggle');
+            if (btn) {
+                btn.removeEventListener('click', toggleTheme);
+                btn.addEventListener('click', toggleTheme);
+            }
+        }
 
         // Fungsi pembantu mengubah teks menjadi URL-friendly slug
         function slugify(text) {
@@ -1683,10 +1839,10 @@ function doPost(e) {
 
             if (filterName === 'selected') {
                 if (tabAll) {
-                    tabAll.className = "px-3.5 py-2 rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 active:scale-95";
+                    tabAll.className = "px-3.5 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all flex items-center gap-1.5 active:scale-95";
                 }
                 if (tabSel) {
-                    tabSel.className = "px-3.5 py-2 rounded-lg bg-white text-gray-900 shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95";
+                    tabSel.className = "px-3.5 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95";
                 }
                 if (notice) notice.classList.remove('hidden');
 
@@ -1708,10 +1864,10 @@ function doPost(e) {
                 }
             } else {
                 if (tabAll) {
-                    tabAll.className = "px-3.5 py-2 rounded-lg bg-white text-gray-900 shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95";
+                    tabAll.className = "px-3.5 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95";
                 }
                 if (tabSel) {
-                    tabSel.className = "px-3.5 py-2 rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 active:scale-95";
+                    tabSel.className = "px-3.5 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all flex items-center gap-1.5 active:scale-95";
                 }
                 if (notice) notice.classList.add('hidden');
                 if (emptyNotice) emptyNotice.classList.add('hidden');
@@ -1750,7 +1906,7 @@ function doPost(e) {
             if (pText) pText.textContent = `${percent}%`;
             if (pStatus) {
                 if (selectedCount >= maxLimit) {
-                    pStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-700 font-bold">🎉 Kuota Terpenuhi (${selectedCount} foto)</span>`;
+                    pStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-700 dark:text-emerald-400 font-bold">🎉 Kuota Terpenuhi (${selectedCount} foto)</span>`;
                 } else if (selectedCount > 0) {
                     pStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span><span>Dipilih: ${selectedCount} dari ${maxLimit} foto</span>`;
                 } else {
@@ -1774,8 +1930,8 @@ function doPost(e) {
             const subtitleEl = document.getElementById('gallerySubtitle');
             if (subtitleEl) {
                 if (appState.clientName) {
-                    const datePart = appState.sessionDate ? ` • Sesi: ${formatDisplayDate(appState.sessionDate)}` : '';
-                    subtitleEl.innerHTML = `Klien: <span class="font-semibold text-gray-800">${escapeHtml(appState.clientName)}</span>${escapeHtml(datePart)} &mdash; Silakan pilih maksimal <b>${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
+                    const datePart = appState.sessionDate ? ` &bull; Sesi: <strong class="font-semibold text-gray-800 dark:text-gray-200">${escapeHtml(formatDisplayDate(appState.sessionDate))}</strong>` : '';
+                    subtitleEl.innerHTML = `<span class="text-gray-600 dark:text-gray-400 font-medium">Klien:</span> <span class="font-bold text-gray-900 dark:text-white">${escapeHtml(appState.clientName)}</span>${datePart} &mdash; Silakan pilih maksimal <b class="font-bold text-gray-900 dark:text-white">${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
                 } else {
                     subtitleEl.textContent = 'Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
                 }
@@ -1791,33 +1947,59 @@ function doPost(e) {
             }
         }
 
+        function getMasonryColCount() {
+            const w = window.innerWidth;
+            if (w >= 1280) return 6;
+            if (w >= 1024) return 5;
+            if (w >= 768) return 4;
+            if (w >= 640) return 3;
+            return 2;
+        }
+
         function renderGallery() {
             els.photoGrid.innerHTML = '';
 
+            // 1. Urutkan nama file secara alfanumerik alami (Natural Sort: IMG_1, IMG_2, IMG_10...)
+            if (appState.photos && Array.isArray(appState.photos)) {
+                appState.photos.sort((a, b) => {
+                    return String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true, sensitivity: 'base' });
+                });
+            }
+
             if (appState.photos.length === 0) {
                 const emptyMessage = document.createElement('div');
-                emptyMessage.className = "col-span-full flex flex-col items-center justify-center py-16 text-center";
+                emptyMessage.className = "w-full col-span-full flex flex-col items-center justify-center py-16 text-center";
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const isClient = urlParams.has('t') || urlParams.has('token') || urlParams.has('c');
 
                 if (isClient) {
                     emptyMessage.innerHTML = `
-                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <h3 class="text-xl font-medium text-gray-900 mb-2">Belum ada foto</h3>
-                        <p class="text-gray-500">Galeri ini kosong atau foto gagal dimuat. Hubungi fotografer Anda.</p>
+                        <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">Belum ada foto</h3>
+                        <p class="text-gray-500 dark:text-gray-400">Galeri ini kosong atau foto gagal dimuat. Hubungi fotografer Anda.</p>
                     `;
                 } else {
                     emptyMessage.innerHTML = `
-                        <svg class="w-16 h-16 text-blue-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Mode Fotografer</h3>
-                        <p class="text-gray-500 mb-4">Silakan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
-                        <button onclick="handleAdminClick(event)" class="px-5 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition shadow-sm border border-blue-200">Buka Pengaturan Admin</button>
+                        <svg class="w-16 h-16 text-blue-300 dark:text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Mode Fotografer</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">Silakan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
+                        <button onclick="handleAdminClick(event)" class="px-5 py-2 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition shadow-sm border border-blue-200 dark:border-blue-800">Buka Pengaturan Admin</button>
                     `;
                 }
 
                 els.photoGrid.appendChild(emptyMessage);
                 return;
+            }
+
+            // 2. Siapkan wadah kolom flex untuk urutan berurutan (kiri ke kanan)
+            const colCount = getMasonryColCount();
+            const colContainers = [];
+            for (let c = 0; c < colCount; c++) {
+                const colDiv = document.createElement('div');
+                colDiv.className = "flex-1 flex flex-col gap-1.5 sm:gap-2 min-w-0";
+                els.photoGrid.appendChild(colDiv);
+                colContainers.push(colDiv);
             }
 
             appState.photos.forEach((photo, index) => {
@@ -1834,7 +2016,7 @@ function doPost(e) {
 
                 const card = document.createElement('div');
                 card.setAttribute('data-id', photo.id);
-                card.className = `relative group rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-gray-100 aspect-[4/3] ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
+                card.className = `w-full relative group rounded-xl overflow-hidden cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-gray-100 dark:bg-gray-800 ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
 
                 // Jika sedang di filter "Foto Terpilih" dan foto ini tidak terpilih, sembunyikan
                 if (currentGalleryFilter === 'selected' && !isSelected) {
@@ -1842,7 +2024,7 @@ function doPost(e) {
                 }
 
                 const checkBadge = isSelected
-                    ? `<div class="check-badge absolute top-2 right-2 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white p-1 rounded-full z-30 shadow-md ring-2 ring-white animate-scale-in">
+                    ? `<div class="check-badge absolute top-1.5 right-1.5 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white p-1 rounded-full z-30 shadow-md ring-2 ring-white animate-scale-in">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                        </div>`
                     : '';
@@ -1852,24 +2034,24 @@ function doPost(e) {
 
                 const watermarkHtml = appState.useWatermark ? `
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 z-10 overflow-hidden">
-                        <span class="text-white font-bold text-sm sm:text-lg md:text-xl transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${safeStudio}</span>
+                        <span class="text-white font-bold text-sm sm:text-base md:text-lg transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] px-2 text-center select-none">${safeStudio}</span>
                     </div>` : '';
 
                 card.innerHTML = `
                     ${checkBadge}
-                    <div class="w-full h-full shimmer-bg">
+                    <div class="w-full min-h-[90px] shimmer-bg relative overflow-hidden">
                         <img src="${safeThumb}" alt="${safePhotoId}" draggable="false" 
-                            class="w-full h-full object-cover transition duration-300 group-hover:scale-105 pointer-events-none opacity-0" 
+                            class="w-full h-auto block transition duration-300 group-hover:scale-105 pointer-events-none opacity-0" 
                             loading="lazy" 
-                            onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg');"
-                            onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'; this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg');">
+                            onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg', 'min-h-[90px]');"
+                            onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'; this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg', 'min-h-[90px]');">
                     </div>
                     
                     ${watermarkHtml}
 
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 pointer-events-none z-20"></div>
                     
-                    <button class="absolute top-2 left-2 bg-black/60 hover:bg-black/80 active:scale-90 text-white p-2 rounded-full z-30 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Lihat Penuh">
+                    <button class="absolute top-1.5 left-1.5 bg-black/60 hover:bg-black/80 active:scale-90 text-white p-1.5 rounded-full z-30 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Lihat Penuh">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                     </button>
                 `;
@@ -1886,9 +2068,25 @@ function doPost(e) {
                     openFullscreen(photo.id);
                 });
 
-                els.photoGrid.appendChild(card);
+                // Masukkan kartu ke kolom sesuai urutan berurutan kiri ke kanan
+                const targetCol = colContainers[index % colCount];
+                targetCol.appendChild(card);
             });
         }
+
+        // Re-render saat ukuran window berubah agar jumlah kolom masonry responsif
+        let masonryResizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(masonryResizeTimer);
+            masonryResizeTimer = setTimeout(() => {
+                if (els.viewGallery && !els.viewGallery.classList.contains('hidden') && appState.photos && appState.photos.length > 0) {
+                    const activeCols = els.photoGrid.querySelectorAll(':scope > div.flex-1').length;
+                    if (activeCols !== getMasonryColCount()) {
+                        renderGallery();
+                    }
+                }
+            }, 250);
+        });
 
         // Optimasi Performa HP: Perbarui hanya elemen kartu yang diketuk tanpa me-render ulang seluruh grid
         function updateCardSelection(id, isSelected) {
@@ -1908,7 +2106,7 @@ function doPost(e) {
                 let badge = targetCard.querySelector('.check-badge');
                 if (!badge) {
                     badge = document.createElement('div');
-                    badge.className = "check-badge absolute top-2 right-2 bg-gradient-to-tr from-blue-600 via-indigo-600 to-indigo-500 text-white p-1 rounded-full z-30 shadow-md ring-2 ring-white dark:ring-slate-900 animate-scale-in";
+                    badge.className = "check-badge absolute top-1.5 right-1.5 bg-gradient-to-tr from-blue-600 via-indigo-600 to-indigo-500 text-white p-1 rounded-full z-30 shadow-md ring-2 ring-white dark:ring-slate-900 animate-scale-in";
                     badge.innerHTML = `<svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
                     targetCard.appendChild(badge);
                 }
@@ -2139,9 +2337,79 @@ function doPost(e) {
             }
         }
 
+        let isLoopNotificationActive = false;
+        let loopNotificationTimer = null;
+
+        function showCenteredLoopNotification(onComplete) {
+            const notif = document.getElementById('fullscreenLoopNotification');
+            if (!notif) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            isLoopNotificationActive = true;
+            clearTimeout(loopNotificationTimer);
+
+            // Sembunyikan foto saat ini sementara agar notifikasi di tengah menjadi fokus utama
+            if (els.fullscreenImage) {
+                els.fullscreenImage.style.transition = 'opacity 0.25s ease';
+                els.fullscreenImage.style.opacity = '0';
+            }
+            if (els.fullscreenLoader) {
+                els.fullscreenLoader.classList.add('hidden');
+            }
+
+            // Tampilkan notifikasi di tengah layar
+            notif.classList.remove('opacity-0', 'pointer-events-none');
+            notif.classList.add('opacity-100', 'pointer-events-auto');
+            const innerCard = notif.querySelector('.loop-card');
+            if (innerCard) {
+                innerCard.classList.remove('scale-90');
+                innerCard.classList.add('scale-100');
+            }
+
+            const proceedToFirst = () => {
+                if (!isLoopNotificationActive) return;
+                isLoopNotificationActive = false;
+                clearTimeout(loopNotificationTimer);
+
+                notif.classList.remove('opacity-100', 'pointer-events-auto');
+                notif.classList.add('opacity-0', 'pointer-events-none');
+                if (innerCard) {
+                    innerCard.classList.remove('scale-100');
+                    innerCard.classList.add('scale-90');
+                }
+
+                if (onComplete) onComplete();
+            };
+
+            // Beri jeda 1.3 detik di tengah layar sebelum foto pertama dimulai lagi
+            loopNotificationTimer = setTimeout(proceedToFirst, 1300);
+
+            // Pengguna juga bisa mengetuk layar untuk langsung lanjut tanpa menunggu
+            notif.onclick = (e) => {
+                e.stopPropagation();
+                proceedToFirst();
+            };
+        }
+
         function closeFullscreen(fromPopstate = false) {
             const isFromPopstate = (fromPopstate === true);
             if (els.fullscreenModal.classList.contains('hidden')) return;
+
+            // Sembunyikan notifikasi loop di tengah jika sedang aktif
+            isLoopNotificationActive = false;
+            clearTimeout(loopNotificationTimer);
+            const loopNotif = document.getElementById('fullscreenLoopNotification');
+            if (loopNotif) {
+                loopNotif.classList.remove('opacity-100', 'pointer-events-auto');
+                loopNotif.classList.add('opacity-0', 'pointer-events-none');
+                const innerCard = loopNotif.querySelector('.loop-card');
+                if (innerCard) {
+                    innerCard.classList.remove('scale-100');
+                    innerCard.classList.add('scale-90');
+                }
+            }
 
             els.fullscreenModal.classList.add('hidden');
             els.fullscreenModal.classList.remove('flex', 'block');
@@ -2173,6 +2441,8 @@ function doPost(e) {
         }
 
         function navigateFullscreen(direction) {
+            if (isLoopNotificationActive) return;
+
             const activePhotos = getActiveFullscreenPhotos();
             if (!activePhotos || activePhotos.length === 0) {
                 closeFullscreen(false);
@@ -2185,6 +2455,16 @@ function doPost(e) {
             let curIndex = -1;
             if (currentFullscreenPhoto) {
                 curIndex = activePhotos.findIndex(p => p.id === currentFullscreenPhoto.id);
+            }
+
+            // CEK JIKA SEDANG DI FOTO TERAKHIR DAN MENGGESER KE DEPAN
+            if (direction > 0 && curIndex === activePhotos.length - 1) {
+                // Tampilkan notifikasi di tengah SEBELUM foto pertama dimulai lagi!
+                showCenteredLoopNotification(() => {
+                    resetZoomOnNavigate();
+                    openFullscreen(0, 1);
+                });
+                return;
             }
 
             let newIndex = 0;
@@ -2664,14 +2944,14 @@ function doPost(e) {
                     const photoObj = appState.photos ? appState.photos.find(p => p.id === id) : null;
                     const safeThumb = photoObj ? getSafePhotoUrl(photoObj) : '';
                     const item = document.createElement('div');
-                    item.className = "flex items-center gap-2.5 p-2 rounded-xl bg-gray-50 border border-gray-100";
+                    item.className = "flex items-center gap-2.5 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700";
                     item.innerHTML = `
-                        <div class="w-11 h-11 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
+                        <div class="w-11 h-11 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
                             ${safeThumb ? `<img src="${safeThumb}" alt="${escapeHtml(id)}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[10px] text-gray-400">Foto</div>`}
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="text-xs font-bold text-gray-800 truncate">${escapeHtml(id)}</p>
-                            <span class="inline-block text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">Terpilih</span>
+                            <p class="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(id)}</p>
+                            <span class="inline-block text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded">Terpilih</span>
                         </div>
                     `;
                     revGrid.appendChild(item);
@@ -2903,17 +3183,11 @@ function doPost(e) {
                 updateUI();
                 renderGallery();
 
-                els.btnViewGallery.classList.replace('text-gray-600', 'text-blue-700');
-                els.btnViewGallery.classList.replace('hover:bg-gray-100', 'bg-blue-50');
-                els.btnViewAdmin.classList.replace('text-blue-700', 'text-gray-600');
-                els.btnViewAdmin.classList.replace('bg-blue-50', 'hover:bg-gray-100');
-                els.btnViewAdmin.classList.add('hover:text-gray-900');
+                if (els.btnViewGallery) els.btnViewGallery.className = "px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 transition";
+                if (els.btnViewAdmin) els.btnViewAdmin.className = "px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition";
             } else {
-                els.btnViewAdmin.classList.replace('text-gray-600', 'text-blue-700');
-                els.btnViewAdmin.classList.replace('hover:bg-gray-100', 'bg-blue-50');
-                els.btnViewAdmin.classList.remove('hover:text-gray-900');
-                els.btnViewGallery.classList.replace('text-blue-700', 'text-gray-600');
-                els.btnViewGallery.classList.replace('bg-blue-50', 'hover:bg-gray-100');
+                if (els.btnViewAdmin) els.btnViewAdmin.className = "px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 transition";
+                if (els.btnViewGallery) els.btnViewGallery.className = "px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition";
 
                 // Isi form admin dari appState yang sudah tersimpan (tidak akan reset)
                 els.inputStudioName.value = appState.studioName;
@@ -3503,7 +3777,8 @@ function doPost(e) {
 
         // --- STARTUP APLIKASI ---
         document.addEventListener('DOMContentLoaded', async () => {
-
+            // Inisialisasi tema (terang/gelap)
+            initTheme();
 
             // Auto-select text pada input saat diklik (focus) untuk memudahkan admin menghapus/mengedit
             const allInputs = document.querySelectorAll('input');
@@ -3583,7 +3858,7 @@ function doPost(e) {
                     // Jika dibuka via Short Code (?c=...), tarik data token dari Google Sheets
                     if (shortCode && !tokenToUse) {
                         els.photoGrid.innerHTML = `
-                            <div class="col-span-full flex flex-col items-center justify-center py-24">
+                            <div class="col-span-full flex flex-col items-center justify-center py-24 w-full" style="column-span: all;">
                                 <div class="relative">
                                     <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
                                     <div class="absolute inset-0 flex items-center justify-center mb-6">
@@ -3615,7 +3890,7 @@ function doPost(e) {
 
                     // Tarik foto secara otomatis di balik layar (background)
                     els.photoGrid.innerHTML = `
-                        <div class="col-span-full flex flex-col items-center justify-center py-24">
+                        <div class="col-span-full flex flex-col items-center justify-center py-24 w-full" style="column-span: all;">
                             <div class="relative">
                                 <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-6"></div>
                                 <div class="absolute inset-0 flex items-center justify-center mb-6">
@@ -3654,10 +3929,10 @@ function doPost(e) {
                         renderGallery();
                         updateUI();
                     } else {
-                        els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Gagal memuat foto: ${result.message}</div>`;
+                        els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10 w-full" style="column-span: all;">Gagal memuat foto: ${result.message}</div>`;
                     }
                 } catch (error) {
-                    els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16">
+                    els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16 w-full" style="column-span: all;">
                         <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">Tautan Tidak Ditemukan / Tidak Valid</h3>
                         <p class="text-gray-500 max-w-md mx-auto mb-4">${error.message || "Tautan galeri ini mungkin telah kedaluwarsa atau belum terdaftar. Silakan minta tautan baru kepada fotografer Anda."}</p>
