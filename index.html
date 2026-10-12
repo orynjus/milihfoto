@@ -31,6 +31,8 @@
                     if (localStorage.getItem('isAdminDevice') !== 'true') {
                         localStorage.setItem('isClientDevice', 'true');
                     }
+                    // Mencegah flash halaman utama: aktifkan splash screen seketika di detik 0!
+                    document.documentElement.classList.add('client-splash-active');
                 } else if (!isAdminBypass) {
                     // Klien mencoba mengakses domain utama (menghapus parameter)
                     const isAdminSession = sessionStorage.getItem('activeAdminSession') === 'true';
@@ -52,6 +54,22 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+        }
+
+        /* ====== PREVENT FLASH & INSTANT SPLASH SCREEN MODE (0 DETIK) ====== */
+        html.client-splash-active #protected-gallery-content,
+        html.client-splash-active nav,
+        html.client-splash-active footer,
+        html.client-splash-active #floatingWaBtn {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        html.client-splash-active #welcomeCoverModal {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 99999 !important;
         }
 
         .selected-ring {
@@ -304,67 +322,93 @@
             display: block;
         }
 
-        /* ====== SLIDE FOTO MELAYANG DI BELAKANG SPLASH SCREEN ====== */
-        .cover-bg-slide {
-            will-change: transform, opacity;
-            background-size: cover;
-            background-position: center;
+        /* ====== RENTETAN FOTO KECIL MELAYANG (ATAS & BAWAH SPLASH SCREEN) ====== */
+        .photo-strip-wrapper {
+            position: absolute;
+            left: 0;
+            right: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 5;
+            padding: 4px 0;
         }
 
-        .cover-slide-floating-1 {
-            animation: coverKenBurns1 9s ease-in-out infinite alternate;
-        }
-
-        .cover-slide-floating-2 {
-            animation: coverKenBurns2 9s ease-in-out infinite alternate;
-        }
-
-        @keyframes coverKenBurns1 {
-            0% {
-                transform: scale(1.05) translate(0%, 0%);
-            }
-
-            50% {
-                transform: scale(1.12) translate(-2%, 1.5%);
-            }
-
-            100% {
-                transform: scale(1.18) translate(1.5%, -1%);
-            }
-        }
-
-        @keyframes coverKenBurns2 {
-            0% {
-                transform: scale(1.18) translate(1.5%, -1.5%);
-            }
-
-            50% {
-                transform: scale(1.10) translate(-1.5%, 1%);
-            }
-
-            100% {
-                transform: scale(1.05) translate(0%, 0%);
-            }
-        }
-
-        /* Kartu Foto Mengambang Melayang (Floating Cards Parallax) */
-        .cover-drift-card {
-            animation: coverCardFloat 6s ease-in-out infinite alternate;
+        .photo-strip-track {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: max-content;
             will-change: transform;
         }
 
-        @keyframes coverCardFloat {
+        @media (min-width: 640px) {
+            .photo-strip-track {
+                gap: 16px;
+            }
+        }
+
+        /* Rentetan Atas: Bergerak dari Kanan ke Kiri Secara Mulus & Berkelanjutan */
+        .photo-strip-rtl {
+            animation: marqueeMoveRTL 34s linear infinite;
+        }
+
+        /* Rentetan Bawah: Bergerak dari Kiri ke Kanan Secara Mulus & Berkelanjutan */
+        .photo-strip-ltr {
+            animation: marqueeMoveLTR 34s linear infinite;
+        }
+
+        @keyframes marqueeMoveRTL {
             0% {
-                transform: translateY(0px) rotate(var(--rot, 0deg));
+                transform: translate3d(0, 0, 0);
             }
-
-            50% {
-                transform: translateY(-16px) rotate(calc(var(--rot, 0deg) + 1.5deg));
-            }
-
             100% {
-                transform: translateY(4px) rotate(calc(var(--rot, 0deg) - 1.5deg));
+                transform: translate3d(-50%, 0, 0);
             }
+        }
+
+        @keyframes marqueeMoveLTR {
+            0% {
+                transform: translate3d(-50%, 0, 0);
+            }
+            100% {
+                transform: translate3d(0, 0, 0);
+            }
+        }
+
+        .photo-strip-item {
+            flex-shrink: 0;
+            width: 104px;
+            height: 74px;
+            border-radius: 0.875rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.75), 0 0 12px rgba(59, 130, 246, 0.15);
+            background-color: #0f172a;
+            transform: rotate(var(--rot, 0deg));
+            transition: transform 0.3s ease;
+        }
+
+        @media (min-width: 640px) {
+            .photo-strip-item {
+                width: 136px;
+                height: 94px;
+                border-radius: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .photo-strip-item {
+                width: 156px;
+                height: 106px;
+            }
+        }
+
+        .photo-strip-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.9) contrast(1.05);
         }
     </style>
 </head>
@@ -769,23 +813,24 @@
         class="fixed inset-0 z-50 overflow-y-auto bg-gray-950 flex items-center justify-center p-4 sm:p-6 transition-all duration-500 hidden opacity-0 no-select"
         oncontextmenu="return false;">
 
-        <!-- Floating Background Photo Slideshow -->
-        <div id="coverBgSlideshow" class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <!-- Dual Layer Crossfade Ken Burns Slides -->
-            <div id="coverSlideA"
-                class="cover-bg-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0"></div>
-            <div id="coverSlideB"
-                class="cover-bg-slide absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0"></div>
+        <!-- Rentetan Foto Melayang di Latar Belakang Splash Screen (Atas: Kanan ke Kiri, Bawah: Kiri ke Kanan) -->
+        <div id="coverPhotoStripContainer" class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+            <!-- Background Gelap Sinematik Studio -->
+            <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/95 to-gray-950"></div>
 
-            <!-- Floating Ambient Cards di sisi latar belakang (Desktop / Tablet) -->
-            <div id="coverFloatingCards" class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+            <!-- Rentetan Foto Kecil Atas (Berjalan dari KANAN ke KIRI) -->
+            <div class="photo-strip-wrapper top-3 sm:top-5 md:top-8">
+                <div id="coverStripTop" class="photo-strip-track photo-strip-rtl"></div>
             </div>
 
-            <!-- Vignette & Deep Cinematic Gradient Overlays (Teks splash screen tetap sangat jelas & kontras) -->
-            <div
-                class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/75 to-gray-950/60 backdrop-blur-[2px]">
+            <!-- Rentetan Foto Kecil Bawah (Berjalan dari KIRI ke KANAN) -->
+            <div class="photo-strip-wrapper bottom-3 sm:bottom-5 md:bottom-8">
+                <div id="coverStripBottom" class="photo-strip-track photo-strip-ltr"></div>
             </div>
-            <div class="absolute inset-0 bg-gradient-to-r from-gray-950/85 via-transparent to-gray-950/85"></div>
+
+            <!-- Vignette Kiri & Kanan (Foto Memudar Halus di Sisi Layar) -->
+            <div class="absolute inset-y-0 left-0 w-14 sm:w-32 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none"></div>
+            <div class="absolute inset-y-0 right-0 w-14 sm:w-32 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none"></div>
         </div>
 
         <div
@@ -911,15 +956,6 @@
                     </div>
                 </div>
 
-                <!-- Security & Backup Note -->
-                <div
-                    class="flex items-start gap-2 bg-emerald-50 text-emerald-800 text-xs p-3 rounded-xl border border-emerald-100">
-                    <svg class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <p></p>
-                </div>
             </div>
 
             <!-- Modal Footer Buttons -->
@@ -2828,88 +2864,60 @@ function doPost(e) {
             openReviewModal();
         });
 
-        // --- WELCOME COVER / SPLASH SCREEN KLIEN ---
-        // State pengontrol slide foto melayang di background splash screen
-        let coverSlideTimer = null;
-        let coverSlideIdx = 0;
-        let coverActiveLayer = 'A';
+        // --- WELCOME COVER: RENTETAN FOTO KECIL MELAYANG (ATAS & BAWAH SPLASH SCREEN) ---
+        function initWelcomeCoverPhotoStrips() {
+            const stripTop = document.getElementById('coverStripTop');
+            const stripBottom = document.getElementById('coverStripBottom');
+            if (!stripTop || !stripBottom) return;
 
-        function initWelcomeCoverSlideshow() {
-            const slideA = document.getElementById('coverSlideA');
-            const slideB = document.getElementById('coverSlideB');
-            const cardsContainer = document.getElementById('coverFloatingCards');
-            if (!slideA || !slideB) return;
-
-            if (coverSlideTimer) {
-                clearInterval(coverSlideTimer);
-                coverSlideTimer = null;
-            }
-
+            // HANYA gunakan foto asli album Google Drive klien
             const photos = appState.photos || [];
             if (photos.length === 0) {
-                slideA.style.opacity = '0';
-                slideB.style.opacity = '0';
-                if (cardsContainer) cardsContainer.innerHTML = '';
+                stripTop.innerHTML = '';
+                stripBottom.innerHTML = '';
                 return;
             }
 
-            // Injeksi 4 kartu melayang halus di sudut layar latar (efek 3D floating ambient)
-            if (cardsContainer && photos.length > 0) {
-                cardsContainer.innerHTML = '';
-                const cardConfigs = [
-                    { pos: 'top-10 -left-6', rot: '-6deg', delay: '0s' },
-                    { pos: 'bottom-12 -left-8', rot: '4deg', delay: '-2s' },
-                    { pos: 'top-12 -right-8', rot: '5deg', delay: '-4s' },
-                    { pos: 'bottom-16 -right-6', rot: '-4deg', delay: '-1.5s' }
-                ];
-                cardConfigs.forEach((cfg, idx) => {
-                    const p = photos[idx % photos.length];
-                    const url = getSafePhotoUrl(p);
-                    if (url) {
-                        const cardEl = document.createElement('div');
-                        cardEl.className = `cover-drift-card absolute ${cfg.pos} w-40 h-28 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/80 opacity-40 bg-gray-900`;
-                        cardEl.style.setProperty('--rot', cfg.rot);
-                        cardEl.style.animationDelay = cfg.delay;
-                        cardEl.innerHTML = `<img src="${url}" alt="Preview" class="w-full h-full object-cover">`;
-                        cardsContainer.appendChild(cardEl);
-                    }
-                });
+            // Siapkan list foto dengan minimal 10 item per set agar track lebar dan loop 50% translation seamless
+            function preparePhotoList(sourceList, isReverse = false) {
+                let list = isReverse ? [...sourceList].reverse() : [...sourceList];
+                while (list.length < 10) {
+                    list = list.concat(sourceList);
+                }
+                return list;
             }
 
-            coverSlideIdx = 0;
-            coverActiveLayer = 'A';
+            const topPhotos = preparePhotoList(photos, false);
+            const bottomPhotos = preparePhotoList(photos, true);
 
-            const firstUrl = getSafePhotoUrl(photos[0]);
-            slideA.style.backgroundImage = `url('${firstUrl}')`;
-            slideA.className = 'cover-bg-slide cover-slide-floating-1 absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-100';
-            slideB.className = 'cover-bg-slide absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-0';
+            // Fungsi render 2 set foto ke dalam track untuk seamless infinite marquee
+            function populateTrack(trackEl, photoList) {
+                // Gandakan list (Set A + Set B) untuk menghasilkan infinite loop transform -50%
+                const doubleList = [...photoList, ...photoList];
+                const tiltAngles = ['-2deg', '1.5deg', '-1deg', '2deg', '0deg', '-1.5deg', '1deg'];
 
-            if (photos.length <= 1) return;
+                trackEl.innerHTML = doubleList.map((p, idx) => {
+                    const url = p.url ? p.url : getSafePhotoUrl(p);
+                    const rot = tiltAngles[idx % tiltAngles.length];
+                    return `
+                        <div class="photo-strip-item" style="--rot: ${rot};">
+                            <img src="${url}" alt="Foto Galeri" loading="lazy">
+                        </div>
+                    `;
+                }).join('');
+            }
 
-            // Transisi slide otomatis setiap 3.8 detik dengan efek Ken Burns melayang
-            coverSlideTimer = setInterval(() => {
-                coverSlideIdx = (coverSlideIdx + 1) % photos.length;
-                const nextUrl = getSafePhotoUrl(photos[coverSlideIdx]);
+            populateTrack(stripTop, topPhotos);
+            populateTrack(stripBottom, bottomPhotos);
+        }
 
-                if (coverActiveLayer === 'A') {
-                    slideB.style.backgroundImage = `url('${nextUrl}')`;
-                    slideB.className = 'cover-bg-slide cover-slide-floating-2 absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-100';
-                    slideA.style.opacity = '0';
-                    coverActiveLayer = 'B';
-                } else {
-                    slideA.style.backgroundImage = `url('${nextUrl}')`;
-                    slideA.className = 'cover-bg-slide cover-slide-floating-1 absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-100';
-                    slideB.style.opacity = '0';
-                    coverActiveLayer = 'A';
-                }
-            }, 3800);
+        // Alias kompatibilitas
+        function initWelcomeCoverSlideshow() {
+            initWelcomeCoverPhotoStrips();
         }
 
         function stopWelcomeCoverSlideshow() {
-            if (coverSlideTimer) {
-                clearInterval(coverSlideTimer);
-                coverSlideTimer = null;
-            }
+            // Animasi CSS marquee berjalan otomatis tanpa timer setInterval
         }
 
         // --- WELCOME COVER / SPLASH SCREEN KLIEN ---
@@ -2921,11 +2929,8 @@ function doPost(e) {
             const isClient = urlParams.has('t') || urlParams.has('token') || urlParams.has('c');
             if (!isClient && !force) return;
 
-            try {
-                if (!force && sessionStorage.getItem('welcomeCoverDismissed') === 'true') {
-                    return;
-                }
-            } catch (e) { }
+            // Pastikan mode splash instan aktif agar halaman utama di belakangnya tetap tersembunyi
+            document.documentElement.classList.add('client-splash-active');
 
             const nameEl = document.getElementById('coverClientName');
             const dateEl = document.getElementById('coverSessionDate');
@@ -2945,17 +2950,16 @@ function doPost(e) {
             }
             if (studioEl) studioEl.textContent = appState.studioName || "Studio Foto";
 
-            // Inisialisasi & jalankan slide foto melayang otomatis
-            initWelcomeCoverSlideshow();
+            // Inisialisasi & render rentetan foto kecil melayang (atas dan bawah)
+            initWelcomeCoverPhotoStrips();
 
             cover.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                cover.classList.remove('opacity-0');
-            });
+            cover.classList.remove('opacity-0');
         }
 
         // Helper fungsi untuk melihat / preview tampilan splash screen kapan saja
         window.previewWelcomeCover = function () {
+            document.documentElement.classList.add('client-splash-active');
             showWelcomeCover(true);
         };
 
@@ -2964,11 +2968,10 @@ function doPost(e) {
             btnOpenGal.addEventListener('click', () => {
                 const cover = document.getElementById('welcomeCoverModal');
                 if (cover) {
+                    // Hilangkan kelas client-splash-active agar galeri utama tampil
+                    document.documentElement.classList.remove('client-splash-active');
                     cover.classList.add('opacity-0', '-translate-y-6', 'pointer-events-none');
                     stopWelcomeCoverSlideshow();
-                    try {
-                        sessionStorage.setItem('welcomeCoverDismissed', 'true');
-                    } catch (e) { }
                     setTimeout(() => {
                         cover.classList.add('hidden');
                         cover.classList.remove('-translate-y-6', 'pointer-events-none');
@@ -3579,10 +3582,11 @@ function doPost(e) {
             }, 2000);
         });
 
-        // Event Buka Galeri Klien dari dashboard admin tanpa reset
+        // Event Buka Galeri Klien dari dashboard admin tanpa reset (Preview langsung splash screen)
         if (els.btnOpenClientGallery) {
             els.btnOpenClientGallery.addEventListener('click', () => {
                 switchView('gallery');
+                showWelcomeCover(true);
             });
         }
 
@@ -3728,6 +3732,20 @@ function doPost(e) {
                 try {
                     let tokenToUse = encryptedToken;
 
+                    // 1. Jika token langsung tersedia di URL (?t=), segera dekripsi data klien di detik 0!
+                    if (tokenToUse) {
+                        try {
+                            decodeTokenToAppState(tokenToUse);
+                            updateUI();
+                        } catch (errToken) {
+                            console.warn("Gagal parse token awal:", errToken);
+                        }
+                    }
+
+                    // 2. BUKA SPLASH SCREEN SEKETIKA DI AWAL (0ms) SEBELUM FETCH GOOGLE DRIVE!
+                    // Klien akan langsung disambut oleh kartu ucapan selamat datang, bukan halaman utama atau loading spinner
+                    showWelcomeCover();
+
                     // Jika dibuka via Short Code (?c=...), tarik data token dari Google Sheets
                     if (shortCode && !tokenToUse) {
                         els.photoGrid.innerHTML = `
@@ -3752,16 +3770,16 @@ function doPost(e) {
 
                         if (shortJson && shortJson.status === 'success' && shortJson.data && shortJson.data.token) {
                             tokenToUse = shortJson.data.token;
+                            decodeTokenToAppState(tokenToUse);
+                            updateUI();
+                            // Perbarui teks di splash screen dengan nama klien & tanggal yang baru didapat
+                            showWelcomeCover();
                         } else {
                             throw new Error(shortJson && shortJson.message ? shortJson.message : "Tautan galeri tidak ditemukan atau sudah kedaluwarsa.");
                         }
                     }
 
-                    // Dekripsi token kembali menjadi data
-                    decodeTokenToAppState(tokenToUse);
-                    updateUI();
-
-                    // Tarik foto secara otomatis dengan animasi loading yang lebih interaktif
+                    // Tarik foto secara otomatis di balik layar (background)
                     els.photoGrid.innerHTML = `
                         <div class="col-span-full flex flex-col items-center justify-center py-24">
                             <div class="relative">
@@ -3798,7 +3816,8 @@ function doPost(e) {
                         appState.selectedPhotos.clear();
                         renderGallery();
                         updateUI();
-                        showWelcomeCover();
+                        // Foto sudah siap! Aktifkan slide foto melayang otomatis di background splash screen
+                        initWelcomeCoverSlideshow();
                     } else {
                         els.photoGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Gagal memuat foto: ${result.message}</div>`;
                     }
