@@ -286,7 +286,7 @@
         /*
          * Overlay ini TRANSPARAN di layar normal karena blend mode 'screen' dengan hitam = tidak terlihat.
          * Namun pada beberapa device saat OS composite layer untuk screenshot,
-         * overlay ini bisa muncul dan menggelapkan  capture.
+         * overlay ini bisa muncul dan menggelapkan hasil capture.
          */
         #css-blend-shield {
             display: none;
@@ -735,45 +735,29 @@
                 Klien Kami
             </h1>
 
-            <!-- Meta Badges -->
-            <div class="flex items-center justify-center flex-wrap gap-2 mb-5">
-                <span
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300">
+            <!-- Meta Badges (Hanya Tanggal Sesi jika ada) -->
+            <div id="coverMetaBadges" class="flex items-center justify-center flex-wrap gap-2 mb-5">
+                <span id="coverDateBadge"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300">
                     <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span id="coverSessionDate">-</span>
                 </span>
-                <span
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-400/20 text-xs text-blue-300 font-semibold">
-                    <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span id="coverQuotaText">Pilih 10 Foto</span>
-                </span>
-                <span
-                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300">
-                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span id="coverPhotoCount">0 Foto</span>
-                </span>
             </div>
 
-            <!-- Warm Greeting Message -->
-            <div class="bg-white/5 rounded-2xl p-4 border border-white/5 mb-6 text-left">
-                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed mb-3">
+            <!-- Warm Greeting Message (Format Center) -->
+            <div class="bg-white/5 rounded-2xl p-5 border border-white/5 mb-6 text-center">
+                <p class="text-xs sm:text-sm text-gray-300 leading-relaxed mb-3.5 text-center">
                     Halo Kak! Selamat datang di galeri pemilihan foto. Silakan tentukan foto-foto terbaik Anda untuk
                     proses edit &amp; cetak.
                 </p>
                 <div
-                    class="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-center text-[10px] text-gray-400 font-medium">
-                    <div class="p-1 rounded bg-black/20">👆 Ketuk Foto untuk Pilih</div>
-                    <div class="p-1 rounded bg-black/20">🔍 Ikon Kaca untuk Zoom</div>
-                    <div class="p-1 rounded bg-black/20">💬 Kirim ke WA saat Selesai</div>
+                    class="grid grid-cols-3 gap-2 pt-2.5 border-t border-white/5 text-center text-[10px] text-gray-400 font-medium">
+                    <div class="p-1.5 rounded bg-black/20">👆 Ketuk Foto untuk Pilih</div>
+                    <div class="p-1.5 rounded bg-black/20">🔍 Ikon Kaca untuk Zoom</div>
+                    <div class="p-1.5 rounded bg-black/20">💬 Kirim ke WA saat Selesai</div>
                 </div>
             </div>
 
@@ -851,7 +835,8 @@
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    
+                    <p>Hasil pilihan ini otomatis dicadangkan ke <b>Google Sheets</b> fotografer &amp; langsung
+                        diteruskan ke WhatsApp.</p>
                 </div>
             </div>
 
@@ -1870,11 +1855,7 @@ function doPost(e) {
                     
                     ${watermarkHtml}
 
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex flex-col justify-end pointer-events-none z-20">
-                        <div class="p-2 sm:p-2.5">
-                            <span class="inline-block bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md truncate max-w-[90%] shadow-sm">${safePhotoId}</span>
-                        </div>
-                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 pointer-events-none z-20"></div>
                     
                     <button class="absolute top-2 left-2 bg-black/60 hover:bg-black/80 active:scale-90 text-white p-2 rounded-full z-30 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Lihat Penuh">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
@@ -1890,7 +1871,7 @@ function doPost(e) {
                 const btnZoom = card.querySelector('.btn-zoom');
                 btnZoom.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    openFullscreen(index);
+                    openFullscreen(photo.id);
                 });
 
                 els.photoGrid.appendChild(card);
@@ -1961,14 +1942,39 @@ function doPost(e) {
             updateCardSelection(id, isNowSelected);
             updateUI();
 
-            // Jika fullscreen sedang buka, update tombolnya juga
+            // Jika fullscreen sedang buka, update tombol dan navigasinya juga
             if (currentFullscreenPhoto && currentFullscreenPhoto.id === id && !els.fullscreenModal.classList.contains('hidden')) {
                 updateFullscreenButton(id);
+                if (currentGalleryFilter === 'selected') {
+                    const activePhotos = getActiveFullscreenPhotos();
+                    if (activePhotos.length > 1) {
+                        els.btnPrevPhoto.classList.remove('hidden');
+                        els.btnNextPhoto.classList.remove('hidden');
+                    } else {
+                        els.btnPrevPhoto.classList.add('hidden');
+                        els.btnNextPhoto.classList.add('hidden');
+                    }
+                    const curIdx = activePhotos.findIndex(p => p.id === id);
+                    const safePhotoId = escapeHtml(id);
+                    const photoCounter = (curIdx !== -1)
+                        ? `<span class="text-xs sm:text-sm text-gray-300 font-normal ml-1 opacity-85">(${curIdx + 1}/${activePhotos.length})</span>`
+                        : `<span class="text-xs sm:text-sm text-amber-300 font-normal ml-1 opacity-85">(Dibatalkan)</span>`;
+                    els.fullscreenTitle.innerHTML = `<span class="font-semibold">${safePhotoId}</span>${photoCounter}`;
+                }
             }
         }
 
         // State navigasi history untuk preview fullscreen
         let isFullscreenHistoryActive = false;
+
+        // Ambil daftar foto aktif berdasarkan tab filter (semua vs khusus foto terpilih)
+        function getActiveFullscreenPhotos() {
+            if (currentGalleryFilter === 'selected') {
+                const selected = (appState.photos || []).filter(p => appState.selectedPhotos.has(p.id));
+                return selected;
+            }
+            return appState.photos || [];
+        }
 
         function getSafePhotoUrl(photo) {
             if (!photo) return '';
@@ -1983,13 +1989,14 @@ function doPost(e) {
         }
 
         function preloadAdjacentPhotos(currentIndex) {
-            if (!appState.photos || appState.photos.length <= 1) return;
-            const total = appState.photos.length;
+            const activePhotos = getActiveFullscreenPhotos();
+            if (!activePhotos || activePhotos.length <= 1) return;
+            const total = activePhotos.length;
             const nextIdx = (currentIndex + 1) % total;
             const prevIdx = (currentIndex - 1 + total) % total;
 
-            const nextUrl = getSafePhotoUrl(appState.photos[nextIdx]);
-            const prevUrl = getSafePhotoUrl(appState.photos[prevIdx]);
+            const nextUrl = getSafePhotoUrl(activePhotos[nextIdx]);
+            const prevUrl = getSafePhotoUrl(activePhotos[prevIdx]);
 
             if (nextUrl) {
                 const imgNext = new Image();
@@ -2001,21 +2008,40 @@ function doPost(e) {
             }
         }
 
-        function openFullscreen(index, direction = 0) {
+        function openFullscreen(target, direction = 0) {
+            const activePhotos = getActiveFullscreenPhotos();
+            if (!activePhotos || activePhotos.length === 0) {
+                closeFullscreen(false);
+                return;
+            }
+
+            let index = 0;
+            if (typeof target === 'string') {
+                index = activePhotos.findIndex(p => p.id === target);
+                if (index === -1) index = 0;
+            } else if (typeof target === 'number') {
+                index = Math.max(0, Math.min(target, activePhotos.length - 1));
+            } else if (target && target.id) {
+                index = activePhotos.findIndex(p => p.id === target.id);
+                if (index === -1) index = 0;
+            }
+
+            const photo = activePhotos[index];
+            if (!photo) return;
+
             const isAlreadyOpen = !els.fullscreenModal.classList.contains('hidden');
             currentFullscreenIndex = index;
-            const photo = appState.photos[index];
             currentFullscreenPhoto = photo;
 
             // Indikator nama file + nomor urut foto (contoh: IMG_001 (3/20))
             const safePhotoId = escapeHtml(photo.id);
-            const photoCounter = (appState.photos && appState.photos.length > 0)
-                ? `<span class="text-xs sm:text-sm text-gray-300 font-normal ml-1 opacity-85">(${index + 1}/${appState.photos.length})</span>`
+            const photoCounter = (activePhotos && activePhotos.length > 0)
+                ? `<span class="text-xs sm:text-sm text-gray-300 font-normal ml-1 opacity-85">(${index + 1}/${activePhotos.length})</span>`
                 : '';
             els.fullscreenTitle.innerHTML = `<span class="font-semibold">${safePhotoId}</span>${photoCounter}`;
 
             // Tampilkan tombol Prev/Next jika foto lebih dari 1
-            if (appState.photos.length > 1) {
+            if (activePhotos.length > 1) {
                 els.btnPrevPhoto.classList.remove('hidden');
                 els.btnNextPhoto.classList.remove('hidden');
             } else {
@@ -2135,12 +2161,35 @@ function doPost(e) {
         }
 
         function navigateFullscreen(direction) {
-            if (currentFullscreenIndex === -1 || appState.photos.length <= 1) return;
-            let newIndex = currentFullscreenIndex + direction;
+            const activePhotos = getActiveFullscreenPhotos();
+            if (!activePhotos || activePhotos.length === 0) {
+                closeFullscreen(false);
+                return;
+            }
+            if (activePhotos.length === 1 && currentFullscreenPhoto && activePhotos[0].id === currentFullscreenPhoto.id) {
+                return;
+            }
+
+            let curIndex = -1;
+            if (currentFullscreenPhoto) {
+                curIndex = activePhotos.findIndex(p => p.id === currentFullscreenPhoto.id);
+            }
+
+            let newIndex = 0;
+            if (curIndex !== -1) {
+                newIndex = curIndex + direction;
+            } else {
+                // Jika foto saat ini baru saja dibatalkan pilihannya, geser ke foto di dekatnya
+                if (direction >= 0) {
+                    newIndex = currentFullscreenIndex >= activePhotos.length ? 0 : currentFullscreenIndex;
+                } else {
+                    newIndex = currentFullscreenIndex - 1 < 0 ? activePhotos.length - 1 : currentFullscreenIndex - 1;
+                }
+            }
 
             // Looping array foto jika melewati batas awal/akhir
-            if (newIndex < 0) newIndex = appState.photos.length - 1;
-            if (newIndex >= appState.photos.length) newIndex = 0;
+            if (newIndex < 0) newIndex = activePhotos.length - 1;
+            if (newIndex >= activePhotos.length) newIndex = 0;
 
             resetZoomOnNavigate();
             openFullscreen(newIndex, direction);
@@ -2293,7 +2342,8 @@ function doPost(e) {
                 const isFlick = absX > 25 && elapsed < 320;
                 const isStandardSwipe = absX > 45;
 
-                if ((isStandardSwipe || isFlick) && appState.photos.length > 1) {
+                const activePhotos = getActiveFullscreenPhotos();
+                if ((isStandardSwipe || isFlick) && activePhotos.length > 1) {
                     const direction = diffX < 0 ? 1 : -1;
                     const exitX = diffX < 0 ? -90 : 90;
                     els.fullscreenImage.style.transition = 'transform 0.16s ease-out, opacity 0.16s ease-out';
@@ -2713,15 +2763,21 @@ function doPost(e) {
 
             const nameEl = document.getElementById('coverClientName');
             const dateEl = document.getElementById('coverSessionDate');
+            const dateBadge = document.getElementById('coverDateBadge');
             const studioEl = document.getElementById('coverStudioName');
-            const countEl = document.getElementById('coverPhotoCount');
-            const quotaEl = document.getElementById('coverQuotaText');
 
             if (nameEl) nameEl.textContent = appState.clientName || "Klien Terkasih";
-            if (dateEl) dateEl.textContent = appState.sessionDate ? formatDisplayDate(appState.sessionDate) : "-";
+            if (dateBadge) {
+                if (appState.sessionDate) {
+                    dateBadge.style.display = 'inline-flex';
+                    if (dateEl) dateEl.textContent = formatDisplayDate(appState.sessionDate);
+                } else {
+                    dateBadge.style.display = 'none';
+                }
+            } else if (dateEl) {
+                dateEl.textContent = appState.sessionDate ? formatDisplayDate(appState.sessionDate) : "-";
+            }
             if (studioEl) studioEl.textContent = appState.studioName || "Studio Foto";
-            if (countEl) countEl.textContent = `${appState.photos ? appState.photos.length : 0} Foto`;
-            if (quotaEl) quotaEl.textContent = `Pilih ${appState.maxLimit} Foto`;
 
             cover.classList.remove('hidden');
             requestAnimationFrame(() => {
