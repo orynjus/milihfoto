@@ -347,20 +347,21 @@
             }
         }
 
-        /* Rentetan Atas: Bergerak dari Kanan ke Kiri Secara Mulus & Berkelanjutan */
+        /* Rentetan Atas: Bergerak dari Kanan ke Kiri Secara Sangat Lambat & Halus */
         .photo-strip-rtl {
-            animation: marqueeMoveRTL 34s linear infinite;
+            animation: marqueeMoveRTL 85s linear infinite;
         }
 
-        /* Rentetan Bawah: Bergerak dari Kiri ke Kanan Secara Mulus & Berkelanjutan */
+        /* Rentetan Bawah: Bergerak dari Kiri ke Kanan Secara Sangat Lambat & Halus */
         .photo-strip-ltr {
-            animation: marqueeMoveLTR 34s linear infinite;
+            animation: marqueeMoveLTR 85s linear infinite;
         }
 
         @keyframes marqueeMoveRTL {
             0% {
                 transform: translate3d(0, 0, 0);
             }
+
             100% {
                 transform: translate3d(-50%, 0, 0);
             }
@@ -370,6 +371,7 @@
             0% {
                 transform: translate3d(-50%, 0, 0);
             }
+
             100% {
                 transform: translate3d(0, 0, 0);
             }
@@ -381,11 +383,16 @@
             height: 74px;
             border-radius: 0.875rem;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.75), 0 0 12px rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.75), 0 0 12px rgba(59, 130, 246, 0.1);
             background-color: #0f172a;
+            opacity: 0.45;
             transform: rotate(var(--rot, 0deg));
-            transition: transform 0.3s ease;
+            transition: opacity 0.5s ease, transform 0.3s ease;
+        }
+
+        .photo-strip-item:hover {
+            opacity: 0.8;
         }
 
         @media (min-width: 640px) {
@@ -408,7 +415,7 @@
             height: 100%;
             object-fit: cover;
             display: block;
-            filter: brightness(0.9) contrast(1.05);
+            filter: brightness(0.8) contrast(1.05);
         }
     </style>
 </head>
@@ -829,8 +836,12 @@
             </div>
 
             <!-- Vignette Kiri & Kanan (Foto Memudar Halus di Sisi Layar) -->
-            <div class="absolute inset-y-0 left-0 w-14 sm:w-32 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none"></div>
-            <div class="absolute inset-y-0 right-0 w-14 sm:w-32 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none"></div>
+            <div
+                class="absolute inset-y-0 left-0 w-14 sm:w-32 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none">
+            </div>
+            <div
+                class="absolute inset-y-0 right-0 w-14 sm:w-32 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none">
+            </div>
         </div>
 
         <div
@@ -955,7 +966,6 @@
                         <!-- Diisi otomatis oleh JS -->
                     </div>
                 </div>
-
             </div>
 
             <!-- Modal Footer Buttons -->
@@ -2865,17 +2875,39 @@ function doPost(e) {
         });
 
         // --- WELCOME COVER: RENTETAN FOTO KECIL MELAYANG (ATAS & BAWAH SPLASH SCREEN) ---
+        const DEFAULT_COVER_PHOTOS = [
+            { url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80", id: "sample1" },
+            { url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=600&q=80", id: "sample2" },
+            { url: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80", id: "sample3" },
+            { url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80", id: "sample4" },
+            { url: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=600&q=80", id: "sample5" },
+            { url: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=600&q=80", id: "sample6" },
+            { url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80", id: "sample7" },
+            { url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80", id: "sample8" }
+        ];
+
         function initWelcomeCoverPhotoStrips() {
             const stripTop = document.getElementById('coverStripTop');
             const stripBottom = document.getElementById('coverStripBottom');
             if (!stripTop || !stripBottom) return;
 
-            // HANYA gunakan foto asli album Google Drive klien
-            const photos = appState.photos || [];
-            if (photos.length === 0) {
-                stripTop.innerHTML = '';
-                stripBottom.innerHTML = '';
-                return;
+            // 1. Cek apakah ada foto album asli klien dari Google Drive
+            let photos = (appState.photos && appState.photos.length > 0) ? appState.photos : null;
+
+            // 2. Jika belum ada di memori, coba ambil dari cache galeri sesi sebelumnya
+            if (!photos) {
+                try {
+                    const cached = localStorage.getItem('cached_client_photos');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) photos = parsed;
+                    }
+                } catch (e) { }
+            }
+
+            // 3. Fallback foto fotografi berkelas jika foto album belum selesai ditarik dari Google Drive
+            if (!photos || photos.length === 0) {
+                photos = DEFAULT_COVER_PHOTOS;
             }
 
             // Siapkan list foto dengan minimal 10 item per set agar track lebar dan loop 50% translation seamless
@@ -2894,7 +2926,8 @@ function doPost(e) {
             function populateTrack(trackEl, photoList) {
                 // Gandakan list (Set A + Set B) untuk menghasilkan infinite loop transform -50%
                 const doubleList = [...photoList, ...photoList];
-                const tiltAngles = ['-2deg', '1.5deg', '-1deg', '2deg', '0deg', '-1.5deg', '1deg'];
+                // Sudut sangat halus (0deg s/d 0.5deg) agar rapi dan tidak membuat pusing
+                const tiltAngles = ['0deg', '-0.5deg', '0.5deg', '0deg'];
 
                 trackEl.innerHTML = doubleList.map((p, idx) => {
                     const url = p.url ? p.url : getSafePhotoUrl(p);
@@ -2937,7 +2970,7 @@ function doPost(e) {
             const dateBadge = document.getElementById('coverDateBadge');
             const studioEl = document.getElementById('coverStudioName');
 
-            if (nameEl) nameEl.textContent = appState.clientName || "Klien Terkasih";
+            if (nameEl) nameEl.textContent = appState.clientName || "";
             if (dateBadge) {
                 if (appState.sessionDate) {
                     dateBadge.style.display = 'inline-flex';
@@ -3814,6 +3847,9 @@ function doPost(e) {
 
                         appState.photos = result.data;
                         appState.selectedPhotos.clear();
+                        try {
+                            localStorage.setItem('cached_client_photos', JSON.stringify(result.data.slice(0, 30)));
+                        } catch (e) { }
                         renderGallery();
                         updateUI();
                         // Foto sudah siap! Aktifkan slide foto melayang otomatis di background splash screen
