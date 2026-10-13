@@ -84,14 +84,10 @@
             transition: none !important;
         }
 
-        html,
         body,
         nav,
         footer,
-        main,
-        section,
-        .photo-card,
-        #viewGallery>div,
+        #galleryHeaderCard,
         #viewAdmin>div,
         #reviewModal>div,
         #pinModal>div,
@@ -102,10 +98,24 @@
         input,
         textarea,
         select {
-            transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ====== OPTIMASI PERFORMA GRID FOTO (ANTI-LAG SAAT GANTI TEMA) ====== */
+        #photoGrid {
+            contain: layout style;
+        }
+
+        .photo-card-item {
+            contain: layout style;
+        }
+
+        #photoGrid,
+        #photoGrid * {
+            /* Mencegah repainting massal 400+ kartu foto saat perpindahan tema terang/gelap */
+            transition-property: transform, opacity, box-shadow;
         }
 
         /* ====== ANIMASI EQUALIZER MUSIK LATAR ====== */
@@ -438,7 +448,7 @@
         </svg>
         <p style="color:#f87171;font-size:1.25rem;font-weight:700;">⚠️ Foto Dilindungi</p>
         <p style="color:#9ca3af;font-size:0.9rem;text-align:center;max-width:300px;">Screenshot tidak
-            diizinkan.<br>Silakan pilih foto Anda melalui tombol pilih.</p>
+            diizinkan.<br>Silahkan pilih foto Anda melalui tombol pilih.</p>
     </div>
 
     <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
@@ -515,8 +525,8 @@
         <!-- === VIEW: GALERI KLIEN === -->
         <div id="viewGallery" class="block animate-fade-in">
             <!-- Header Kartu Galeri Klien dengan Progress Bar -->
-            <div
-                class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800 transition-all">
+            <div id="galleryHeaderCard"
+                class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
@@ -527,7 +537,7 @@
                         </h1>
                         <p id="gallerySubtitle"
                             class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 leading-relaxed">
-                            Silakan pilih foto terbaik yang ingin dicetak. Ketuk ikon perbesar untuk melihat detail.
+                            Silahkan pilih foto terbaik yang ingin dicetak. Ketuk ikon perbesar untuk melihat detail.
                         </p>
                     </div>
                     <div class="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
@@ -602,7 +612,7 @@
                 </svg>
                 <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">Belum Ada Foto Terpilih</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Anda belum mencentang foto
-                    apapun. Silakan
+                    apapun. Silahkan
                     beralih ke tab Semua Foto untuk mulai memilih foto favorit Anda.</p>
                 <button onclick="setGalleryFilter('all')"
                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">Lihat
@@ -965,7 +975,7 @@
             <!-- Warm Greeting Message (Format Center) -->
             <div class="bg-white/5 rounded-2xl p-5 border border-white/5 mb-6 text-center">
                 <p class="text-xs sm:text-sm text-gray-300 leading-relaxed mb-3.5 text-center">
-                    Halo Kak! Selamat datang di galeri pemilihan foto. Silakan tentukan foto-foto terbaik Anda untuk
+                    Halo Kak! Selamat datang di galeri pemilihan foto. Silahkan tentukan foto-foto terbaik Anda untuk
                     proses edit &amp; cetak.
                 </p>
                 <div
@@ -2331,9 +2341,9 @@ function doPost(e) {
             if (subtitleEl) {
                 if (appState.clientName) {
                     const datePart = appState.sessionDate ? ` &bull; Sesi: <strong class="font-semibold text-gray-800 dark:text-gray-200">${escapeHtml(formatDisplayDate(appState.sessionDate))}</strong>` : '';
-                    subtitleEl.innerHTML = `<span class="text-gray-600 dark:text-gray-400 font-medium">Klien:</span> <span class="font-bold text-gray-900 dark:text-white">${escapeHtml(appState.clientName)}</span>${datePart} &mdash; Silakan pilih maksimal <b class="font-bold text-gray-900 dark:text-white">${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
+                    subtitleEl.innerHTML = `<span class="text-gray-600 dark:text-gray-400 font-medium">Klien:</span> <span class="font-bold text-gray-900 dark:text-white">${escapeHtml(appState.clientName)}</span>${datePart} &mdash; Silahkan pilih maksimal <b class="font-bold text-gray-900 dark:text-white">${appState.maxLimit}</b> foto terbaik yang ingin dicetak.`;
                 } else {
-                    subtitleEl.textContent = 'Silakan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
+                    subtitleEl.textContent = 'Silahkan pilih foto terbaik. Ketuk ikon perbesar untuk melihat detail.';
                 }
             }
 
@@ -2383,7 +2393,7 @@ function doPost(e) {
                     emptyMessage.innerHTML = `
                         <svg class="w-16 h-16 text-blue-300 dark:text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Mode Fotografer</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-4">Silakan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">Silahkan masuk ke menu <b>⚙️ Admin</b> untuk menarik foto dari Google Drive dan membagikan link ke klien Anda.</p>
                         <button onclick="handleAdminClick(event)" class="px-5 py-2 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition shadow-sm border border-blue-200 dark:border-blue-800">Buka Pengaturan Admin</button>
                     `;
                 }
@@ -2416,7 +2426,7 @@ function doPost(e) {
 
                 const card = document.createElement('div');
                 card.setAttribute('data-id', photo.id);
-                card.className = `w-full relative group rounded-xl overflow-hidden cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-gray-100 dark:bg-gray-800 ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
+                card.className = `photo-card-item w-full relative group rounded-xl overflow-hidden cursor-pointer transition-shadow duration-200 shadow-sm hover:shadow-md bg-gray-100 dark:bg-gray-800 ${isSelected ? 'selected-ring' : 'border-2 border-transparent'}`;
 
                 // Jika sedang di filter "Foto Terpilih" dan foto ini tidak terpilih, sembunyikan
                 if (currentGalleryFilter === 'selected' && !isSelected) {
@@ -2441,7 +2451,7 @@ function doPost(e) {
                     ${checkBadge}
                     <div class="w-full min-h-[90px] shimmer-bg relative overflow-hidden">
                         <img src="${safeThumb}" alt="${safePhotoId}" draggable="false" 
-                            class="w-full h-auto block transition duration-300 group-hover:scale-105 pointer-events-none opacity-0" 
+                            class="w-full h-auto block transition-transform duration-300 group-hover:scale-105 pointer-events-none opacity-0" 
                             loading="lazy" 
                             onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg', 'min-h-[90px]');"
                             onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Gambar+Gagal+Dimuat'; this.classList.remove('opacity-0'); this.parentElement.classList.remove('shimmer-bg', 'min-h-[90px]');">
@@ -2449,7 +2459,7 @@ function doPost(e) {
                     
                     ${watermarkHtml}
 
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 pointer-events-none z-20"></div>
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none z-20"></div>
                     
                     <button class="absolute top-1.5 left-1.5 bg-black/60 hover:bg-black/80 active:scale-90 text-white p-1.5 rounded-full z-30 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Lihat Penuh">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
@@ -3432,7 +3442,7 @@ function doPost(e) {
         // Klik Tombol Kirim di Floating Dock -> Buka Review Modal
         els.btnSendWa.addEventListener('click', () => {
             if (appState.selectedPhotos.size === 0) {
-                showDialog("Silakan pilih minimal 1 foto terlebih dahulu.", "Pilihan Kosong");
+                showDialog("Silahkan pilih minimal 1 foto terlebih dahulu.", "Pilihan Kosong");
                 return;
             }
             openReviewModal();
@@ -3671,7 +3681,7 @@ function doPost(e) {
                 const waitSec = Math.ceil((pinLockoutUntil - now) / 1000);
                 els.pinModal.classList.add('hidden');
                 els.pinModal.classList.remove('flex');
-                showDialog(`Terlalu banyak percobaan gagal. Silakan tunggu ${waitSec} detik lagi demi keamanan.`, "Akses Dikunci Sementara", "error");
+                showDialog(`Terlalu banyak percobaan gagal. Silahkan tunggu ${waitSec} detik lagi demi keamanan.`, "Akses Dikunci Sementara", "error");
                 return;
             }
 
@@ -3680,7 +3690,7 @@ function doPost(e) {
                 if (!isFromTyping) {
                     els.pinModal.classList.add('hidden');
                     els.pinModal.classList.remove('flex');
-                    showDialog("Silakan masukkan PIN terlebih dahulu.", "PIN Kosong", "error", () => {
+                    showDialog("Silahkan masukkan PIN terlebih dahulu.", "PIN Kosong", "error", () => {
                         els.pinModal.classList.remove('hidden');
                         els.pinModal.classList.add('flex');
                         setTimeout(() => els.inputPin.focus(), 60);
@@ -3836,7 +3846,7 @@ function doPost(e) {
         async function pullPhotosAutomatically(folderInput, gasUrl) {
             const folderId = extractFolderId(folderInput);
             if (!gasUrl) {
-                showDialog("URL Web App GAS belum diisi. Silakan isi dan buat script GAS-nya terlebih dahulu.", "Peringatan");
+                showDialog("URL Web App GAS belum diisi. Silahkan isi dan buat script GAS-nya terlebih dahulu.", "Peringatan");
                 return;
             }
 
@@ -4057,7 +4067,7 @@ function doPost(e) {
                 const greeting = appState.clientName ? `Halo Kak *${appState.clientName}*,` : `Halo,`;
                 const sessionInfo = appState.sessionDate ? ` (Sesi: ${formatDisplayDate(appState.sessionDate)})` : '';
                 const buildShareMessage = (url) => {
-                    return `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilakan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${url}\n\nTerima kasih!`;
+                    return `${greeting} berikut adalah link galeri foto Anda${sessionInfo} dari *${appState.studioName}*.\n\nSilahkan buka link di bawah ini untuk memilih foto yang ingin dicetak, maksimal *${appState.maxLimit}* foto terbaik Anda:\n${url}\n\nTerima kasih!`;
                 };
 
                 // REALTIME (0 Detik Jeda): Teks langsung tampil seketika & tombol salin langsung aktif
@@ -4393,7 +4403,7 @@ function doPost(e) {
                     els.photoGrid.innerHTML = `<div class="col-span-full text-center py-16 w-full" style="column-span: all;">
                         <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">Tautan Tidak Ditemukan / Tidak Valid</h3>
-                        <p class="text-gray-500 max-w-md mx-auto mb-4">${error.message || "Tautan galeri ini mungkin telah kedaluwarsa atau belum terdaftar. Silakan minta tautan baru kepada fotografer Anda."}</p>
+                        <p class="text-gray-500 max-w-md mx-auto mb-4">${error.message || "Tautan galeri ini mungkin telah kedaluwarsa atau belum terdaftar. Silahkan minta tautan baru kepada fotografer Anda."}</p>
                     </div>`;
                     console.error("Kesalahan membuka galeri klien:", error);
                 }
