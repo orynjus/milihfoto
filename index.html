@@ -59,8 +59,6 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-                // Mencegah flash transisi warna saat halaman pertama kali dimuat
-                document.documentElement.classList.add('no-theme-transition');
             } catch (e) { }
         })();
     </script>
@@ -76,46 +74,13 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* ====== TRANSISI TEMA SUPER MULUS (LIGHT / DARK SMOOTH TRANSITION) ====== */
-        html.no-theme-transition,
-        html.no-theme-transition *,
-        html.no-theme-transition *::before,
-        html.no-theme-transition *::after {
-            transition: none !important;
-        }
-
-        body,
-        nav,
-        footer,
-        #galleryHeaderCard,
-        #viewAdmin>div,
-        #reviewModal>div,
-        #pinModal>div,
-        #dialogModal>div,
-        #helpFolderModal>div,
-        #filterTabContainer,
-        #filterTabContainer button,
-        input,
-        textarea,
-        select {
-            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* ====== OPTIMASI PERFORMA GRID FOTO (ANTI-LAG SAAT GANTI TEMA) ====== */
+        /* ====== OPTIMASI PERFORMA GRID FOTO ====== */
         #photoGrid {
             contain: layout style;
         }
 
         .photo-card-item {
             contain: layout style;
-        }
-
-        #photoGrid,
-        #photoGrid * {
-            /* Mencegah repainting massal 400+ kartu foto saat perpindahan tema terang/gelap */
-            transition-property: transform, opacity, box-shadow;
         }
 
         /* ====== ANIMASI EQUALIZER MUSIK LATAR ====== */
@@ -1604,10 +1569,6 @@ function doPost(e) {
                 btn.removeEventListener('click', toggleTheme);
                 btn.addEventListener('click', toggleTheme);
             }
-            // Aktifkan transisi setelah render awal selesai (mencegah flash)
-            setTimeout(() => {
-                document.documentElement.classList.remove('no-theme-transition');
-            }, 60);
         }
 
         // --- MANAJEMEN MUSIK LATAR GALERI KLIEN ---
