@@ -51,7 +51,7 @@
     </script>
     <!-- Instant Theme Loader (Default Terang) -->
     <script>
-        (function() {
+        (function () {
             try {
                 const savedTheme = localStorage.getItem('app_theme');
                 if (savedTheme === 'dark') {
@@ -59,7 +59,9 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-            } catch (e) {}
+                // Mencegah flash transisi warna saat halaman pertama kali dimuat
+                document.documentElement.classList.add('no-theme-transition');
+            } catch (e) { }
         })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,39 +74,67 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                        color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* ====== TRANSISI TEMA SUPER MULUS (LIGHT / DARK SMOOTH TRANSITION) ====== */
+        html.no-theme-transition,
+        html.no-theme-transition *,
+        html.no-theme-transition *::before,
+        html.no-theme-transition *::after {
+            transition: none !important;
+        }
+
+        html,
+        body,
         nav,
-        #viewGallery > div,
-        #viewAdmin > div,
-        #reviewModal > div,
-        #pinModal > div,
-        #dialogModal > div,
-        #helpFolderModal > div,
+        footer,
+        main,
+        section,
+        .photo-card,
+        #viewGallery>div,
+        #viewAdmin>div,
+        #reviewModal>div,
+        #pinModal>div,
+        #dialogModal>div,
+        #helpFolderModal>div,
         #filterTabContainer,
         #filterTabContainer button,
         input,
-        textarea {
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                        border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                        color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        textarea,
+        select {
+            transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        html.theme-transitioning,
-        html.theme-transitioning *,
-        html.theme-transitioning *::before,
-        html.theme-transitioning *::after {
-            transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
-                        border-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
-                        color 450ms cubic-bezier(0.4, 0, 0.2, 1),
-                        fill 450ms cubic-bezier(0.4, 0, 0.2, 1),
-                        stroke 450ms cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 450ms cubic-bezier(0.4, 0, 0.2, 1) !important;
-            transition-delay: 0s !important;
+        /* ====== ANIMASI EQUALIZER MUSIK LATAR ====== */
+        @keyframes musicWave {
+
+            0%,
+            100% {
+                height: 4px;
+            }
+
+            50% {
+                height: 16px;
+            }
+        }
+
+        .music-playing .music-bar:nth-child(1) {
+            animation: musicWave 1.1s ease-in-out infinite;
+        }
+
+        .music-playing .music-bar:nth-child(2) {
+            animation: musicWave 0.8s ease-in-out infinite 0.2s;
+        }
+
+        .music-playing .music-bar:nth-child(3) {
+            animation: musicWave 1.3s ease-in-out infinite 0.4s;
+        }
+
+        .music-playing .music-bar:nth-child(4) {
+            animation: musicWave 0.9s ease-in-out infinite 0.1s;
         }
 
         /* ====== PREVENT FLASH & INSTANT SPLASH SCREEN MODE (0 DETIK) ====== */
@@ -387,7 +417,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 antialiased min-h-screen flex flex-col">
 
     <!-- Anti-Screenshot Print Block -->
     <div id="anti-screenshot-print-msg" style="display:none;">
@@ -414,27 +444,57 @@
     <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
     <div id="css-blend-shield"></div>
 
-    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 transition-colors duration-200">
+    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-500 mr-2" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
                         </path>
                     </svg>
-                    <span id="navStudioName" class="font-bold text-xl text-gray-900 dark:text-white tracking-tight">Studio Foto</span>
+                    <span id="navStudioName"
+                        class="font-bold text-xl text-gray-900 dark:text-white tracking-tight">Studio Foto</span>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Tombol Musik Latar Klien (Hanya tampil jika ada URL lagu) -->
+                    <button id="btnMusicToggle" type="button" aria-label="Putar / Jeda Musik Latar" title="Musik Latar"
+                        class="hidden relative w-9 h-9 p-0 rounded-xl text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-950/60 border border-purple-200 dark:border-purple-800/80 transition-all duration-300 active:scale-90 items-center justify-center overflow-hidden">
+                        <!-- Equalizer Animasi saat Berputar -->
+                        <div id="musicWaveContainer" class="flex items-end justify-center gap-[2px] h-4 w-4">
+                            <span
+                                class="music-bar w-[2.5px] bg-purple-500 dark:bg-purple-400 rounded-full h-1.5 transition-all"></span>
+                            <span
+                                class="music-bar w-[2.5px] bg-purple-500 dark:bg-purple-400 rounded-full h-3 transition-all"></span>
+                            <span
+                                class="music-bar w-[2.5px] bg-purple-500 dark:bg-purple-400 rounded-full h-2 transition-all"></span>
+                            <span
+                                class="music-bar w-[2.5px] bg-purple-500 dark:bg-purple-400 rounded-full h-3.5 transition-all"></span>
+                        </div>
+                        <!-- Icon Saat Dijeda -->
+                        <svg id="musicPausedIcon" class="w-4 h-4 text-gray-400 dark:text-gray-500 hidden transition-all"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                    </button>
+
                     <!-- Toggle Mode Terang/Gelap -->
-                    <button id="btnThemeToggle" type="button" aria-label="Ganti Mode Terang atau Gelap" title="Mode Terang / Gelap"
+                    <button id="btnThemeToggle" type="button" aria-label="Ganti Mode Terang atau Gelap"
+                        title="Mode Terang / Gelap"
                         class="relative w-9 h-9 p-0 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/80 transition-all duration-300 active:scale-90 flex items-center justify-center overflow-hidden">
-                        <svg id="themeIconSun" class="w-5 h-5 text-amber-400 absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="themeIconSun"
+                            class="w-5 h-5 text-amber-400 absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <svg id="themeIconMoon" class="w-5 h-5 text-gray-600 dark:text-gray-300 absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="themeIconMoon"
+                            class="w-5 h-5 text-gray-600 dark:text-gray-300 absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
@@ -455,23 +515,28 @@
         <!-- === VIEW: GALERI KLIEN === -->
         <div id="viewGallery" class="block animate-fade-in">
             <!-- Header Kartu Galeri Klien dengan Progress Bar -->
-            <div class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800 transition-all">
+            <div
+                class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800 transition-all">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
 
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Pilih Foto Anda
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                            Pilih Foto
                         </h1>
-                        <p id="gallerySubtitle" class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 leading-relaxed">
+                        <p id="gallerySubtitle"
+                            class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 leading-relaxed">
                             Silakan pilih foto terbaik yang ingin dicetak. Ketuk ikon perbesar untuk melihat detail.
                         </p>
                     </div>
                     <div class="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                        <div class="flex items-center bg-blue-50/80 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                        <div
+                            class="flex items-center bg-blue-50/80 dark:bg-blue-950/60 px-4 py-2.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
                             <span
                                 class="text-xs font-semibold text-blue-800 dark:text-blue-300 mr-2 uppercase tracking-wider">Terpilih:</span>
-                            <span id="counterText" class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">0 / 10</span>
+                            <span id="counterText"
+                                class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">0 / 10</span>
                         </div>
                     </div>
                 </div>
@@ -479,7 +544,8 @@
                 <!-- Animated Selection Progress Bar -->
                 <div class="mt-4 pt-3.5 border-t border-gray-100 dark:border-gray-800">
                     <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
-                        <span id="progressStatusText" class="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                        <span id="progressStatusText"
+                            class="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                             <span>Pilih maksimal 10 foto</span>
                         </span>
@@ -500,7 +566,8 @@
                     id="filterTabContainer">
                     <button id="tabFilterAll" onclick="setGalleryFilter('all')"
                         class="px-3.5 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-bold transition-all flex items-center gap-1.5 active:scale-95">
-                        <svg class="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
                             </path>
@@ -528,12 +595,14 @@
             <!-- Empty Selected Filter Notice -->
             <div id="filterEmptySelectedState"
                 class="hidden col-span-full py-16 text-center bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 p-6 mb-6">
-                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
                 <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">Belum Ada Foto Terpilih</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Anda belum mencentang foto apapun. Silakan
+                <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Anda belum mencentang foto
+                    apapun. Silakan
                     beralih ke tab Semua Foto untuk mulai memilih foto favorit Anda.</p>
                 <button onclick="setGalleryFilter('all')"
                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">Lihat
@@ -541,8 +610,7 @@
             </div>
 
             <!-- Grid Foto Masonry (Foto Utuh, Rapi, Urut Berurutan) -->
-            <div id="photoGrid"
-                class="flex gap-1.5 sm:gap-2 pb-28 no-select items-start w-full"
+            <div id="photoGrid" class="flex gap-1.5 sm:gap-2 pb-28 no-select items-start w-full"
                 oncontextmenu="return false;">
                 <!-- Kolom foto akan di-render di sini oleh JavaScript -->
             </div>
@@ -550,7 +618,8 @@
 
         <!-- === VIEW: ADMIN PENGATURAN === -->
         <div id="viewAdmin" class="hidden animate-fade-in">
-            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 md:p-8 max-w-3xl mx-auto">
+            <div
+                class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 md:p-8 max-w-3xl mx-auto">
                 <div class="flex items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
                     <span class="text-x font-bold text-gray-900 dark:text-white">Pengaturan Admin</span>
                 </div>
@@ -559,12 +628,14 @@
                 <div id="adminSettingsContent" class="space-y-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Studio Foto</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Studio
+                                Foto</label>
                             <input type="text" id="inputStudioName"
                                 class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batas Maksimal Pilihan
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batas
+                                Maksimal Pilihan
                                 Foto</label>
                             <input type="number" id="inputMaxLimit"
                                 class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
@@ -573,7 +644,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor WhatsApp Fotografer</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor WhatsApp
+                            Fotografer</label>
                         <input type="text" id="inputWaNumber"
                             class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                             placeholder="">
@@ -581,12 +653,15 @@
                     </div>
 
                     <!-- Opsi Watermark (Default Aktif) -->
-                    <div class="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div
+                        class="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <div>
                             <label for="inputUseWatermark"
-                                class="block text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">Watermark Nama
+                                class="block text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">Watermark
+                                Nama
                                 Studio</label>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan watermark teks nama studio di atas foto
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan watermark teks nama
+                                studio di atas foto
                                 galeri &amp; layar penuh.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -598,27 +673,32 @@
                     </div>
 
                     <!-- Informasi Klien & Tanggal Sesi Foto -->
-                    <div class="p-4 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-3">
+                    <div
+                        class="p-4 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-3">
                         <div class="flex items-center space-x-2">
                             <span class="text-base">&#128197;</span>
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-blue-200">Informasi Klien &amp; Tanggal Sesi</h3>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-blue-200">Informasi Klien &amp; Tanggal
+                                Sesi</h3>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Nama Klien / Acara</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Nama
+                                    Klien / Acara</label>
                                 <input type="text" id="inputClientName"
                                     class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Tanggal Sesi Foto</label>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Tanggal
+                                    Sesi Foto</label>
                                 <input type="date" id="inputSessionDate"
                                     class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
                             </div>
                         </div>
                         <div class="pt-1">
                             <div class="flex items-center justify-between mb-1">
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300">Custom Link Pendek (Alias
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300">Custom Link
+                                    Pendek (Alias
                                     URL)</label>
                                 <button type="button" id="btnResetSlug"
                                     class="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium hidden flex items-center gap-1">
@@ -639,6 +719,33 @@
                         </div>
                     </div>
 
+                    <!-- Pengaturan Musik Latar Galeri Klien (Opsional) -->
+                    <div
+                        class="p-4 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base">🎵</span>
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-purple-200">URL Musik (Opsional)
+                                </h3>
+                            </div>
+
+                        </div>
+                        <div>
+
+                            <div class="flex gap-2">
+                                <input type="text" id="inputAudioUrl"
+                                    class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm font-mono placeholder:font-sans"
+                                    placeholder="">
+                                <button type="button" id="btnTestAudio"
+                                    class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm active:scale-95">
+                                    <span id="testAudioIcon">▶️</span>
+                                    <span id="testAudioText">Tes Lagu</span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
                     <div class="border-t border-gray-200 dark:border-gray-800 pt-0 mt-0">
                         <div class="flex justify-between items-end mb-2">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white"></h3>
@@ -649,7 +756,8 @@
 
                         <div class="space-y-4">
                             <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL Web App Google Apps
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL Web
+                                    App Google Apps
                                     Script</label>
                                 <input type="text" id="inputGasUrl"
                                     class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
@@ -657,23 +765,27 @@
                             </div>
 
                             <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kunci Rahasia GAS
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kunci
+                                    Rahasia GAS
                                     (Secret Key)</label>
                                 <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
                                     class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="Masukkan kunci rahasia Anda">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">hanya tersimpan lokal di browser admin.</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">hanya tersimpan lokal di
+                                    browser admin.</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Folder Google
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link
+                                    Folder Google
                                     Drive</label>
                                 <input type="text" id="inputFolderUrl"
                                     class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
                                     placeholder="">
                                 <div id="folderSyncStatus"
                                     class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Pastikan pengaturan folder Drive Anda adalah
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Pastikan pengaturan folder
+                                    Drive Anda adalah
                                     <b>"Siapa saja yang memiliki link"</b>.
                                 </p>
                             </div>
@@ -689,12 +801,14 @@
                     <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
                     <div id="shareSection" class="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6 hidden">
                         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">&#128279; Bagikan Pesan &amp; Galeri ke Klien
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">&#128279; Bagikan Pesan &amp;
+                                Galeri ke Klien
                             </h3>
                             <span id="shortLinkBadge"
                                 class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Teks pesan dan link di bawah ini siap disalin atau
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Teks pesan dan link di bawah ini siap
+                            disalin atau
                             langsung dikirimkan ke WhatsApp klien:</p>
                         <div class="space-y-3 mb-4">
                             <textarea id="inputClientLink" readonly rows="5"
@@ -733,8 +847,10 @@
                         </div>
 
                         <!-- Panel Kirim ke Klien -->
-                        <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirim Langsung ke WhatsApp
+                        <div
+                            class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirim
+                                Langsung ke WhatsApp
                                 Klien</label>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2"></p>
                             <div class="flex flex-col sm:flex-row gap-2">
@@ -830,7 +946,7 @@
             <!-- Client Name -->
             <h1 id="coverClientName"
                 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-white to-blue-200 tracking-tight mb-3">
-                Klien Kami
+
             </h1>
 
             <!-- Meta Badges (Hanya Tanggal Sesi jika ada) -->
@@ -843,6 +959,7 @@
                     </svg>
                     <span id="coverSessionDate">-</span>
                 </span>
+
             </div>
 
             <!-- Warm Greeting Message (Format Center) -->
@@ -872,6 +989,9 @@
         </div>
     </div>
 
+    <!-- Audio Element untuk Musik Latar Galeri Klien -->
+    <audio id="bgMusic" loop preload="none" class="hidden"></audio>
+
     <!-- Review Summary Modal Sebelum Kirim WhatsApp -->
     <div id="reviewModal"
         class="fixed inset-0 z-50 bg-gray-950/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 hidden no-select"
@@ -888,7 +1008,8 @@
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-gray-900 dark:text-white">Konfirmasi Pilihan Foto</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Tinjau kembali foto sebelum dikirim ke WA</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Tinjau kembali foto sebelum dikirim ke WA
+                        </p>
                     </div>
                 </div>
                 <button id="btnCloseReviewTop"
@@ -903,7 +1024,8 @@
             <!-- Modal Body (Scrollable) -->
             <div class="p-5 overflow-y-auto space-y-4 flex-1">
                 <!-- Info Ringkasan Klien -->
-                <div class="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3.5 border border-gray-100 dark:border-gray-700 text-xs space-y-2">
+                <div
+                    class="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3.5 border border-gray-100 dark:border-gray-700 text-xs space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-500 dark:text-gray-400">Nama Klien:</span>
                         <span id="reviewClientName" class="font-bold text-gray-900 dark:text-white">-</span>
@@ -914,7 +1036,8 @@
                     </div>
                     <div class="flex justify-between pt-1 border-t border-gray-200/60 dark:border-gray-700">
                         <span class="text-gray-600 dark:text-gray-400 font-semibold">Total Foto Dipilih:</span>
-                        <span id="reviewTotalCount" class="font-extrabold text-blue-600 dark:text-blue-400 text-sm">0 Foto</span>
+                        <span id="reviewTotalCount" class="font-extrabold text-blue-600 dark:text-blue-400 text-sm">0
+                            Foto</span>
                     </div>
                 </div>
 
@@ -928,7 +1051,8 @@
             </div>
 
             <!-- Modal Footer Buttons -->
-            <div class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center gap-2.5">
+            <div
+                class="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center gap-2.5">
                 <button id="btnCancelReview"
                     class="flex-1 py-3 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-200 font-semibold rounded-xl text-xs sm:text-sm transition shadow-sm">
                     Periksa Lagi
@@ -1046,8 +1170,10 @@
     <!-- PIN Login Modal -->
     <div id="pinModal" style="z-index: 1000;"
         class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm z-[1000] hidden items-center justify-center px-4 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-100 dark:border-gray-800">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 text-gray-700 dark:text-gray-300">
+        <div
+            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-gray-100 dark:border-gray-800">
+            <div
+                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 text-gray-700 dark:text-gray-300">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
@@ -1073,7 +1199,8 @@
     <!-- Folder Help Modal -->
     <div id="helpFolderModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center px-4 animate-fade-in overflow-y-auto pt-20 pb-10">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto border border-gray-100 dark:border-gray-800">
+        <div
+            class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full p-6 animate-scale-in my-auto border border-gray-100 dark:border-gray-800">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">Cara Memasang Google Apps Script (GAS)</h3>
                 <button id="btnCloseHelp" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
@@ -1089,7 +1216,8 @@
                     <b>pencatat otomatis backup hasil pilihan foto klien ke Google Sheets</b>.
                 </p>
                 <ol class="list-decimal pl-5 space-y-2 font-medium">
-                    <li>Buka <a href="https://sheets.new" target="_blank" class="text-blue-600 dark:text-blue-400 underline">Google
+                    <li>Buka <a href="https://sheets.new" target="_blank"
+                            class="text-blue-600 dark:text-blue-400 underline">Google
                             Sheets
                             (sheets.new)</a> untuk membuat file Spreadsheet baru.</li>
                     <li>Pada menu di atas, klik <b>Ekstensi &rarr; Apps Script</b>.</li>
@@ -1273,14 +1401,15 @@ function doPost(e) {
             class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in text-center border border-gray-100 dark:border-gray-800 relative">
             <div id="dialogIconContainer"
                 class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 dark:bg-blue-900/40 mb-4 transition-all duration-300">
-                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 dark:text-blue-400 transition-all duration-300" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
+                <svg id="dialogIcon" class="h-7 w-7 text-blue-600 dark:text-blue-400 transition-all duration-300"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
             <h3 id="dialogTitle" class="text-xl font-bold text-gray-900 dark:text-white mb-2">Informasi</h3>
-            <p id="dialogMessage" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Pesan di sini.</p>
+            <p id="dialogMessage" class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Pesan di sini.
+            </p>
             <button id="btnDialogOk"
                 class="w-full inline-flex justify-center items-center rounded-xl shadow-md px-5 py-2.5 bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 focus:outline-none transition-all">
                 Mengerti
@@ -1321,6 +1450,7 @@ function doPost(e) {
             clientName: "",
             customSlug: "",
             sessionDate: "",
+            audioUrl: "", // URL file lagu musik latar klien
             gasUrl: getDefaultGasUrl(), // Endpoint default tersamar
             gasSecretKey: getDefaultGasSecretKey(), // Kunci rahasia default aman
             folderUrl: "",
@@ -1353,6 +1483,9 @@ function doPost(e) {
             inputCustomSlug: document.getElementById('inputCustomSlug'),
             btnResetSlug: document.getElementById('btnResetSlug'),
             inputSessionDate: document.getElementById('inputSessionDate'),
+            inputAudioUrl: document.getElementById('inputAudioUrl'),
+            btnTestAudio: document.getElementById('btnTestAudio'),
+            audioStatusBadge: document.getElementById('audioStatusBadge'),
             inputGasUrl: document.getElementById('inputGasUrl'),
             inputGasSecret: document.getElementById('inputGasSecret'),
             inputFolderUrl: document.getElementById('inputFolderUrl'),
@@ -1405,6 +1538,13 @@ function doPost(e) {
             inputClientWa: document.getElementById('inputClientWa'),
             btnSendToClientWa: document.getElementById('btnSendToClientWa'),
 
+            // Audio & Musik Latar Klien
+            bgMusic: document.getElementById('bgMusic'),
+            btnMusicToggle: document.getElementById('btnMusicToggle'),
+            musicWaveContainer: document.getElementById('musicWaveContainer'),
+            musicPausedIcon: document.getElementById('musicPausedIcon'),
+            coverMusicIndicator: document.getElementById('coverMusicIndicator'),
+
             // Theme Toggle
             btnThemeToggle: document.getElementById('btnThemeToggle'),
             themeIconSun: document.getElementById('themeIconSun'),
@@ -1430,21 +1570,13 @@ function doPost(e) {
             }
         }
 
-        let themeTransitionTimer = null;
         function toggleTheme() {
-            clearTimeout(themeTransitionTimer);
-            // Aktifkan transisi menyeluruh di seluruh elemen DOM
-            document.documentElement.classList.add('theme-transitioning');
-
+            // Ganti tema secara instan & mulus (transisi dihandle oleh CSS modern tanpa jank)
             const isDark = document.documentElement.classList.toggle('dark');
             try {
                 localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-            } catch (e) {}
+            } catch (e) { }
             updateThemeUI(isDark);
-
-            themeTransitionTimer = setTimeout(() => {
-                document.documentElement.classList.remove('theme-transitioning');
-            }, 500);
         }
 
         function initTheme() {
@@ -1461,6 +1593,255 @@ function doPost(e) {
             if (btn) {
                 btn.removeEventListener('click', toggleTheme);
                 btn.addEventListener('click', toggleTheme);
+            }
+            // Aktifkan transisi setelah render awal selesai (mencegah flash)
+            setTimeout(() => {
+                document.documentElement.classList.remove('no-theme-transition');
+            }, 60);
+        }
+
+        // --- MANAJEMEN MUSIK LATAR GALERI KLIEN ---
+        let bgAudio = null;
+        let isAudioPlaying = false;
+        let audioFadeInterval = null;
+        let testAudio = null;
+        let isTestingAudio = false;
+
+        // Helper: Normalisasi URL Audio (mendukung Google Drive direct streaming & Dropbox)
+        function convertAudioUrl(url) {
+            if (!url) return '';
+            url = url.trim();
+            // Google Drive preview/sharing link handler
+            const gDriveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (gDriveMatch && gDriveMatch[1]) {
+                return `https://docs.google.com/uc?export=download&id=${gDriveMatch[1]}`;
+            }
+            // Dropbox direct link handler
+            if (url.includes('dropbox.com')) {
+                return url.replace('dl=0', 'raw=1').replace('?dl=0', '?raw=1');
+            }
+            return url;
+        }
+
+        function initClientAudio() {
+            if (!bgAudio) {
+                bgAudio = document.getElementById('bgMusic') || new Audio();
+            }
+            const cleanUrl = convertAudioUrl(appState.audioUrl);
+            if (!cleanUrl) {
+                // Admin TIDAK memasukkan URL lagu -> Galeri otomatis hening
+                if (bgAudio) {
+                    try { bgAudio.pause(); } catch (e) { }
+                    bgAudio.src = '';
+                }
+                isAudioPlaying = false;
+                updateMusicUI(false, false);
+                return;
+            }
+
+            // Ada URL lagu
+            if (bgAudio.src !== cleanUrl) {
+                bgAudio.src = cleanUrl;
+                bgAudio.loop = true;
+            }
+            updateMusicUI(false, true);
+        }
+
+        function playClientAudio(fade = true) {
+            if (!appState.audioUrl) return;
+            if (!bgAudio) bgAudio = document.getElementById('bgMusic') || new Audio();
+            const cleanUrl = convertAudioUrl(appState.audioUrl);
+            if (!cleanUrl) return;
+
+            if (bgAudio.src !== cleanUrl) {
+                bgAudio.src = cleanUrl;
+                bgAudio.loop = true;
+            }
+
+            clearInterval(audioFadeInterval);
+
+            if (fade) {
+                bgAudio.volume = 0;
+                const playPromise = bgAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isAudioPlaying = true;
+                        updateMusicUI(true, true);
+                        let vol = 0;
+                        audioFadeInterval = setInterval(() => {
+                            vol = Math.min(0.55, vol + 0.05);
+                            if (bgAudio) bgAudio.volume = vol;
+                            if (vol >= 0.55) clearInterval(audioFadeInterval);
+                        }, 120);
+                    }).catch(err => {
+                        console.warn("Autoplay audio tertahan browser:", err);
+                        isAudioPlaying = false;
+                        updateMusicUI(false, true);
+                    });
+                }
+            } else {
+                bgAudio.volume = 0.55;
+                bgAudio.play().then(() => {
+                    isAudioPlaying = true;
+                    updateMusicUI(true, true);
+                }).catch(err => {
+                    console.warn("Audio play error:", err);
+                    isAudioPlaying = false;
+                    updateMusicUI(false, true);
+                });
+            }
+        }
+
+        function pauseClientAudio() {
+            if (!bgAudio) return;
+            clearInterval(audioFadeInterval);
+            bgAudio.pause();
+            isAudioPlaying = false;
+            updateMusicUI(false, true);
+        }
+
+        function toggleClientAudio() {
+            if (!appState.audioUrl) return;
+            if (isAudioPlaying) {
+                pauseClientAudio();
+            } else {
+                playClientAudio(false);
+            }
+        }
+
+        function updateMusicUI(isPlaying, hasAudio) {
+            const btnMusic = document.getElementById('btnMusicToggle');
+            const waveContainer = document.getElementById('musicWaveContainer');
+            const pausedIcon = document.getElementById('musicPausedIcon');
+            const coverMusicBadge = document.getElementById('coverMusicIndicator');
+
+            if (!hasAudio) {
+                // Tidak ada audio: sembunyikan semua elemen musik
+                if (btnMusic) {
+                    btnMusic.classList.add('hidden');
+                    btnMusic.classList.remove('flex');
+                }
+                if (coverMusicBadge) {
+                    coverMusicBadge.classList.add('hidden');
+                    coverMusicBadge.classList.remove('inline-flex');
+                }
+                return;
+            }
+
+            // Ada audio: tampilkan badge & tombol
+            if (coverMusicBadge) {
+                coverMusicBadge.classList.remove('hidden');
+                coverMusicBadge.classList.add('inline-flex');
+            }
+
+            if (btnMusic) {
+                btnMusic.classList.remove('hidden');
+                btnMusic.classList.add('flex');
+                if (isPlaying) {
+                    btnMusic.classList.add('music-playing');
+                    btnMusic.title = "Jeda Musik Latar";
+                    btnMusic.setAttribute('aria-label', "Jeda Musik Latar");
+                    if (waveContainer) waveContainer.classList.remove('hidden');
+                    if (pausedIcon) pausedIcon.classList.add('hidden');
+                } else {
+                    btnMusic.classList.remove('music-playing');
+                    btnMusic.title = "Putar Musik Latar";
+                    btnMusic.setAttribute('aria-label', "Putar Musik Latar");
+                    if (waveContainer) waveContainer.classList.add('hidden');
+                    if (pausedIcon) pausedIcon.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Tester Audio di Dashboard Admin
+        function initAdminAudioTester() {
+            const btnTest = document.getElementById('btnTestAudio');
+            const inputAudio = document.getElementById('inputAudioUrl');
+            const badgeStatus = document.getElementById('audioStatusBadge');
+            const testIcon = document.getElementById('testAudioIcon');
+            const testText = document.getElementById('testAudioText');
+
+            function refreshBadge() {
+                const url = inputAudio ? inputAudio.value.trim() : '';
+                if (badgeStatus) {
+                    if (url) {
+                        badgeStatus.textContent = "✓ Musik Aktif";
+                        badgeStatus.className = "text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300";
+                    } else {
+                        badgeStatus.textContent = "Hening (Tanpa Musik)";
+                        badgeStatus.className = "text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+                    }
+                }
+            }
+
+            if (inputAudio) {
+                inputAudio.addEventListener('input', () => {
+                    refreshBadge();
+                    if (isTestingAudio && testAudio) {
+                        testAudio.pause();
+                        isTestingAudio = false;
+                        if (testIcon) testIcon.textContent = "▶️";
+                        if (testText) testText.textContent = "Tes Lagu";
+                        if (btnTest) {
+                            btnTest.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                            btnTest.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                        }
+                    }
+                });
+                inputAudio.addEventListener('blur', refreshBadge);
+            }
+
+            if (btnTest) {
+                btnTest.addEventListener('click', () => {
+                    const rawUrl = inputAudio ? inputAudio.value.trim() : '';
+                    if (!rawUrl) {
+                        showDialog("Masukkan URL lagu terlebih dahulu untuk mengetes.", "Peringatan");
+                        return;
+                    }
+
+                    if (isTestingAudio && testAudio) {
+                        testAudio.pause();
+                        isTestingAudio = false;
+                        if (testIcon) testIcon.textContent = "▶️";
+                        if (testText) testText.textContent = "Tes Lagu";
+                        btnTest.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                        btnTest.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                        return;
+                    }
+
+                    const cleanUrl = convertAudioUrl(rawUrl);
+                    if (!testAudio) {
+                        testAudio = new Audio();
+                    }
+                    testAudio.src = cleanUrl;
+                    testAudio.volume = 0.65;
+
+                    if (testIcon) testIcon.textContent = "⏳";
+                    if (testText) testText.textContent = "Memuat...";
+
+                    testAudio.play().then(() => {
+                        isTestingAudio = true;
+                        if (testIcon) testIcon.textContent = "⏹️";
+                        if (testText) testText.textContent = "Berhenti";
+                        btnTest.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                        btnTest.classList.add('bg-rose-600', 'hover:bg-rose-700');
+                    }).catch(err => {
+                        isTestingAudio = false;
+                        if (testIcon) testIcon.textContent = "▶️";
+                        if (testText) testText.textContent = "Tes Lagu";
+                        btnTest.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                        btnTest.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                        showDialog("Gagal memutar audio dari URL ini. Pastikan link dapat diakses publik atau berupa file audio MP3 yang valid.", "Uji Audio Gagal", "error");
+                    });
+
+                    testAudio.onended = () => {
+                        isTestingAudio = false;
+                        if (testIcon) testIcon.textContent = "▶️";
+                        if (testText) testText.textContent = "Tes Lagu";
+                        btnTest.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                        btnTest.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                    };
+                });
             }
         }
 
@@ -1625,6 +2006,7 @@ function doPost(e) {
             appState.useWatermark = true;
             appState.clientName = "";
             appState.sessionDate = getTodayDateString();
+            appState.audioUrl = "";
             appState.gasUrl = getDefaultGasUrl();
             appState.gasSecretKey = getDefaultGasSecretKey();
             appState.folderUrl = "";
@@ -1643,6 +2025,11 @@ function doPost(e) {
             if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
             isSlugManuallyEdited = false;
             if (els.inputSessionDate) els.inputSessionDate.value = getTodayDateString();
+            if (els.inputAudioUrl) els.inputAudioUrl.value = "";
+            if (els.audioStatusBadge) {
+                els.audioStatusBadge.textContent = "Hening (Tanpa Musik)";
+                els.audioStatusBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+            }
             if (els.inputGasUrl) els.inputGasUrl.value = appState.gasUrl;
             if (els.inputGasSecret) els.inputGasSecret.value = getDefaultGasSecretKey();
             if (els.inputFolderUrl) els.inputFolderUrl.value = "";
@@ -1687,10 +2074,22 @@ function doPost(e) {
                     appState.clientName = parsed.clientName || "";
                     appState.customSlug = parsed.customSlug || "";
                     appState.sessionDate = parsed.sessionDate || getTodayDateString();
+                    appState.audioUrl = parsed.audioUrl || "";
                     appState.gasUrl = (!parsed.gasUrl || parsed.gasUrl.includes('_3Jpg')) ? getDefaultGasUrl() : parsed.gasUrl;
                     appState.gasSecretKey = parsed.gasSecretKey || getDefaultGasSecretKey();
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
+
+                    if (els.inputAudioUrl) els.inputAudioUrl.value = appState.audioUrl;
+                    if (els.audioStatusBadge) {
+                        if (appState.audioUrl) {
+                            els.audioStatusBadge.textContent = "✓ Musik Aktif";
+                            els.audioStatusBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300";
+                        } else {
+                            els.audioStatusBadge.textContent = "Hening (Tanpa Musik)";
+                            els.audioStatusBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+                        }
+                    }
                 }
             } catch (e) {
                 console.log("Local storage dibatasi, menggunakan default.");
@@ -1709,6 +2108,7 @@ function doPost(e) {
                     clientName: appState.clientName || "",
                     customSlug: appState.customSlug || "",
                     sessionDate: appState.sessionDate || "",
+                    audioUrl: appState.audioUrl || "",
                     gasUrl: appState.gasUrl,
                     gasSecretKey: appState.gasSecretKey,
                     folderUrl: appState.folderUrl,
@@ -3068,6 +3468,17 @@ function doPost(e) {
             }
             if (studioEl) studioEl.textContent = appState.studioName || "Studio Foto";
 
+            const musicIndicator = document.getElementById('coverMusicIndicator');
+            if (musicIndicator) {
+                if (appState.audioUrl) {
+                    musicIndicator.classList.remove('hidden');
+                    musicIndicator.classList.add('inline-flex');
+                } else {
+                    musicIndicator.classList.add('hidden');
+                    musicIndicator.classList.remove('inline-flex');
+                }
+            }
+
             cover.classList.remove('hidden');
             cover.classList.remove('opacity-0');
         }
@@ -3091,7 +3502,16 @@ function doPost(e) {
                         cover.classList.remove('-translate-y-6', 'pointer-events-none');
                     }, 500);
                 }
+                // Putar musik latar jika admin memasukkan URL audio!
+                if (appState.audioUrl) {
+                    playClientAudio(true);
+                }
             });
+        }
+
+        const btnMusicTgl = document.getElementById('btnMusicToggle');
+        if (btnMusicTgl) {
+            btnMusicTgl.addEventListener('click', toggleClientAudio);
         }
 
 
@@ -3172,6 +3592,14 @@ function doPost(e) {
                 if (els.inputSessionDate) {
                     appState.sessionDate = els.inputSessionDate.value.trim();
                 }
+                if (els.inputAudioUrl) {
+                    appState.audioUrl = els.inputAudioUrl.value.trim();
+                }
+                initClientAudio();
+                if (isTestingAudio && testAudio) {
+                    testAudio.pause();
+                    isTestingAudio = false;
+                }
                 if (els.inputUseWatermark) {
                     appState.useWatermark = els.inputUseWatermark.checked;
                 }
@@ -3207,6 +3635,16 @@ function doPost(e) {
                     }
                 }
                 if (els.inputSessionDate) els.inputSessionDate.value = appState.sessionDate || getTodayDateString();
+                if (els.inputAudioUrl) els.inputAudioUrl.value = appState.audioUrl || '';
+                if (els.audioStatusBadge) {
+                    if (appState.audioUrl) {
+                        els.audioStatusBadge.textContent = "✓ Musik Aktif";
+                        els.audioStatusBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300";
+                    } else {
+                        els.audioStatusBadge.textContent = "Hening (Tanpa Musik)";
+                        els.audioStatusBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+                    }
+                }
                 if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || getDefaultGasSecretKey();
                 if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
                 els.inputGasUrl.value = appState.gasUrl;
@@ -3544,6 +3982,9 @@ function doPost(e) {
             if (els.inputSessionDate) {
                 appState.sessionDate = els.inputSessionDate.value.trim();
             }
+            if (els.inputAudioUrl) {
+                appState.audioUrl = els.inputAudioUrl.value.trim();
+            }
             if (els.inputGasSecret && els.inputGasSecret.value.trim()) {
                 appState.gasSecretKey = els.inputGasSecret.value.trim();
             } else if (!appState.gasSecretKey) {
@@ -3584,11 +4025,12 @@ function doPost(e) {
                 }
                 const sig = Math.abs(hash).toString(36);
 
-                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi
+                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi | AudioUrl
                 const wmFlag = appState.useWatermark ? '1' : '0';
                 const safeClient = encodeURIComponent(appState.clientName || '');
                 const safeDate = encodeURIComponent(appState.sessionDate || '');
-                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}`;
+                const safeAudio = encodeURIComponent(appState.audioUrl || '');
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}|${safeAudio}`;
                 const token = btoa(encodeURIComponent(rawData));
 
                 const clientUrlFallback = `${baseUrl}?t=${token}`;
@@ -3656,6 +4098,7 @@ function doPost(e) {
                         studioName: appState.studioName || 'Studio',
                         clientName: appState.clientName || '',
                         sessionDate: appState.sessionDate || '',
+                        audioUrl: appState.audioUrl || '',
                         fullLink: shortClientUrl
                     });
 
@@ -3738,6 +4181,7 @@ function doPost(e) {
                 const sig = parts.length > 6 ? parts[6] : null;
                 const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
                 const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
+                const audioUrl = parts.length > 9 ? decodeURIComponent(parts[9]) : '';
 
                 // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
                 if (sig) {
@@ -3763,6 +4207,7 @@ function doPost(e) {
                 appState.useWatermark = useWm;
                 appState.clientName = clientName;
                 appState.sessionDate = sessionDate;
+                appState.audioUrl = audioUrl;
             } else {
                 // Fallback format lama (JSON)
                 const parsedData = JSON.parse(decodedStr);
@@ -3772,6 +4217,7 @@ function doPost(e) {
                 appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
                 appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
                 appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
+                appState.audioUrl = parsedData.au || '';
             }
         }
 
@@ -3799,6 +4245,9 @@ function doPost(e) {
                     if (this.value.trim()) this.value = formatWaNumber(this.value);
                 });
             }
+
+            // Inisialisasi tester audio di dashboard admin
+            initAdminAudioTester();
 
             // CEK APAKAH INI LINK DARI KLIEN (Mengandung Token atau Short Code)
             const urlParams = new URLSearchParams(window.location.search);
@@ -3845,6 +4294,9 @@ function doPost(e) {
                     if (tokenToUse) {
                         try {
                             decodeTokenToAppState(tokenToUse);
+                            const queryAudio = urlParams.get('m') || urlParams.get('audio') || urlParams.get('music');
+                            if (queryAudio) appState.audioUrl = queryAudio;
+                            initClientAudio();
                             updateUI();
                         } catch (errToken) {
                             console.warn("Gagal parse token awal:", errToken);
@@ -3880,6 +4332,12 @@ function doPost(e) {
                         if (shortJson && shortJson.status === 'success' && shortJson.data && shortJson.data.token) {
                             tokenToUse = shortJson.data.token;
                             decodeTokenToAppState(tokenToUse);
+                            if (shortJson.data.audioUrl && !appState.audioUrl) {
+                                appState.audioUrl = shortJson.data.audioUrl;
+                            }
+                            const queryAudio = urlParams.get('m') || urlParams.get('audio') || urlParams.get('music');
+                            if (queryAudio) appState.audioUrl = queryAudio;
+                            initClientAudio();
                             updateUI();
                             // Perbarui teks di splash screen dengan nama klien & tanggal yang baru didapat
                             showWelcomeCover();
