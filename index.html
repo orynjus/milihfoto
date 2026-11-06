@@ -389,6 +389,142 @@
         #css-blend-shield.active {
             display: block;
         }
+
+        /* ====== VIEW ADMIN: 1 LAYAR PENUH DI PC (NO SCROLL & FULL SCREEN) ====== */
+        @media (min-width: 1024px) {
+            body.admin-view-active {
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            body.admin-view-active nav>div {
+                max-width: 100% !important;
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
+            }
+
+            body.admin-view-active #protected-gallery-content {
+                max-width: 100% !important;
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
+                padding-top: 1rem !important;
+                padding-bottom: 0.75rem !important;
+                display: flex;
+                flex-direction: column;
+                flex: 1 1 0%;
+                min-height: 0;
+            }
+
+            body.admin-view-active #viewAdmin:not(.hidden) {
+                display: flex !important;
+                flex-direction: column;
+                flex: 1 1 0%;
+                min-height: 0;
+            }
+
+            body.admin-view-active footer {
+                padding-top: 0.25rem;
+                padding-bottom: 0.5rem;
+                flex-shrink: 0;
+            }
+        }
+
+        @media (min-width: 1024px) and (max-height: 640px) {
+            body.admin-view-active {
+                height: auto;
+                overflow-y: auto !important;
+            }
+        }
+
+        #shareSection.hidden,
+        #shareSectionPlaceholder.hidden {
+            display: none !important;
+        }
+
+        /* ====== TOGGLE ON/OFF DENGAN TEKS & WARNA ====== */
+        .toggle-on-off {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            width: 74px;
+            height: 34px;
+            border-radius: 9999px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #ef4444;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.22);
+        }
+
+        .toggle-on-off .toggle-knob {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 26px;
+            height: 26px;
+            border-radius: 9999px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+        }
+
+        .toggle-on-off .toggle-label-on,
+        .toggle-on-off .toggle-label-off {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+            line-height: 1;
+            user-select: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .toggle-on-off .toggle-label-on {
+            left: 11px;
+            opacity: 0;
+        }
+
+        .toggle-on-off .toggle-label-off {
+            right: 9px;
+            opacity: 1;
+        }
+
+        input:checked+.toggle-on-off {
+            background-color: #10b981;
+        }
+
+        input:checked+.toggle-on-off .toggle-knob {
+            transform: translateX(40px);
+        }
+
+        input:checked+.toggle-on-off .toggle-label-on {
+            opacity: 1;
+        }
+
+        input:checked+.toggle-on-off .toggle-label-off {
+            opacity: 0;
+        }
+
+        /* Rapikan warna kotak input (terutama Nomor WhatsApp) dari efek autofill browser */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+            -webkit-text-fill-color: #111827 !important;
+            caret-color: #111827 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        html.dark input:-webkit-autofill,
+        html.dark input:-webkit-autofill:hover,
+        html.dark input:-webkit-autofill:focus,
+        html.dark input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #1f2937 inset !important;
+            -webkit-text-fill-color: #f3f4f6 !important;
+            caret-color: #f3f4f6 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
     </style>
 </head>
 
@@ -419,9 +555,9 @@
     <!-- CSS Blend Mode Shield (selalu ada di DOM) -->
     <div id="css-blend-shield"></div>
 
-    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+    <nav class="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 w-full">
+        <div class="w-full max-w-full mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14 sm:h-16">
                 <div class="flex items-center">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-500 mr-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -485,10 +621,11 @@
         </div>
     </nav>
 
-    <main id="protected-gallery-content" class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main id="protected-gallery-content"
+        class="flex-grow w-full max-w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 lg:py-4 transition-all">
 
         <!-- === VIEW: GALERI KLIEN === -->
-        <div id="viewGallery" class="block animate-fade-in">
+        <div id="viewGallery" class="block animate-fade-in w-full">
             <!-- Header Kartu Galeri Klien dengan Progress Bar -->
             <div id="galleryHeaderCard"
                 class="mb-6 bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100/80 dark:border-gray-800">
@@ -592,257 +729,251 @@
         </div>
 
         <!-- === VIEW: ADMIN PENGATURAN === -->
-        <div id="viewAdmin" class="hidden animate-fade-in">
-            <div
-                class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 md:p-8 max-w-3xl mx-auto">
-                <div class="flex items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
-                    <span class="text-x font-bold text-gray-900 dark:text-white">Pengaturan Admin</span>
-                </div>
+        <div id="viewAdmin" class="hidden animate-fade-in w-full">
+            <div class="w-full flex-1 flex flex-col min-h-0">
+                <!-- KONTEN PENGATURAN (Grid 2 Kolom Memenuhi Layar Penuh di PC) -->
+                <div id="adminSettingsContent"
+                    class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-stretch min-h-0">
 
-                <!-- KONTEN PENGATURAN -->
-                <div id="adminSettingsContent" class="space-y-3">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Studio
-                                Foto</label>
-                            <input type="text" id="inputStudioName"
-                                class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batas
-                                Maksimal Pilihan
-                                Foto</label>
-                            <input type="number" id="inputMaxLimit"
-                                class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                min="1">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor WhatsApp
-                            Fotografer</label>
-                        <input type="text" id="inputWaNumber"
-                            class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                            placeholder="">
-                        <input type="password" id="inputAdminPin" class="hidden">
-                    </div>
-
-                    <!-- Opsi Watermark (Default Aktif) -->
+                    <!-- KOLOM 1: STUDIO & SUMBER FOTO -->
                     <div
-                        class="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <div>
-                            <label for="inputUseWatermark"
-                                class="block text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">Watermark
-                                Nama
-                                Studio</label>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tampilkan watermark teks nama
-                                studio di atas foto
-                                galeri &amp; layar penuh.</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="inputUseWatermark" class="sr-only peer" checked>
+                        class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-4 sm:p-5 lg:p-6 flex flex-col justify-between h-full gap-3">
+                        <div class="space-y-3 lg:space-y-4">
                             <div
-                                class="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                class="flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider pb-2 border-b border-gray-100 dark:border-gray-800">
+                                <span class="flex items-center gap-2">🏢 Profil Studio &amp; Folder Foto</span>
                             </div>
-                        </label>
-                    </div>
 
-                    <!-- Informasi Klien & Tanggal Sesi Foto -->
-                    <div
-                        class="p-4 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-base">&#128197;</span>
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-blue-200">Informasi Klien &amp; Tanggal
-                                Sesi</h3>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <!-- Baris 1: Nama Studio & Limit Foto -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                                <div>
+                                    <label for="inputStudioName"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Nama
+                                        Studio Foto</label>
+                                    <input type="text" id="inputStudioName"
+                                        class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base">
+                                </div>
+                                <div>
+                                    <label for="inputMaxLimit"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Batas
+                                        Maksimal Foto</label>
+                                    <input type="number" id="inputMaxLimit" min="1"
+                                        class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base">
+                                </div>
+                            </div>
+
+                            <!-- Baris 2: WhatsApp Fotografer -->
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Nama
-                                    Klien / Acara</label>
-                                <input type="text" id="inputClientName"
-                                    class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                <label for="inputWaNumber"
+                                    class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Nomor
+                                    WhatsApp Fotografer</label>
+                                <input type="text" id="inputWaNumber" autocomplete="off"
+                                    class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base"
                                     placeholder="">
                             </div>
+
+                            <!-- Baris 3: Folder Google Drive -->
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300 mb-1">Tanggal
-                                    Sesi Foto</label>
-                                <input type="date" id="inputSessionDate"
-                                    class="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
-                            </div>
-                        </div>
-                        <div class="pt-1">
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block text-xs font-semibold text-gray-700 dark:text-blue-300">Custom Link
-                                    Pendek (Alias
-                                    URL)</label>
-                                <button type="button" id="btnResetSlug"
-                                    class="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium hidden flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                        </path>
-                                    </svg>
-                                    Reset ke Nama Klien
-                                </button>
-                            </div>
-                            <input type="text" id="inputCustomSlug"
-                                class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-mono text-gray-800 dark:text-gray-200 shadow-sm"
-                                placeholder="" autocomplete="off" spellcheck="false">
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                                Anda juga bisa mengetik kustom url sendiri sebelum menyimpan.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Pengaturan Musik Latar Galeri Klien (Opsional) -->
-                    <div
-                        class="p-4 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/40 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-base">🎵</span>
-                                <h3 class="text-sm font-bold text-gray-900 dark:text-purple-200">URL Musik (Opsional)
-                                </h3>
-                            </div>
-
-                        </div>
-                        <div>
-
-                            <div class="flex gap-2">
-                                <input type="text" id="inputAudioUrl"
-                                    class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm font-mono placeholder:font-sans"
-                                    placeholder="">
-                                <button type="button" id="btnTestAudio"
-                                    class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm active:scale-95">
-                                    <span id="testAudioIcon">▶️</span>
-                                    <span id="testAudioText">Tes Lagu</span>
-                                </button>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-200 dark:border-gray-800 pt-0 mt-0">
-                        <div class="flex justify-between items-end mb-2">
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white"></h3>
-                            <button id="btnHelpFolder"
-                                class="hidden text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold underline px-2 py-1 bg-blue-50 dark:bg-blue-950/50 rounded transition">Cara
-                                Pasang GAS?</button>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL Web
-                                    App Google Apps
-                                    Script</label>
-                                <input type="text" id="inputGasUrl"
-                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                    placeholder="https://script.google.com/macros/s/.../exec">
-                            </div>
-
-                            <div class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kunci
-                                    Rahasia GAS
-                                    (Secret Key)</label>
-                                <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026"
-                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
-                                    placeholder="Masukkan kunci rahasia Anda">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">hanya tersimpan lokal di
-                                    browser admin.</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link
-                                    Folder Google
-                                    Drive</label>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="inputFolderUrl"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">Link
+                                        Folder Google Drive</label>
+                                    <button type="button" id="btnHelpFolder"
+                                        class="hidden text-xs text-blue-600 dark:text-blue-400 hover:underline">Bantuan
+                                        GAS</button>
+                                </div>
                                 <input type="text" id="inputFolderUrl"
-                                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                                    class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base font-mono placeholder:font-sans"
                                     placeholder="">
                                 <div id="folderSyncStatus"
-                                    class="text-xs font-medium mt-2 hidden flex items-center transition-all"></div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Pastikan pengaturan folder
-                                    Drive Anda adalah
-                                    <b>"Siapa saja yang memiliki link"</b>.
-                                </p>
+                                    class="text-xs sm:text-sm font-medium mt-1.5 hidden flex items-center transition-all">
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Akses folder Drive disetel:
+                                    <strong>"Siapa saja yang memiliki link"</strong>.</p>
+                            </div>
+
+                            <!-- Baris 4: Dua Toggle Berdampingan -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 pt-1">
+                                <!-- Toggle Watermark -->
+                                <div
+                                    class="p-3.5 lg:p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+                                    <div class="min-w-0 pr-1">
+                                        <label for="inputUseWatermark"
+                                            class="block text-xs sm:text-sm font-bold text-gray-900 dark:text-white cursor-pointer truncate">Watermark
+                                            Studio</label>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">Teks nama di
+                                            foto</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" id="inputUseWatermark" class="sr-only" checked>
+                                        <div class="toggle-on-off">
+                                            <span class="toggle-label-on">ON</span>
+                                            <span class="toggle-label-off">OFF</span>
+                                            <span class="toggle-knob"></span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Toggle Download Foto Klien -->
+                                <div
+                                    class="p-3.5 lg:p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+                                    <div class="min-w-0 pr-1">
+                                        <label for="inputAllowClientDownload"
+                                            class="block text-xs sm:text-sm font-bold text-gray-900 dark:text-white cursor-pointer truncate">Download
+                                            Klien</label>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">Izin unduh
+                                            file asli</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                        <input type="checkbox" id="inputAllowClientDownload" class="sr-only">
+                                        <div class="toggle-on-off">
+                                            <span class="toggle-label-on">ON</span>
+                                            <span class="toggle-label-off">OFF</span>
+                                            <span class="toggle-knob"></span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Hidden GAS Settings -->
+                            <div class="hidden">
+                                <input type="password" id="inputAdminPin" autocomplete="new-password">
+                                <input type="text" id="inputGasUrl" placeholder="">
+                                <input type="password" id="inputGasSecret" value="MilihFotoSecureKey2026" autocomplete="new-password">
                             </div>
                         </div>
-                    </div>
 
-                    <div class="pt-4 flex justify-end">
-                        <button id="btnSaveAdmin"
-                            class="px-6 py-2 bg-gray-900 dark:bg-blue-600 text-white rounded-lg font-medium hover:bg-black dark:hover:bg-blue-700 transition shadow-sm">Simpan
-                            Pengaturan</button>
-                    </div>
-
-                    <!-- BAGIKAN LINK KLIEN (Akan muncul setelah Simpan) -->
-                    <div id="shareSection" class="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6 hidden">
-                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">&#128279; Bagikan Pesan &amp;
-                                Galeri ke Klien
-                            </h3>
-                            <span id="shortLinkBadge"
-                                class="text-xs px-2.5 py-1 rounded-full font-semibold hidden"></span>
+                        <!-- Tombol Simpan Pengaturan -->
+                        <div class="pt-2">
+                            <button id="btnSaveAdmin"
+                                class="w-full py-3 lg:py-3.5 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm lg:text-base font-bold transition shadow-md flex items-center justify-center gap-2 active:scale-98">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                <span>Simpan Pengaturan &amp; Buat Link</span>
+                            </button>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Teks pesan dan link di bawah ini siap
-                            disalin atau
-                            langsung dikirimkan ke WhatsApp klien:</p>
-                        <div class="space-y-3 mb-4">
-                            <textarea id="inputClientLink" readonly rows="5"
-                                class="w-full px-4 py-3 border border-blue-200 dark:border-blue-900/60 rounded-xl bg-blue-50/80 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 outline-none text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
-                            <div class="flex flex-col sm:flex-row gap-2">
+                    </div>
+
+                    <!-- KOLOM 2: INFORMASI KLIEN, MUSIK & BAGIKAN LINK -->
+                    <div
+                        class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-4 sm:p-5 lg:p-6 flex flex-col justify-between h-full gap-3">
+                        <div class="space-y-3 lg:space-y-4">
+                            <div
+                                class="flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider pb-2 border-b border-gray-100 dark:border-gray-800">
+                                <span class="flex items-center gap-2">👤 Sesi Klien &amp; Bagikan Link</span>
+                            </div>
+
+                            <!-- Baris 1: Nama Klien & Tanggal Sesi -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                                <div>
+                                    <label for="inputClientName"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Nama
+                                        Klien / Acara</label>
+                                    <input type="text" id="inputClientName"
+                                        class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base"
+                                        placeholder="">
+                                </div>
+                                <div>
+                                    <label for="inputSessionDate"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tanggal
+                                        Sesi</label>
+                                    <input type="date" id="inputSessionDate"
+                                        class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base">
+                                </div>
+                            </div>
+
+                            <!-- Baris 2: Custom Alias URL -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="inputCustomSlug"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">Custom
+                                        Alias URL (Link Pendek)</label>
+                                    <button type="button" id="btnResetSlug"
+                                        class="text-xs text-blue-600 dark:text-blue-400 hover:underline hidden flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>Reset ke Nama</span>
+                                    </button>
+                                </div>
+                                <input type="text" id="inputCustomSlug"
+                                    class="w-full px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm lg:text-base font-mono text-gray-800 dark:text-gray-200"
+                                    placeholder="">
+                            </div>
+
+                            <!-- Baris 3: Musik Latar -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="inputAudioUrl"
+                                        class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">URL
+                                        Musik</label>
+
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="inputAudioUrl"
+                                        class="flex-1 px-3.5 py-2.5 lg:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm lg:text-base font-mono placeholder:font-sans"
+                                        placeholder="">
+                                    <button type="button" id="btnTestAudio"
+                                        class="px-4 py-2.5 lg:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow-sm active:scale-95">
+                                        <span id="testAudioIcon">▶️</span>
+                                        <span id="testAudioText">Tes Lagu</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BAGIKAN LINK KLIEN (Muncul setelah Simpan) -->
+                        <div id="shareSection"
+                            class="flex-1 flex flex-col justify-between border-t border-gray-200 dark:border-gray-800 pt-3 space-y-2.5 hidden">
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                    <span>🔗 Pesan &amp; Tautan Klien</span>
+                                </span>
+                            </div>
+
+                            <textarea id="inputClientLink" readonly rows="3"
+                                class="flex-1 w-full px-3.5 py-2 border border-blue-200 dark:border-blue-900/60 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100 outline-none text-xs sm:text-sm font-medium resize-none leading-relaxed shadow-inner"></textarea>
+
+                            <!-- 2 Tombol Aksi Cepat -->
+                            <div class="grid grid-cols-2 gap-2">
                                 <button id="btnCopyLink"
-                                    class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-sm flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
-                                        </path>
+                                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                     </svg>
-                                    Salin Pesan &amp; Link
-                                </button>
-                                <button id="btnOpenClientGallery" type="button"
-                                    class="px-5 py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                        </path>
-                                    </svg>
-                                    Buka Galeri Klien
+                                    <span class="truncate">Salin Pesan</span>
                                 </button>
                                 <button id="btnShareWa"
-                                    class="px-5 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-sm whitespace-nowrap flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-1.5" fill="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
+                                    class="px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-sm flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                         <path
                                             d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                                     </svg>
-                                    Buka WA
+                                    <span class="truncate">Buka WA</span>
+                                </button>
+                            </div>
+
+                            <!-- Kirim Langsung ke WA Klien -->
+                            <div class="flex gap-2">
+                                <input type="text" id="inputClientWa"
+                                    class="flex-1 px-3.5 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-xs sm:text-sm"
+                                    placeholder="">
+                                <button id="btnSendToClientWa"
+                                    class="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                    </svg>
+                                    <span>Kirim WA</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Panel Kirim ke Klien -->
-                        <div
-                            class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirim
-                                Langsung ke WhatsApp
-                                Klien</label>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2"></p>
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="text" id="inputClientWa"
-                                    class="flex-1 px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"
-                                    placeholder="">
-                                <button id="btnSendToClientWa"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center whitespace-nowrap shadow-sm">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                                    </svg>
-                                    Kirim ke WA Klien
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -850,10 +981,10 @@
     </main>
 
     <!-- Footer Credit -->
-    <footer class="w-full text-center pb-6 pt-2 bg-transparent z-10 relative">
+    <footer class="w-full text-center py-2 bg-transparent z-10 relative">
         <a href="https://wa.me/6282329375006?text=Halo%20Bangkit%20Production,%20saya%20terbantu%20dengan%20sistem%20pemilihan%20foto%20klien%20dan%20ingin%20memberikan%20donasi/apresiasi."
             target="_blank" rel="noopener noreferrer"
-            class="text-xs font-semibold tracking-wider text-gray-400 hover:text-blue-600 transition-colors">
+            class="text-[11px] font-semibold tracking-wider text-gray-400 hover:text-blue-600 transition-colors">
             DESIGN BY BANGKIT_PRODUCTION
         </a>
     </footer>
@@ -1133,10 +1264,18 @@
 
         <!-- Footer Mengambang -->
         <div
-            class="absolute bottom-0 inset-x-0 p-6 sm:pb-8 bg-gradient-to-t from-black/80 to-transparent flex justify-center z-20 pointer-events-none">
+            class="absolute bottom-0 inset-x-0 p-6 sm:pb-8 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-3 z-20 pointer-events-none">
             <button id="btnToggleFullscreenSelect"
                 class="pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95">
                 <!-- Icon dan text diatur via JS -->
+            </button>
+            <button id="btnDownloadFullscreen" title="Download Foto Ini"
+                class="hidden pointer-events-auto items-center px-5 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span>Download</span>
             </button>
         </div>
     </div>
@@ -1422,6 +1561,7 @@ function doPost(e) {
             adminPinHash: "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // SHA-256 untuk default PIN: 1234
             adminPinLength: 4,
             useWatermark: true,
+            allowClientDownload: false,
             clientName: "",
             customSlug: "",
             sessionDate: "",
@@ -1454,6 +1594,7 @@ function doPost(e) {
             inputWaNumber: document.getElementById('inputWaNumber'),
             inputAdminPin: document.getElementById('inputAdminPin'),
             inputUseWatermark: document.getElementById('inputUseWatermark'),
+            inputAllowClientDownload: document.getElementById('inputAllowClientDownload'),
             inputClientName: document.getElementById('inputClientName'),
             inputCustomSlug: document.getElementById('inputCustomSlug'),
             btnResetSlug: document.getElementById('btnResetSlug'),
@@ -1480,6 +1621,7 @@ function doPost(e) {
             btnBackFullscreen: document.getElementById('btnBackFullscreen'),
             btnCloseFullscreen: document.getElementById('btnCloseFullscreen'),
             btnToggleFullscreenSelect: document.getElementById('btnToggleFullscreenSelect'),
+            btnDownloadFullscreen: document.getElementById('btnDownloadFullscreen'),
             fullscreenLoader: document.getElementById('fullscreenLoader'),
             btnPrevPhoto: document.getElementById('btnPrevPhoto'),
             btnNextPhoto: document.getElementById('btnNextPhoto'),
@@ -1975,6 +2117,7 @@ function doPost(e) {
             appState.adminPinHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // Default PIN: 1234
             appState.adminPinLength = 4;
             appState.useWatermark = true;
+            appState.allowClientDownload = false;
             appState.clientName = "";
             appState.sessionDate = getTodayDateString();
             appState.audioUrl = "";
@@ -1991,6 +2134,7 @@ function doPost(e) {
             if (els.inputAdminPin) els.inputAdminPin.value = "";
             appState.customSlug = "";
             if (els.inputUseWatermark) els.inputUseWatermark.checked = true;
+            if (els.inputAllowClientDownload) els.inputAllowClientDownload.checked = false;
             if (els.inputClientName) els.inputClientName.value = "";
             if (els.inputCustomSlug) els.inputCustomSlug.value = "";
             if (els.btnResetSlug) els.btnResetSlug.classList.add('hidden');
@@ -2010,6 +2154,8 @@ function doPost(e) {
                 els.folderSyncStatus.innerHTML = "";
             }
             if (els.shareSection) els.shareSection.classList.add('hidden');
+            const sharePl = document.getElementById('shareSectionPlaceholder');
+            if (sharePl) sharePl.classList.remove('hidden');
             if (els.inputClientLink) els.inputClientLink.value = "";
             if (els.inputClientWa) els.inputClientWa.value = "";
 
@@ -2042,6 +2188,7 @@ function doPost(e) {
                     appState.adminPinLength = parsed.adminPinLength || (parsed.adminPin ? parsed.adminPin.length : 4);
 
                     appState.useWatermark = parsed.useWatermark !== undefined ? parsed.useWatermark : true;
+                    appState.allowClientDownload = parsed.allowClientDownload !== undefined ? Boolean(parsed.allowClientDownload) : false;
                     appState.clientName = parsed.clientName || "";
                     appState.customSlug = parsed.customSlug || "";
                     appState.sessionDate = parsed.sessionDate || getTodayDateString();
@@ -2051,6 +2198,7 @@ function doPost(e) {
                     appState.folderUrl = parsed.folderUrl || "";
                     appState.clientLinkHistory = parsed.clientLinkHistory || [];
 
+                    if (els.inputAllowClientDownload) els.inputAllowClientDownload.checked = appState.allowClientDownload;
                     if (els.inputAudioUrl) els.inputAudioUrl.value = appState.audioUrl;
                     if (els.audioStatusBadge) {
                         if (appState.audioUrl) {
@@ -2076,6 +2224,7 @@ function doPost(e) {
                     adminPinHash: appState.adminPinHash,
                     adminPinLength: appState.adminPinLength || 4,
                     useWatermark: appState.useWatermark !== undefined ? appState.useWatermark : true,
+                    allowClientDownload: Boolean(appState.allowClientDownload),
                     clientName: appState.clientName || "",
                     customSlug: appState.customSlug || "",
                     sessionDate: appState.sessionDate || "",
@@ -2408,6 +2557,11 @@ function doPost(e) {
                         <span class="text-white font-bold text-sm sm:text-base md:text-lg transform -rotate-45 whitespace-nowrap drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] px-2 text-center select-none">${safeStudio}</span>
                     </div>` : '';
 
+                const downloadBtnHtml = appState.allowClientDownload ? `
+                    <button class="absolute bottom-1.5 right-1.5 bg-emerald-600/90 hover:bg-emerald-700 active:scale-90 text-white p-1.5 rounded-full z-30 opacity-85 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-download pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Download Foto">
+                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>` : '';
+
                 card.innerHTML = `
                     ${checkBadge}
                     <div class="w-full min-h-[90px] shimmer-bg relative overflow-hidden">
@@ -2425,10 +2579,11 @@ function doPost(e) {
                     <button class="absolute top-1.5 left-1.5 bg-black/60 hover:bg-black/80 active:scale-90 text-white p-1.5 rounded-full z-30 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity btn-zoom pointer-events-auto shadow-sm" data-id="${safePhotoId}" title="Lihat Penuh">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                     </button>
+                    ${downloadBtnHtml}
                 `;
 
                 card.addEventListener('click', (e) => {
-                    if (!e.target.closest('.btn-zoom')) {
+                    if (!e.target.closest('.btn-zoom') && !e.target.closest('.btn-download')) {
                         toggleSelection(photo.id);
                     }
                 });
@@ -2438,6 +2593,13 @@ function doPost(e) {
                     e.stopPropagation();
                     openFullscreen(photo.id);
                 });
+
+                const btnDownload = card.querySelector('.btn-download');
+                if (btnDownload) {
+                    btnDownload.addEventListener('click', (e) => {
+                        downloadPhoto(photo, e);
+                    });
+                }
 
                 // Masukkan kartu ke kolom sesuai urutan berurutan kiri ke kanan
                 const targetCol = colContainers[index % colCount];
@@ -2858,6 +3020,46 @@ function doPost(e) {
             openFullscreen(newIndex, direction);
         }
 
+        let isDownloadingPhoto = false;
+        let downloadBlurSuppressTimer = null;
+
+        function getPhotoDownloadUrl(photo) {
+            if (!photo) return '';
+            const fileIdMatch = (photo.url && (photo.url.match(/id=([^&]+)/) || photo.url.match(/\/d\/([a-zA-Z0-9_-]+)/))) ||
+                (photo.thumb && (photo.thumb.match(/id=([^&]+)/) || photo.thumb.match(/\/d\/([a-zA-Z0-9_-]+)/)));
+            if (fileIdMatch && fileIdMatch[1]) {
+                return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+            }
+            return photo.url || photo.thumb || '';
+        }
+
+        function downloadPhoto(photo, e) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            if (!appState.allowClientDownload || !photo) return;
+
+            const downloadUrl = getPhotoDownloadUrl(photo);
+            if (!downloadUrl) return;
+
+            // Tahan sementara proteksi blur layar saat dialog unduhan browser muncul
+            isDownloadingPhoto = true;
+            clearTimeout(downloadBlurSuppressTimer);
+            downloadBlurSuppressTimer = setTimeout(() => {
+                isDownloadingPhoto = false;
+            }, 4000);
+
+            const fileName = (photo.id || 'foto').replace(/[^\w.-]+/g, '_') + '.jpg';
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', fileName);
+            link.setAttribute('rel', 'noopener noreferrer');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function updateFullscreenButton(id) {
             const isSelected = appState.selectedPhotos.has(id);
             const btn = els.btnToggleFullscreenSelect;
@@ -2868,6 +3070,16 @@ function doPost(e) {
             } else {
                 btn.className = "pointer-events-auto flex items-center px-6 py-3 rounded-full font-semibold transition shadow-lg transform active:scale-95 bg-blue-600 text-white hover:bg-blue-700";
                 btn.innerHTML = `Pilih Foto Ini`;
+            }
+
+            if (els.btnDownloadFullscreen) {
+                if (appState.allowClientDownload) {
+                    els.btnDownloadFullscreen.classList.remove('hidden');
+                    els.btnDownloadFullscreen.classList.add('flex');
+                } else {
+                    els.btnDownloadFullscreen.classList.add('hidden');
+                    els.btnDownloadFullscreen.classList.remove('flex');
+                }
             }
         }
 
@@ -2881,6 +3093,13 @@ function doPost(e) {
                 toggleSelection(currentFullscreenPhoto.id);
             }
         });
+        if (els.btnDownloadFullscreen) {
+            els.btnDownloadFullscreen.addEventListener('click', (e) => {
+                if (currentFullscreenPhoto) {
+                    downloadPhoto(currentFullscreenPhoto, e);
+                }
+            });
+        }
 
         els.btnPrevPhoto.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -3539,6 +3758,12 @@ function doPost(e) {
             const fromView = viewName === 'gallery' ? els.viewAdmin : els.viewGallery;
             const toView = viewName === 'gallery' ? els.viewGallery : els.viewAdmin;
 
+            if (viewName === 'admin') {
+                document.body.classList.add('admin-view-active');
+            } else {
+                document.body.classList.remove('admin-view-active');
+            }
+
             // Update tombol nav
             if (viewName === 'gallery') {
                 // SINKRONISASI DATA: Ambil input terbaru dari form admin ke appState agar tidak reset / hilang
@@ -3573,6 +3798,9 @@ function doPost(e) {
                 }
                 if (els.inputUseWatermark) {
                     appState.useWatermark = els.inputUseWatermark.checked;
+                }
+                if (els.inputAllowClientDownload) {
+                    appState.allowClientDownload = els.inputAllowClientDownload.checked;
                 }
                 if (els.inputFolderUrl) {
                     appState.folderUrl = els.inputFolderUrl.value.trim();
@@ -3618,6 +3846,7 @@ function doPost(e) {
                 }
                 if (els.inputGasSecret) els.inputGasSecret.value = appState.gasSecretKey || getDefaultGasSecretKey();
                 if (els.inputUseWatermark) els.inputUseWatermark.checked = appState.useWatermark !== false;
+                if (els.inputAllowClientDownload) els.inputAllowClientDownload.checked = Boolean(appState.allowClientDownload);
                 els.inputGasUrl.value = appState.gasUrl;
                 els.inputFolderUrl.value = appState.folderUrl;
             }
@@ -3840,6 +4069,8 @@ function doPost(e) {
                         }
                         if (els.inputClientName) appState.clientName = els.inputClientName.value.trim();
                         if (els.inputSessionDate) appState.sessionDate = els.inputSessionDate.value.trim();
+                        if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
+                        if (els.inputAllowClientDownload) appState.allowClientDownload = els.inputAllowClientDownload.checked;
 
                         // Render galeri di latar belakang agar fotografer bisa mengecek fotonya
                         renderGallery();
@@ -3905,7 +4136,7 @@ function doPost(e) {
         els.inputFolderUrl.addEventListener('input', () => {
             clearTimeout(typingTimer);
             const folderInput = els.inputFolderUrl.value.trim();
-            const gasUrl = els.inputGasUrl.value.trim();
+            const gasUrl = els.inputGasUrl.value.trim() || appState.gasUrl || getDefaultGasUrl();
 
             // Sembunyikan status lama saat mengetik ulang
             els.folderSyncStatus.classList.add('hidden');
@@ -3962,6 +4193,7 @@ function doPost(e) {
                 appState.gasSecretKey = getDefaultGasSecretKey();
             }
             if (els.inputUseWatermark) appState.useWatermark = els.inputUseWatermark.checked;
+            if (els.inputAllowClientDownload) appState.allowClientDownload = els.inputAllowClientDownload.checked;
             appState.gasUrl = els.inputGasUrl.value.trim() || getDefaultGasUrl();
             appState.folderUrl = els.inputFolderUrl.value.trim();
 
@@ -3996,12 +4228,13 @@ function doPost(e) {
                 }
                 const sig = Math.abs(hash).toString(36);
 
-                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi | AudioUrl
+                // Format: FolderID | GasID | Limit | WA | NamaStudio | Watermark (1 atau 0) | Signature | NamaKlien | TanggalSesi | AudioUrl | AllowDownload (1 atau 0)
                 const wmFlag = appState.useWatermark ? '1' : '0';
+                const dlFlag = appState.allowClientDownload ? '1' : '0';
                 const safeClient = encodeURIComponent(appState.clientName || '');
                 const safeDate = encodeURIComponent(appState.sessionDate || '');
                 const safeAudio = encodeURIComponent(appState.audioUrl || '');
-                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}|${safeAudio}`;
+                const rawData = `${folderId}|${gasId}|${appState.maxLimit}|${appState.waNumber}|${appState.studioName}|${wmFlag}|${sig}|${safeClient}|${safeDate}|${safeAudio}|${dlFlag}`;
                 const token = btoa(encodeURIComponent(rawData));
 
                 const clientUrlFallback = `${baseUrl}?t=${token}`;
@@ -4023,6 +4256,8 @@ function doPost(e) {
                 }
 
                 els.shareSection.classList.remove('hidden');
+                const sharePl = document.getElementById('shareSectionPlaceholder');
+                if (sharePl) sharePl.classList.add('hidden');
 
                 // Siapkan pembuat teks pesan WhatsApp lengkap
                 const greeting = appState.clientName ? `Halo Kak *${appState.clientName}*,` : `Halo,`;
@@ -4035,12 +4270,6 @@ function doPost(e) {
                 els.inputClientLink.value = buildShareMessage(shortClientUrl);
                 els.btnCopyLink.disabled = false;
                 els.btnCopyLink.classList.remove('opacity-50', 'cursor-not-allowed');
-
-                if (els.shortLinkBadge) {
-                    els.shortLinkBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
-                    els.shortLinkBadge.textContent = "✓ Link Pendek Aktif";
-                    els.shortLinkBadge.classList.remove('hidden');
-                }
 
                 // Pastikan Folder URL selalu lengkap (berupa link Google Drive lengkap)
                 const rawFolder = (appState.folderUrl || (els.inputFolderUrl ? els.inputFolderUrl.value : '') || '').trim();
@@ -4104,14 +4333,6 @@ function doPost(e) {
             }, 2000);
         });
 
-        // Event Buka Galeri Klien dari dashboard admin tanpa reset (Preview langsung splash screen)
-        if (els.btnOpenClientGallery) {
-            els.btnOpenClientGallery.addEventListener('click', () => {
-                switchView('gallery');
-                showWelcomeCover(true);
-            });
-        }
-
         // Event Buka WA secara langsung untuk bagikan link & pesan
         const btnShareWa = document.getElementById('btnShareWa');
         if (btnShareWa) {
@@ -4153,6 +4374,7 @@ function doPost(e) {
                 const clientName = parts.length > 7 ? decodeURIComponent(parts[7]) : '';
                 const sessionDate = parts.length > 8 ? decodeURIComponent(parts[8]) : '';
                 const audioUrl = parts.length > 9 ? decodeURIComponent(parts[9]) : '';
+                const allowDl = parts.length > 10 ? (parts[10] === '1') : false;
 
                 // Validasi integritas (mencegah klien merubah batas foto atau nomor WA)
                 if (sig) {
@@ -4176,6 +4398,7 @@ function doPost(e) {
                 appState.waNumber = waNumber;
                 appState.studioName = studioName;
                 appState.useWatermark = useWm;
+                appState.allowClientDownload = allowDl;
                 appState.clientName = clientName;
                 appState.sessionDate = sessionDate;
                 appState.audioUrl = audioUrl;
@@ -4188,6 +4411,7 @@ function doPost(e) {
                 appState.waNumber = formatWaNumber(parsedData.w) || appState.waNumber;
                 appState.maxLimit = parseInt(parsedData.l) || appState.maxLimit;
                 appState.useWatermark = parsedData.wm !== undefined ? parsedData.wm : true;
+                appState.allowClientDownload = parsedData.dl !== undefined ? Boolean(parsedData.dl) : false;
                 appState.audioUrl = parsedData.au || '';
             }
         }
@@ -4417,6 +4641,7 @@ function doPost(e) {
 
             // 2. Fungsi Blur & Proteksi Tampilan Layar
             function blurScreen() {
+                if (typeof isDownloadingPhoto !== 'undefined' && isDownloadingPhoto) return;
                 requestAnimationFrame(() => {
                     document.body.classList.add('window-blurred');
                 });
